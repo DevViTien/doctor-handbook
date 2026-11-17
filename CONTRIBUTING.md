@@ -71,7 +71,8 @@ Use `import type` for type-only imports (auto-fixed by ESLint).
 **Server**
 
 - Start every server-only file with `import "server-only"`.
-- Every Server Action is built with `createAction` and declares its `access`.
+- Every Server Action is built with `createAction` (typed object input) or `createFormAction`
+  (forms with `useActionState`) and declares its `access`.
 - Every DAL function scopes queries by the authenticated account.
 - Throw `AppError` for expected failures; let everything else bubble up to be logged.
 

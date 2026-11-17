@@ -1,8 +1,10 @@
+import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { redirect } from "next/navigation";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
 import { AppError } from "@/lib/errors";
-import { createAction } from "@/server/actions/create-action";
+import { createAction, createFormAction, formDataToObject } from "@/server/actions/create-action";
 import { getCurrentAuth, requireAccess } from "@/server/auth/guards";
 import type { AuthContext } from "@/server/auth/session";
 
@@ -80,5 +82,68 @@ describe("createAction", () => {
 
     await expect(action({ content: "x" })).resolves.toEqual({ ok: true, data: null });
     expect(requireAccess).not.toHaveBeenCalled();
+  });
+});
+
+describe("formDataToObject", () => {
+  it("keeps fields and drops React's internal $ACTION_* entries", () => {
+    const formData = new FormData();
+    formData.set("username", "bs.lan");
+    formData.set("$ACTION_ID_abc123", "");
+    formData.set("$ACTION_REF_1", "");
+
+    expect(formDataToObject(formData)).toEqual({ username: "bs.lan" });
+  });
+});
+
+describe("createFormAction", () => {
+  beforeEach(() => {
+    vi.mocked(requireAccess).mockResolvedValue(doctorAuth);
+    vi.mocked(getCurrentAuth).mockResolvedValue(null);
+  });
+
+  const formOf = (fields: Record<string, string>) => {
+    const formData = new FormData();
+    for (const [key, value] of Object.entries(fields)) formData.set(key, value);
+    return formData;
+  };
+
+  it("parses FormData with the schema", async () => {
+    const action = createFormAction({ name: "test.form", schema }, async (input) => input.content);
+
+    await expect(action(null, formOf({ content: " hello " }))).resolves.toEqual({
+      ok: true,
+      data: "hello",
+    });
+  });
+
+  it("returns field errors for invalid fields", async () => {
+    const action = createFormAction({ name: "test.form-invalid", schema }, async () => "never");
+
+    const result = await action(null, formOf({ content: "" }));
+
+    expect(result).toMatchObject({ ok: false, error: { code: "VALIDATION_FAILED" } });
+    if (!result.ok) expect(result.error.fieldErrors?.content).toBeDefined();
+  });
+
+  it("maps AppError to its code and message", async () => {
+    const action = createFormAction({ name: "test.form-app-error", schema }, async () => {
+      throw new AppError("FORBIDDEN", "Tài khoản đã bị khoá.");
+    });
+
+    await expect(action(null, formOf({ content: "x" }))).resolves.toEqual({
+      ok: false,
+      error: { code: "FORBIDDEN", message: "Tài khoản đã bị khoá." },
+    });
+  });
+
+  it("lets redirect() through to Next.js", async () => {
+    const action = createFormAction({ name: "test.form-redirect", schema }, async () => {
+      redirect("/patients");
+    });
+
+    const error = await action(null, formOf({ content: "x" })).catch((caught: unknown) => caught);
+
+    expect(isRedirectError(error)).toBe(true);
   });
 });

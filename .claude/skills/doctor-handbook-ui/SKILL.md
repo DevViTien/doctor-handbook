@@ -32,7 +32,7 @@ Luật của dự án thắng:
 - `web-design-guidelines` đòi Title Case → dùng **sentence case** tiếng Việt ("Thêm bệnh nhân").
   Gợi ý `nuqs`, `virtua` hay thư viện khác → không thêm khi chưa có quyết định trong `design.md`.
 - `vercel-react-best-practices`: SWR, `lru-cache`, `@vercel/analytics`, `better-all` → không có trong
-  dự án. Server Action thì **có**, nhưng luôn dựng bằng `createAction` (xác thực + Zod + `ActionResult`),
+  dự án. Server Action thì **có**, nhưng luôn dựng bằng `createAction`/`createFormAction` (xác thực + Zod + `ActionResult`; form dùng `createFormAction` + `useActionState`),
   không viết action trần. Đọc `localStorage`/IndexedDB → kiểm bằng Zod. Màu cứng, inline style trong
   ví dụ → token + Tailwind.
 - `vercel-composition-patterns`: ví dụ viết cho React Native → áp dụng mẫu, không chép API.
@@ -101,10 +101,23 @@ Trước khi coi một màn hình là xong:
 
 1. **Pha 1 — Khảo sát.** Chạy `pnpm dev`, xem màn hình liên quan ở 390 px (DevTools hoặc Playwright
    project `android`/`iphone`); liệt kê vấn đề. Dùng `/opsx:explore` để bàn.
-2. **Pha 2 — Thiết kế.** `/opsx:propose`. Màn hình mới hoặc đổi luồng: làm mockup HTML tĩnh (sáng/tối,
-   điện thoại/máy tính) đặt trong `openspec/changes/<tên>/mockup/` hoặc publish thành Artifact riêng tư.
-   **Người dùng duyệt mockup trước khi code.** `design.md` ghi bố cục, token thêm/đổi (sáng + tối),
-   trạng thái rỗng/tải/lỗi và cách kiểm tra.
+2. **Pha 2 — Thiết kế (bắt buộc, không bỏ qua được).** Trong `/opsx:propose`, với **mọi** change chạm
+   giao diện, kể cả màn hình "chỉ có một form":
+   - Dùng `frontend-design` để chọn hướng hình ảnh có chủ đích (nhưng giữ luật của dự án ở trên).
+   - Làm mockup HTML **chạy được** cho mọi màn hình và **mọi trạng thái** change thêm/đổi (mặc định, đang
+     gửi, từng loại lỗi, rỗng, đang tải), có công tắc sáng/tối và điện thoại (390 px)/máy tính; dùng chữ thật
+     của app, không lorem ipsum. Khi có lựa chọn cần người dùng quyết (bảng màu, bố cục), đặt các phương án
+     cạnh nhau trong mockup để so sánh.
+   - Lưu ở `openspec/changes/<tên>/mockup/index.html`: HTML hoàn chỉnh (`<!doctype html>`, `<head>`,
+     `<body>`), mở trực tiếp bằng trình duyệt, CSS/JS viết trong file (chỉ font từ Google Fonts). **Gửi
+     đường dẫn file local cho người dùng. KHÔNG upload mockup lên claude.ai (Artifact) hay dịch vụ ngoài.**
+   - Tự xem trước bằng ảnh chụp Playwright local (điện thoại 390 px và máy tính, sáng và tối), sửa lỗi
+     hiển thị rồi mới gửi.
+   - Tính tỉ số tương phản của mọi màu mới (sáng và tối) trước khi đưa vào mockup.
+   - `design.md` ghi: link mockup, hướng hình ảnh, bố cục, token thêm/đổi (sáng + tối, tỉ số tương phản),
+     các trạng thái, cách kiểm tra. `tasks.md` có nhóm `0. Thiết kế` với task "người dùng duyệt mockup".
+   - **Dừng lại chờ người dùng duyệt.** Chỉ khi người dùng duyệt (hoặc yêu cầu sửa rồi duyệt bản sửa) mới
+     tick task duyệt, ghi ngày và điều chỉnh vào `design.md`, rồi sang pha 3.
 3. **Pha 3 — Code.** `/opsx:apply` theo `tasks.md`, dùng `vercel-react-best-practices` +
    `vercel-composition-patterns`. Token trước, thành phần chung sau, màn hình cuối.
 4. **Pha 4 — Kiểm tra.** Xem lại ở 390 px và 1280 px, sáng/tối; rà bằng `web-design-guidelines` trên
@@ -116,5 +129,5 @@ Trước khi coi một màn hình là xong:
 - Thêm token tối mà quên `.dark` → chế độ tối lệch. `next-themes` đặt class `dark` trên `<html>`.
 - `"use client"` đặt quá cao làm cả cây thành client: đặt ở lá có tương tác.
 - Trang trong `(doctor)` đã được `requirePageAccess` bảo vệ ở layout, nhưng **mọi** đọc/ghi dữ liệu vẫn
-  phải qua DAL/`createAction` (layout không chạy lại khi điều hướng phía client).
+  phải qua DAL/`createAction`/`createFormAction` (layout không chạy lại khi điều hướng phía client).
 - Hình đẹp ở 1280 px nhưng tràn ở 360 px: luôn xem điện thoại trước.

@@ -51,6 +51,22 @@ jobs:
   e2e:
     name: End-to-end tests (Android viewport)
     runs-on: ubuntu-latest
+    services:
+      # Dedicated test database; E2E fixtures wipe it between tests.
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: doctor_handbook_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d doctor_handbook_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      E2E_DATABASE_URL: postgres://postgres:postgres@localhost:5432/doctor_handbook_e2e
     steps:
       - uses: actions/checkout@v4
 
@@ -64,6 +80,12 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm exec playwright install --with-deps chromium
+
+      # Plain PostgreSQL: also proves the migrations run outside Supabase (no anon role).
+      - name: Apply migrations to the test database
+        run: pnpm db:migrate
+        env:
+          DIRECT_DATABASE_URL: ${{ env.E2E_DATABASE_URL }}
 
       # The iPhone project needs WebKit; run it locally with `pnpm test:e2e`.
       - run: pnpm exec playwright test --project=android

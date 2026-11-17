@@ -96,7 +96,20 @@ dạng động từ + đối tượng: `add-doctor-login`, `add-access-codes`, `
 
 Mọi việc giao diện theo skill **`doctor-handbook-ui`** (`.claude/skills/doctor-handbook-ui/SKILL.md`): bối
 cảnh lâm sàng, luật cứng, checklist màn hình; skill này thắng các skill giao diện vendored khi mâu thuẫn.
-Màn hình mới hoặc đổi luồng: mockup được người dùng duyệt **trước khi code**.
+Bốn pha, **không được bỏ pha 2**:
+
+1. **Khảo sát**: xem màn hình hiện có ở 390 px và 1280 px, sáng/tối.
+2. **Thiết kế** (trong `/opsx:propose`): nạp skill `doctor-handbook-ui` + `frontend-design`, làm mockup HTML
+   cho **mọi** màn hình và trạng thái mà change thêm hoặc đổi (lỗi, đang gửi, rỗng…), sáng/tối,
+   điện thoại/máy tính, lưu ở `openspec/changes/<tên>/mockup/index.html` (HTML hoàn chỉnh, mở trực tiếp
+   bằng trình duyệt) và **gửi đường dẫn file local cho người dùng**. **Không** upload mockup lên claude.ai
+   (Artifact) hay dịch vụ ngoài nào. Người dùng **duyệt mockup trước khi code**; ghi ngày duyệt và các điều chỉnh
+   vào `design.md` và tick task `0.x` trong `tasks.md`. Chưa duyệt thì `/opsx:apply` phải dừng.
+3. **Code**: `/opsx:apply`, bám mockup đã duyệt.
+4. **Kiểm tra**: xem lại ở 390/1280 px sáng/tối, so với mockup; rà bằng `web-design-guidelines`.
+
+Thay đổi **thuần hình ảnh** không đổi hành vi (màu, khoảng cách) không cần change nhưng vẫn cần mockup hoặc
+ảnh trước/sau cho người dùng xem nếu thấy được trên màn hình.
 
 ## Bất biến
 
@@ -104,7 +117,7 @@ Danh sách đầy đủ nằm ở **một chỗ duy nhất**: `openspec/config.y
 điều tuyệt đối không được làm sai:
 
 - Mọi truy vấn dữ liệu đi qua DAL của module và lọc theo `auth.account.id` từ session; không bao giờ nhận
-  account id từ client. Mọi Server Action dựng bằng `createAction` và khai `access`.
+  account id từ client. Mọi Server Action dựng bằng `createAction` (gọi bằng object) hoặc `createFormAction` (form + `useActionState`) và khai `access`.
 - Admin không đọc dữ liệu bệnh nhân. App không phải hồ sơ bệnh án.
 - Không log dữ liệu bệnh nhân (chỉ dùng `logger`); không đưa dữ liệu bệnh nhân vào URL, toast, tiêu đề.
 - Mọi bảng khai `.enableRLS()`; migration tương thích ngược; dữ liệu mới phải có trong sao lưu/nhập.
@@ -118,7 +131,7 @@ danh sách trong `openspec/config.yaml`.
 - Phân tầng `app → modules → components/hooks/lib/config/server`, ESLint chặn import sai chiều và `../`.
   Import qua alias `@/`. Không barrel `index.ts` trong module.
 - Module: `server/queries.ts`, `server/mutations.ts` (DAL, `import "server-only"`), `server/actions.ts`
-  (`"use server"` + `createAction`), `schemas.ts` (Zod dùng chung form/action), `components/`.
+  (`"use server"` + `createAction` / `createFormAction`), `schemas.ts` (Zod dùng chung form/action), `components/`.
 - Lỗi dự kiến ném `AppError(code)`; action trả `ActionResult`; route handler dùng `toErrorResponse`.
 - Không `any`; `import type` cho kiểu; file kebab-case; component PascalCase, export có tên.
 - Test unit đặt cạnh code (`*.test.ts`); E2E trong `tests/e2e`. Mỗi scenario trong spec có test.

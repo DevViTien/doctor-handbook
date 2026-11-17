@@ -32,7 +32,7 @@ context: |
     giữa bác sĩ (D12).
   - Admin chỉ quản lý tài khoản, KHÔNG đọc dữ liệu bệnh nhân (N6, S4): code của admin không truy vấn
     patients, notes, todos (chỉ được đếm).
-  - Mọi Server Action dựng bằng `createAction` và khai `access`; mọi file server bắt đầu bằng
+  - Mọi Server Action dựng bằng `createAction` hoặc `createFormAction` (cho form) và khai `access`; mọi file server bắt đầu bằng
     `import "server-only"`; tầng dùng chung không import module, tầng client không import server
     (ESLint chặn).
   - Phiên đăng nhập không tự hết hạn nhưng thu hồi được (D13): kết thúc khi đăng xuất, đổi/đặt lại mật
@@ -75,9 +75,10 @@ rules:
     - Với mỗi quyết định, nêu phương án đã cân nhắc và lý do chọn.
     - Nêu cách đảm bảo dữ liệu tách theo bác sĩ (hàm DAL nào lọc theo account) và cách xử lý lỗi (mã AppError).
     - Nếu thêm thư viện, ghi phiên bản, lý do và kiểm tra chính sách tuổi phiên bản của pnpm; không thêm dịch vụ ngoài khi chưa có quyết định.
-    - "Change chạm giao diện (theo skill doctor-handbook-ui): nêu bố cục trên điện thoại (390 px) và máy tính, trạng thái rỗng/đang tải/lỗi, và mockup đã được người dùng duyệt nếu có."
+    - "Change chạm giao diện (theo skill doctor-handbook-ui): BẮT BUỘC có mockup HTML trong `mockup/` của change (file local, mở trực tiếp bằng trình duyệt; KHÔNG upload lên claude.ai hay dịch vụ ngoài), gửi đường dẫn file cho người dùng và được người dùng DUYỆT trước khi code. design.md ghi đường dẫn mockup, ngày duyệt, hướng hình ảnh, bố cục điện thoại (390 px) và máy tính, các trạng thái (rỗng/đang tải/lỗi và mọi trạng thái lỗi của form), token thêm hoặc đổi kèm giá trị sáng và tối cùng tỉ số tương phản."
   tasks:
     - Viết tiếng Việt; mỗi task kiểm chứng được độc lập, đủ nhỏ để xong trong khoảng nửa buổi.
+    - 'Change chạm giao diện: nhóm đầu tiên là `## 0. Thiết kế` gồm task làm mockup và task "người dùng duyệt mockup" (ghi ngày và các điều chỉnh đã chốt). Không task code nào được làm trước khi task duyệt được tick.'
     - Mỗi nhóm task có task viết test tương ứng với các scenario (ghi tên scenario trong task).
     - Có thay đổi schema thì có task chạy `pnpm db:generate`, xem lại SQL và cập nhật sao lưu/nhập nếu cần.
     - "Nhóm task cuối luôn gồm việc chạy `pnpm check` (đã gồm `pnpm spec:check`), `pnpm build`, `pnpm test:e2e` nếu đổi giao diện hoặc luồng người dùng, và gỡ `FeaturePlaceholder` khỏi route đã làm xong."
@@ -87,6 +88,7 @@ operations:
   apply:
     guidance:
       - Làm theo thứ tự trong tasks.md; tick `- [x]` ngay khi task xong và test liên quan xanh.
+      - Nếu tasks.md có nhóm `0. Thiết kế` mà task duyệt mockup chưa được tick thì DỪNG, gửi lại đường dẫn file mockup local và chờ người dùng duyệt; không viết code giao diện.
       - Không mở rộng phạm vi khi đang apply; cần đổi hướng thì sửa proposal/design/specs trước rồi mới code.
       - Gọi CLI bằng `pnpm exec openspec` để dùng đúng phiên bản ghim trong repo.
   archive:

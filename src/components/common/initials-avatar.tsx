@@ -9,10 +9,13 @@ type InitialsAvatarProps = {
   className?: string;
 };
 
-/** Person avatar with Vietnamese-aware initials as the default (idea.md §10.1). */
+/**
+ * Person avatar with Vietnamese-aware initials as the default (idea.md §10.1).
+ * Decorative: the name is always shown next to it, so screen readers skip the initials.
+ */
 export function InitialsAvatar({ name, src, className }: InitialsAvatarProps) {
   return (
-    <Avatar className={cn("size-10", className)}>
+    <Avatar aria-hidden className={cn("size-10", className)}>
       {src ? <AvatarImage src={src} alt="" /> : null}
       <AvatarFallback className="font-medium">{getInitials(name)}</AvatarFallback>
     </Avatar>

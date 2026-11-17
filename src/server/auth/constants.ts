@@ -24,6 +24,16 @@ export const ACCESS_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 export const AUTH_ATTEMPT_RETENTION_MS = 24 * 60 * 60 * 1000;
 
 /**
+ * Login rate limiting (spec account-session). Failed logins are counted in a sliding window;
+ * at the threshold every further attempt is refused, even with the right password, until older
+ * failures slide out of the window. The window must fit within AUTH_ATTEMPT_RETENTION_MS.
+ */
+export const LOGIN_FAILURE_WINDOW_MS = 15 * 60 * 1000;
+export const LOGIN_MAX_FAILURES_PER_USERNAME = 5;
+/** Higher than per-username: a whole clinic may share one public IP. */
+export const LOGIN_MAX_FAILURES_PER_IP = 20;
+
+/**
  * Request header set by `src/proxy.ts` with the requested path + query, so server code
  * (which has no pathname API in layouts) can send users back there after login.
  */

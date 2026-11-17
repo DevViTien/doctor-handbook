@@ -37,7 +37,11 @@ export function proxy(request: NextRequest) {
   requestHeaders.set(REQUEST_PATH_HEADER, `${pathname}${search}`);
 
   const response = NextResponse.next({ request: { headers: requestHeaders } });
-  response.cookies.set(SESSION_COOKIE_NAME, token, getSessionCookieOptions());
+  // Refresh only on navigations. A POST may be a Server Action that changes the cookie itself
+  // (logout deletes it); re-setting it here would race that change in the same response.
+  if (request.method === "GET" || request.method === "HEAD") {
+    response.cookies.set(SESSION_COOKIE_NAME, token, getSessionCookieOptions());
+  }
   return response;
 }
 

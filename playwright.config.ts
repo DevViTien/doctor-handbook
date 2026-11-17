@@ -1,20 +1,48 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const PORT = Number(process.env.PORT ?? 3000);
-const baseURL = process.env.E2E_BASE_URL ?? `http://localhost:${PORT}`;
-
 /**
  * End-to-end tests run against mobile viewports first: doctors use the app on their phones.
  * Install browsers once with `pnpm exec playwright install`.
+ *
+ * The app under test is a production build on its own port (3100), so it never collides with
+ * a `pnpm dev` server (Next.js 16 refuses a second dev server in the same directory).
+ *
+ * Tests that need a database run only when `E2E_DATABASE_URL` points to a PostgreSQL database
+ * dedicated to tests (it is wiped). They share one database, so they run in a single worker.
  */
+const PORT = Number(process.env.E2E_PORT ?? 3100);
+const baseURL = process.env.E2E_BASE_URL ?? `http://localhost:${PORT}`;
+const databaseUrl = process.env.E2E_DATABASE_URL;
+
+/** Server env for E2E: the test database plus placeholders for services these flows never use. */
+const serverEnv: Record<string, string> = {
+  ...Object.fromEntries(
+    Object.entries(process.env).filter(
+      (entry): entry is [string, string] => entry[1] !== undefined,
+    ),
+  ),
+  ...(databaseUrl
+    ? {
+        DATABASE_URL: databaseUrl,
+        SUPABASE_URL: "http://127.0.0.1:54321",
+        SUPABASE_SERVICE_ROLE_KEY: "e2e-placeholder-not-used",
+        ACCESS_CODE_PEPPER: "e2e-access-code-pepper-0123456789abcdef",
+      }
+    : {}),
+};
+
 export default defineConfig({
   testDir: "./tests/e2e",
-  fullyParallel: true,
+  fullyParallel: !databaseUrl,
+  workers: databaseUrl ? 1 : undefined,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? "github" : "list",
   use: {
     baseURL,
+    // Stands in for the client IP Vercel sets in production; without it the app sees an unknown
+    // address and (by design) applies no per-IP login limit.
+    extraHTTPHeaders: { "x-real-ip": "203.0.113.10" },
     locale: "vi-VN",
     timezoneId: "Asia/Ho_Chi_Minh",
     trace: "on-first-retry",
@@ -26,9 +54,10 @@ export default defineConfig({
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {
-        command: "pnpm dev",
-        url: baseURL,
+        command: `pnpm build && pnpm exec next start -p ${PORT}`,
+        url: `${baseURL}/api/health`,
+        env: serverEnv,
         reuseExistingServer: !process.env.CI,
-        timeout: 120_000,
+        timeout: 300_000,
       },
 });

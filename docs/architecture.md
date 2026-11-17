@@ -94,6 +94,10 @@ actions share a single session lookup.
 - `createAction` converts errors into `ActionResult` (`lib/result.ts`): `{ ok: true, data }` or
   `{ ok: false, error: { code, message, fieldErrors? } }`. Unexpected errors are logged and
   surfaced as `INTERNAL` without details.
+- Forms use `createFormAction` (same pipeline, signature `(prevState, formData)`) with React's
+  `useActionState` and `<form action={…}>`: the form posts even before JavaScript loads and can
+  never fall back to a GET that would put field values in the URL. Its state is
+  `FormActionState<T>` (`null` before the first submit).
 - Route Handlers use `toErrorResponse` (`server/http/responses.ts`) for the same mapping.
 - User-facing messages are Vietnamese; code, comments, logs and docs are English.
 

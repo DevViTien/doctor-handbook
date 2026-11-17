@@ -1,8 +1,18 @@
 import { expect, test } from "@playwright/test";
 
+import { loginAs } from "./fixtures/auth";
+import {
+  closeDatabase,
+  hasDatabase,
+  resetDatabase,
+  SESSION_COOKIE,
+  setAccountStatus,
+  SKIP_WITHOUT_DATABASE,
+} from "./fixtures/db";
+
 /**
- * Scenarios of openspec/specs/access-gate/spec.md that need no database.
- * Scenarios with a signed-in user or a revoked session are covered once the auth module exists.
+ * Scenarios of openspec/specs/access-gate/spec.md. The last block needs signed-in users and
+ * therefore a test database (E2E_DATABASE_URL).
  */
 
 test.describe("Trang cần đăng nhập chuyển tới đăng nhập", () => {
@@ -53,5 +63,55 @@ test.describe("Kiểm tra sống và việc định kỳ", () => {
 
     expect(response.status()).toBe(200);
     expect(await response.json()).toMatchObject({ status: "ok" });
+  });
+});
+
+test.describe("access-gate with signed-in users", () => {
+  test.skip(!hasDatabase, SKIP_WITHOUT_DATABASE);
+  test.beforeEach(resetDatabase);
+  test.afterAll(closeDatabase);
+
+  test.describe("Mỗi vai trò chỉ vào khu vực của mình", () => {
+    test("Admin mở danh sách bệnh nhân", async ({ page }) => {
+      await loginAs(page, "admin");
+      await page.goto("/patients");
+
+      await expect(page).toHaveURL(/\/admin\/access-codes$/);
+    });
+
+    test("Bác sĩ mở khu vực quản trị", async ({ page }) => {
+      await loginAs(page, "lan");
+      await page.goto("/admin/accounts");
+
+      await expect(page).toHaveURL(/\/patients$/);
+    });
+
+    test("Đã đăng nhập mở trang đăng nhập", async ({ page }) => {
+      await loginAs(page, "lan");
+      await page.goto("/login");
+
+      await expect(page).toHaveURL(/\/patients$/);
+    });
+  });
+
+  test.describe("Phiên không còn hiệu lực được dọn", () => {
+    test("Gọi dọn phiên khi phiên còn hiệu lực", async ({ page, context }) => {
+      await loginAs(page, "lan");
+      await page.goto("/api/auth/clear-session");
+
+      await expect(page).toHaveURL(/\/patients$/);
+      const cookies = await context.cookies();
+      expect(cookies.some((cookie) => cookie.name === SESSION_COOKIE)).toBe(true);
+    });
+
+    test("Tài khoản bị khoá khi đang đăng nhập", async ({ page, context }) => {
+      await loginAs(page, "lan");
+      await setAccountStatus("lan", "locked");
+      await page.goto("/todos");
+
+      await expect(page).toHaveURL(/\/login\?next=%2Ftodos$/);
+      const cookies = await context.cookies();
+      expect(cookies.some((cookie) => cookie.name === SESSION_COOKIE)).toBe(false);
+    });
   });
 });

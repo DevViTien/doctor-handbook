@@ -36,6 +36,10 @@ modules/<feature>/
    from the client.
 2. **Actions are thin.** Validation, authorization and error mapping come from `createAction`;
    the handler calls DAL functions and returns a DTO.
+   **Forms** use `createFormAction` + `useActionState` + `<form action={formAction}>` (never an
+   `onSubmit` that calls the action): the form works before hydration and never leaks fields
+   into the URL. Show `state.error.message` in a `role="alert"` block and
+   `state.error.fieldErrors` under each field.
 3. **Shared layers never import modules** (enforced by ESLint). If two modules need the same
    thing, move it down into `src/lib`, `src/components` or `src/server`.
 4. **Cross-module imports** are allowed for `schemas.ts`, `types.ts`, `constants.ts` and, from

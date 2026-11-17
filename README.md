@@ -52,6 +52,31 @@ pnpm dev                          # http://localhost:3000
 - `CRON_SECRET` protects `/api/cron/daily-maintenance` (daily: keeps the free Supabase project
   awake and prunes rate-limit rows).
 
+## End-to-end tests
+
+`pnpm test:e2e` builds the app and serves it with `next start` on port **3100** (so it never
+collides with `pnpm dev`). Tests that need signed-in users run only when `E2E_DATABASE_URL` is
+set; the others always run.
+
+> **Warning:** the E2E fixtures **wipe** the `accounts` table of `E2E_DATABASE_URL`. Use a
+> database dedicated to tests — never the development or production database. The fixtures
+> refuse any `*.supabase.co` host.
+
+With Docker:
+
+```bash
+docker run -d --name doctor-handbook-e2e-db -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=doctor_handbook_e2e -p 54329:5432 postgres:17
+
+export E2E_DATABASE_URL=postgres://postgres:postgres@localhost:54329/doctor_handbook_e2e
+DIRECT_DATABASE_URL=$E2E_DATABASE_URL pnpm db:migrate   # once, and after each new migration
+pnpm exec playwright install chromium webkit            # once
+pnpm test:e2e                                           # or: pnpm test:e2e --project=android
+```
+
+The Playwright server reuses an already running app on port 3100 outside CI: stop it after
+changing code, or the tests run against the old build.
+
 ## Scripts
 
 | Script                                  | Purpose                                                                                    |

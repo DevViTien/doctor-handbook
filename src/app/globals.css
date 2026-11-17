@@ -24,6 +24,8 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-bg);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -48,72 +50,78 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  /* Palette "Mực bút bi" (ink-pen blue), approved in openspec change add-account-login.
+     Contrast ratios are listed in that change's design.md §6. */
+  --background: #f6f7fa;
+  --foreground: #111827;
+  --card: #ffffff;
+  --card-foreground: #111827;
+  --popover: #ffffff;
+  --popover-foreground: #111827;
+  --primary: #1e40af;
+  --primary-foreground: #ffffff;
+  --secondary: #edf0f5;
+  --secondary-foreground: #111827;
+  --muted: #edf0f5;
+  --muted-foreground: #525c70;
+  --accent: #edf0f5;
+  --accent-foreground: #111827;
+  --destructive: #b42318;
+  --warning: #8a4b00;
+  --warning-bg: #fff4e0;
+  --border: #dce1ea;
+  --input: #7d879a;
+  --ring: #1e40af;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #ffffff;
+  --sidebar-foreground: #111827;
+  --sidebar-primary: #1e40af;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #edf0f5;
+  --sidebar-accent-foreground: #111827;
+  --sidebar-border: #dce1ea;
+  --sidebar-ring: #1e40af;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --background: #0d121c;
+  --foreground: #e9edf5;
+  --card: #151c2a;
+  --card-foreground: #e9edf5;
+  --popover: #151c2a;
+  --popover-foreground: #e9edf5;
+  --primary: #8ea8ff;
+  --primary-foreground: #0d121c;
+  --secondary: #1c2536;
+  --secondary-foreground: #e9edf5;
+  --muted: #1c2536;
+  --muted-foreground: #9ba5b8;
+  --accent: #1c2536;
+  --accent-foreground: #e9edf5;
+  --destructive: #ff8a80;
+  --warning: #ffc56b;
+  --warning-bg: #33240a;
+  --border: #283244;
+  --input: #68748b;
+  --ring: #8ea8ff;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar: #151c2a;
+  --sidebar-foreground: #e9edf5;
+  --sidebar-primary: #8ea8ff;
+  --sidebar-primary-foreground: #0d121c;
+  --sidebar-accent: #1c2536;
+  --sidebar-accent-foreground: #e9edf5;
+  --sidebar-border: #283244;
+  --sidebar-ring: #8ea8ff;
 }
 
 @layer base {
@@ -129,5 +137,15 @@
   }
   html {
     @apply font-sans;
+    /* Taps on a phone: no grey flash, no double-tap-zoom delay on controls. */
+    -webkit-tap-highlight-color: transparent;
+  }
+  a,
+  button,
+  input,
+  label,
+  select,
+  textarea {
+    touch-action: manipulation;
   }
 }
