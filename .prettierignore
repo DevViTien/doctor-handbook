@@ -1,0 +1,14 @@
+.next
+.temp
+node_modules
+coverage
+playwright-report
+test-results
+drizzle
+pnpm-lock.yaml
+next-env.d.ts
+
+# Product documents are written by hand (Vietnamese prose, wide tables).
+idea.md
+teckstack.md
+plan.md

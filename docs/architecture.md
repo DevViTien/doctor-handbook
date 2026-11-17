@@ -1,0 +1,137 @@
+# Architecture
+
+Doctor Handbook is a single Next.js full-stack application (a modular monolith). There is no
+separate backend: pages, Server Actions and Route Handlers run on Vercel and talk to Supabase
+(PostgreSQL + Storage) in the same region.
+
+## Layers
+
+```
+src/
+├── app/          Routes only: layouts, pages, route handlers. Thin; composes modules.
+├── modules/      Feature modules (auth, admin, patients, search, todos, backup).
+├── components/   Shared UI: ui/ (shadcn primitives), layout/, common/, providers/.
+├── hooks/        Shared client hooks.
+├── lib/          Pure, client-safe utilities: errors, results, validation, text, dates, enums.
+├── config/       Static configuration: site, routes, navigation, env (server-only).
+├── server/       Server-only infrastructure: db, auth, actions, storage, http, logger.
+└── proxy.ts      Optimistic auth redirect + sliding session cookie.
+```
+
+Dependency direction (enforced by ESLint `no-restricted-imports`):
+
+```mermaid
+flowchart LR
+    app --> modules
+    app --> shared
+    modules --> shared
+    subgraph shared [Shared layers]
+        components & hooks & lib & config
+        server
+    end
+    components & hooks & lib & config -. never .-> server
+    shared -. never .-> modules
+```
+
+- Shared layers never import `@/modules/*` or `@/app/*`.
+- Client-safe layers (`components`, `hooks`, `lib`, `config`) never import `@/server/*`.
+- Every server-only file starts with `import "server-only"`, so an accidental client import
+  fails the build.
+
+## Feature modules
+
+See [src/modules/README.md](../src/modules/README.md) for the standard module layout and rules.
+In short: `server/queries.ts` and `server/mutations.ts` form the data access layer (DAL),
+`server/actions.ts` exposes Server Actions built with `createAction`, and `schemas.ts` holds Zod
+schemas shared by forms and actions.
+
+## Request flow
+
+```mermaid
+sequenceDiagram
+    participant B as Browser
+    participant P as proxy.ts
+    participant L as Layout / Page (RSC)
+    participant A as Server Action
+    participant D as DAL (module/server)
+    participant DB as PostgreSQL
+
+    B->>P: GET /patients
+    P->>P: cookie present? (no DB)
+    P-->>B: 307 /login if missing
+    P->>L: continue (cookie lifetime refreshed)
+    L->>L: requirePageAccess("doctor")
+    L->>D: read data (scoped by account id)
+    D->>DB: SELECT ... WHERE account_id = $1
+    B->>A: mutation (form / call)
+    A->>A: createAction: requireAccess → Zod parse
+    A->>D: write (scoped by account id)
+    A-->>B: ActionResult { ok, data | error }
+```
+
+## Authentication and authorization
+
+| Concern              | Implementation                                                                                                                                               |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Passwords            | Argon2id (`server/auth/password.ts`)                                                                                                                         |
+| Sessions             | Random 256-bit token in an httpOnly cookie; only its SHA-256 is stored (`sessions` table). No expiry; revoked by logout, password change/reset, account lock |
+| Cookie lifetime      | 400 days, re-set by `proxy.ts` on each visit (browsers cap at 400 days)                                                                                      |
+| Access codes         | 8 chars from an unambiguous alphabet, stored as HMAC-SHA256 keyed with `ACCESS_CODE_PEPPER`, single use, 72-hour TTL                                         |
+| Page guard           | `requirePageAccess(level)` → redirect; a dead session goes through `/api/auth/clear-session`, which deletes the cookie and keeps `next`                      |
+| Redirect targets     | Every `?next=` value passes `getSafeRedirectPath` (`lib/url.ts`) — same-origin relative paths only                                                           |
+| API without session  | `proxy.ts` answers 401 JSON, never an HTML redirect                                                                                                          |
+| Action / route guard | `requireAccess(level)` → `AppError("UNAUTHENTICATED" \| "FORBIDDEN")`                                                                                        |
+| Data ownership       | DAL functions filter by `auth.account.id`; never trust an id from the client                                                                                 |
+| Admin isolation      | Admin code paths never query `patients`, `notes` or `todos`                                                                                                  |
+| Data API             | `.enableRLS()` (no policies) on every table + privileges of `anon` / `authenticated` revoked (`drizzle/0002_*`)                                              |
+
+`getCurrentAuth()` is memoized per request with React `cache`, so a layout, a page and their
+actions share a single session lookup.
+
+## Errors and results
+
+- Server code throws `AppError(code, message?)` (`lib/errors.ts`) for expected failures.
+- `createAction` converts errors into `ActionResult` (`lib/result.ts`): `{ ok: true, data }` or
+  `{ ok: false, error: { code, message, fieldErrors? } }`. Unexpected errors are logged and
+  surfaced as `INTERNAL` without details.
+- Route Handlers use `toErrorResponse` (`server/http/responses.ts`) for the same mapping.
+- User-facing messages are Vietnamese; code, comments, logs and docs are English.
+
+## Data
+
+- Schema: `src/server/db/schema/*` (Drizzle, `snake_case` columns, UUID keys, `timestamptz`).
+- Migrations: `drizzle/`, generated by `pnpm db:generate`, applied by `pnpm db:migrate`
+  (production: automatically after a successful Vercel build). CI fails when the schema
+  changes without a migration. Custom SQL (extensions, privileges) lives in custom migrations
+  created with `pnpm exec drizzle-kit generate --custom --name=<name>`.
+- Every table is declared with `.enableRLS()`, so the generated migration enables RLS.
+- Integrity lives in the database too: lowercase-username CHECK, reset codes must target an
+  account, and `notes (patient_id, account_id)` references `patients (id, account_id)` so a note
+  always has the same owner as its patient.
+- Migrations must be backward compatible (expand → migrate code → contract): they run while the
+  previous deployment still serves traffic.
+- Search: application-computed `search_text` (`normalizeVi`) + `pg_trgm` GIN indexes.
+- Database access is lazy (`getDb()`), so builds never need credentials.
+
+## Storage
+
+Private Supabase buckets (`server/storage/objects.ts`). Object paths always start with the owner's
+account id: storage functions only accept the branded `AccountObjectPath` returned by
+`accountObjectPath(accountId, ...segments)`, which requires a UUID account id and rejects
+`.`/`..` segments (path traversal). Browsers upload and download directly with signed URLs,
+keeping files off Vercel functions (≈4.5 MB body limit).
+
+## Logging and privacy
+
+Use `logger` from `server/logger.ts` only. Never log patient data or request bodies: log ids, error
+codes and timings.
+
+## Testing strategy
+
+| Level      | Tool                            | Location                      |
+| ---------- | ------------------------------- | ----------------------------- |
+| Unit       | Vitest                          | next to the code, `*.test.ts` |
+| End-to-end | Playwright (Pixel 7, iPhone 14) | `tests/e2e`                   |
+
+Priority E2E scenarios once features exist: cross-account access returns 404; locking an account
+ends its sessions immediately; backup → import round-trip.

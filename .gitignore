@@ -1,0 +1,33 @@
+# Local workspace notes
+.temp/
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Testing
+coverage/
+playwright-report/
+test-results/
+playwright/.cache/
+
+# Environment (never commit secrets — use .env.example as the template)
+.env
+.env.*
+!.env.example
+
+# Vercel
+.vercel
+
+# Logs & OS
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.DS_Store
+Thumbs.db
