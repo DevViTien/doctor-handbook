@@ -30,6 +30,9 @@ jobs:
       - run: pnpm format:check
       - run: pnpm test
 
+      - name: OpenSpec (strict validation, no finished change left unarchived)
+        run: pnpm spec:check
+
       # Neither step needs a database: drizzle-kit compares the schema with drizzle/ snapshots.
       - name: Check migration history
         run: pnpm db:check
@@ -44,3 +47,30 @@ jobs:
 
       # Building does not require database credentials: env is validated lazily at runtime.
       - run: pnpm build
+
+  e2e:
+    name: End-to-end tests (Android viewport)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm exec playwright install --with-deps chromium
+
+      # The iPhone project needs WebKit; run it locally with `pnpm test:e2e`.
+      - run: pnpm exec playwright test --project=android
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7

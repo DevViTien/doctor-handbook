@@ -1,4 +1,10 @@
+# Install scripts are blocked by default; each allowed package needs a recorded reason.
 allowBuilds:
+  # Downloads the platform binary used by tsx, drizzle-kit and Vitest.
   esbuild: true
+
+# Exceptions to pnpm's minimum release age policy; each needs a recorded reason.
 minimumReleaseAgeExclude:
+  # Added by pnpm during the initial install (2026-11-17): typescript-eslint 8.73.0 depends on it
+  # and was the only release supporting TypeScript 6. Remove once it is older than the policy age.
   - "@typescript-eslint/types@8.73.0"

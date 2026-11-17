@@ -1,0 +1,96 @@
+schema: spec-driven
+
+context: |
+  Doctor Handbook — web app (dùng chủ yếu trên điện thoại cá nhân) thay cuốn sổ tay giấy của bác sĩ
+  khi khám lâm sàng: ghi nhớ bệnh nhân (danh bạ + tóm tắt + ghi chú theo thời gian), tìm lại tức thì
+  (gõ không dấu hoặc đọc tên), việc cần làm đơn giản, sao lưu ra file và nhập lại. Dự án nội bộ cho
+  một nhóm nhỏ bác sĩ, miễn phí, phi thương mại; chạy trên gói miễn phí (Vercel Hobby, Supabase Free).
+
+  Nguồn chân lý:
+  - idea.md = sản phẩm và các quyết định đã chốt (mục 2, mã D1…D21), nguyên tắc sản phẩm (mục 7,
+    N1…N6), bảo mật tối thiểu (mục 8.6, S1…S9), quy tắc nghiệp vụ (mục 10, BR1…BR5).
+  - teckstack.md = lựa chọn công nghệ và lý do. docs/architecture.md = kiến trúc và quy ước kỹ thuật.
+  - src/modules/<id>/README.md = phạm vi từng module (auth, admin, patients, search, todos, backup).
+  - openspec/specs/ = hành vi hiện trạng (WHAT). openspec/changes/ = việc sắp làm.
+
+  Stack: Next.js 16 (App Router, Server Components, Server Actions) + React 19 + TypeScript 6 strict;
+  Tailwind 4 + shadcn/ui; Drizzle ORM + PostgreSQL (Supabase, region Singapore); Supabase Storage
+  (bucket private, signed URL); Vercel (region sin1); Vitest; Playwright (Pixel 7, iPhone 14).
+
+  Kiến trúc (docs/architecture.md): src/app (chỉ route) → src/modules/<id> (tính năng) → tầng dùng
+  chung src/components, src/hooks, src/lib, src/config (an toàn cho client) và src/server (server-only).
+
+  Bất biến (không được vi phạm; change nào cần đổi thì phải nói rõ trong proposal và lý do):
+  - App là SỔ GHI NHỚ CÁ NHÂN, KHÔNG phải hồ sơ bệnh án (D4, N1): không đơn thuốc, không biểu mẫu
+    chẩn đoán, không in bệnh án, không tích hợp phần mềm phòng khám.
+  - Ghi nhanh bằng sổ giấy (N2): chỉ bắt buộc họ tên bệnh nhân; lưu tự động; không hộp thoại xác nhận
+    cho thao tác thường; chỉ xác nhận thao tác không hoàn tác được (xoá, thay thế dữ liệu, khoá, xoá
+    tài khoản). Ghi 1 ý ≤ 10 giây, tìm 1 bệnh nhân ≤ 5 giây (idea.md 6.2).
+  - Điện thoại trước, một tay (N3): thiết kế cho màn hình ~390 px trước; thao tác chính ở nửa dưới.
+  - Dữ liệu tách theo bác sĩ (S3): mọi truy vấn dữ liệu đi qua DAL của module, lọc theo
+    `auth.account.id` lấy từ session; KHÔNG BAO GIỜ nhận account id từ client. Không chia sẻ dữ liệu
+    giữa bác sĩ (D12).
+  - Admin chỉ quản lý tài khoản, KHÔNG đọc dữ liệu bệnh nhân (N6, S4): code của admin không truy vấn
+    patients, notes, todos (chỉ được đếm).
+  - Mọi Server Action dựng bằng `createAction` và khai `access`; mọi file server bắt đầu bằng
+    `import "server-only"`; tầng dùng chung không import module, tầng client không import server
+    (ESLint chặn).
+  - Phiên đăng nhập không tự hết hạn nhưng thu hồi được (D13): kết thúc khi đăng xuất, đổi/đặt lại mật
+    khẩu, Admin khoá tài khoản. Tài khoản chỉ tạo bằng mã kích hoạt 72 giờ do Admin cấp (D2, D17).
+  - Riêng tư: không log dữ liệu bệnh nhân (chỉ dùng `logger`); danh sách không hiện tóm tắt bệnh (S7);
+    ảnh chỉ trong bucket private qua `accountObjectPath`; mọi `?next=` qua `getSafeRedirectPath`.
+  - Bác sĩ tự giữ bản sao (D8, N5): server miễn phí có thể mất dữ liệu; sao lưu ra một file và nhập
+    lại (thay thế toàn bộ, D20). Định dạng file sao lưu có phiên bản và app MUST đọc được mọi phiên
+    bản cũ hơn; dữ liệu mới thêm vào schema MUST có mặt trong sao lưu/nhập.
+  - Database: mọi bảng khai `.enableRLS()`; migration sinh bằng `pnpm db:generate` và phải tương thích
+    ngược (expand → code → contract) vì chạy khi bản cũ còn phục vụ.
+  - File lớn (ảnh, file sao lưu) đi thẳng giữa trình duyệt và Storage, không qua Vercel Function.
+  - Không thêm dịch vụ ngoài hoặc dịch vụ trả phí mới khi chưa có quyết định ghi vào idea.md /
+    teckstack.md.
+
+  Ngôn ngữ: giao diện chỉ tiếng Việt (chữ hiển thị viết thẳng trong component, sentence case); code,
+  comment, tên định danh, tài liệu kỹ thuật (README, docs/, README module) bằng tiếng Anh.
+  Nội dung artifact OpenSpec (proposal, design, tasks, mô tả requirement và scenario) viết bằng
+  TIẾNG VIỆT. Giữ nguyên tiếng Anh: tiêu đề cấu trúc của OpenSpec (## Why, ## What Changes,
+  ## Capabilities, ## Impact, ## Purpose, ## Requirements, ### Requirement:, #### Scenario:,
+  ## ADDED/MODIFIED/REMOVED Requirements), các dấu **WHEN** / **THEN** / **AND**, từ khoá
+  SHALL / MUST, và mọi định danh (tên capability, tên change, tên hàm/kiểu, mã lỗi, đường dẫn).
+
+rules:
+  proposal:
+    - Viết tiếng Việt; tên change và tên capability là kebab-case tiếng Anh, dạng động từ + đối tượng (add-doctor-login, add-patient-notes).
+    - Ghi rõ change thuộc module nào (src/modules/<id>) và đáp ứng mục nào của idea.md (mã D/N/S/BR hoặc số mục).
+    - Luôn có mục "Ngoài phạm vi" liệt kê những gì cố ý không làm.
+    - Nếu change chạm tới một bất biến trong context, nêu bất biến đó và lý do.
+    - Nếu change thêm hoặc đổi bảng/cột, nêu ảnh hưởng tới file sao lưu (backup) và migration.
+  specs:
+    - Mô tả tiếng Việt, mỗi requirement chứa từ khoá SHALL hoặc MUST.
+    - Mô tả hành vi bác sĩ, Admin hoặc hệ thống quan sát được (WHAT); cách cài đặt (HOW) để ở design.md.
+    - Mỗi scenario phải kiểm chứng được bằng một test (unit, component hoặc E2E).
+    - Có scenario cho quyền truy cập khi capability đụng dữ liệu (chưa đăng nhập, sai vai trò, dữ liệu của bác sĩ khác).
+    - Khối MODIFIED chép TRỌN thân requirement đang có trong openspec/specs/ rồi mới sửa; chép thiếu sẽ làm mất nội dung khi archive.
+    - Đổi bản chất một requirement thì dùng cặp REMOVED + ADDED với tên khác nhau.
+  design:
+    - Chỉ ra thư mục bị ảnh hưởng theo docs/architecture.md (route, module, tầng dùng chung, schema, migration) và kiểm tra chiều phụ thuộc.
+    - Với mỗi quyết định, nêu phương án đã cân nhắc và lý do chọn.
+    - Nêu cách đảm bảo dữ liệu tách theo bác sĩ (hàm DAL nào lọc theo account) và cách xử lý lỗi (mã AppError).
+    - Nếu thêm thư viện, ghi phiên bản, lý do và kiểm tra chính sách tuổi phiên bản của pnpm; không thêm dịch vụ ngoài khi chưa có quyết định.
+    - "Change chạm giao diện (theo skill doctor-handbook-ui): nêu bố cục trên điện thoại (390 px) và máy tính, trạng thái rỗng/đang tải/lỗi, và mockup đã được người dùng duyệt nếu có."
+  tasks:
+    - Viết tiếng Việt; mỗi task kiểm chứng được độc lập, đủ nhỏ để xong trong khoảng nửa buổi.
+    - Mỗi nhóm task có task viết test tương ứng với các scenario (ghi tên scenario trong task).
+    - Có thay đổi schema thì có task chạy `pnpm db:generate`, xem lại SQL và cập nhật sao lưu/nhập nếu cần.
+    - "Nhóm task cuối luôn gồm việc chạy `pnpm check` (đã gồm `pnpm spec:check`), `pnpm build`, `pnpm test:e2e` nếu đổi giao diện hoặc luồng người dùng, và gỡ `FeaturePlaceholder` khỏi route đã làm xong."
+    - Việc cố ý hoãn ghi ở mục "## Ngoài phạm vi", không để `- [ ]` treo mãi.
+
+operations:
+  apply:
+    guidance:
+      - Làm theo thứ tự trong tasks.md; tick `- [x]` ngay khi task xong và test liên quan xanh.
+      - Không mở rộng phạm vi khi đang apply; cần đổi hướng thì sửa proposal/design/specs trước rồi mới code.
+      - Gọi CLI bằng `pnpm exec openspec` để dùng đúng phiên bản ghim trong repo.
+  archive:
+    guidance:
+      - Chỉ archive khi hành vi đã có trong code và `pnpm check` xanh; không bao giờ archive hành vi chưa code.
+      - Trước khi archive, đối chiếu delta spec với code hiện tại (code có thể đã đi khác lúc đề xuất) và diff trọn thân các khối MODIFIED với bản trong openspec/specs/.
+      - Archive trong cùng PR với task cuối cùng của change.

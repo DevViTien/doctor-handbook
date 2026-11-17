@@ -7,6 +7,9 @@ A digital pocket notebook for clinic doctors: remember patients, find them insta
 - Tech stack rationale: [teckstack.md](teckstack.md) (Vietnamese)
 - Architecture and conventions: [docs/architecture.md](docs/architecture.md)
 - Contributing (workflow, commits, checks): [CONTRIBUTING.md](CONTRIBUTING.md)
+- Spec-driven workflow with AI agents (OpenSpec): [CLAUDE.md](CLAUDE.md) (Vietnamese),
+  current behaviour in [openspec/specs/](openspec/specs/), planned work in
+  [openspec/changes/](openspec/changes/)
 
 > **Status:** project skeleton. Infrastructure, shared layers and module boundaries are in place;
 > features are not implemented yet (screens show a placeholder).
@@ -59,7 +62,9 @@ pnpm dev                          # http://localhost:3000
 | `pnpm typecheck`                        | TypeScript in strict mode                                                                  |
 | `pnpm test` / `test:watch`              | Unit tests (Vitest)                                                                        |
 | `pnpm test:e2e`                         | End-to-end tests on mobile viewports (Playwright; run `pnpm exec playwright install` once) |
-| `pnpm check`                            | Lint + typecheck + format check + unit tests                                               |
+| `pnpm check`                            | Lint + typecheck + format check + unit tests + OpenSpec check                              |
+| `pnpm spec:check`                       | OpenSpec strict validation + no finished change left unarchived                            |
+| `pnpm exec openspec <cmd>`              | OpenSpec CLI (pinned version), e.g. `list`, `show`, `validate`, `archive`                  |
 | `pnpm db:generate`                      | Generate a SQL migration from schema changes                                               |
 | `pnpm db:migrate`                       | Apply pending migrations                                                                   |
 | `pnpm db:check`                         | Check the consistency of the migration history                                             |

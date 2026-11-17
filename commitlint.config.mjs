@@ -18,6 +18,8 @@ const config = {
         "deps",
         "docs",
         "ci",
+        "openspec",
+        "agent",
       ],
     ],
   },
