@@ -14,3 +14,6 @@ export const E2E_CLIENT_IP = "203.0.113.10";
 
 /** The fake Supabase Storage started by Playwright (tests/e2e/fake-storage.mjs). */
 export const FAKE_STORAGE_URL = "http://127.0.0.1:54321";
+
+/** Deployment id of the E2E build (Vercel's VERCEL_DEPLOYMENT_ID), see tests app-update. */
+export const E2E_DEPLOYMENT_ID = "dpl_e2e";

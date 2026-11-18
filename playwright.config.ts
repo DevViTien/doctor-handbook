@@ -4,6 +4,7 @@ import {
   E2E_ACCESS_CODE_PEPPER,
   E2E_CLIENT_IP,
   E2E_CRON_SECRET,
+  E2E_DEPLOYMENT_ID,
   FAKE_STORAGE_URL,
 } from "./tests/e2e/fixtures/constants";
 
@@ -28,6 +29,8 @@ const serverEnv: Record<string, string> = {
       (entry): entry is [string, string] => entry[1] !== undefined,
     ),
   ),
+  // As on Vercel: assets carry a deployment id, /api/health reports it (tests app-update).
+  VERCEL_DEPLOYMENT_ID: E2E_DEPLOYMENT_ID,
   ...(databaseUrl
     ? {
         DATABASE_URL: databaseUrl,

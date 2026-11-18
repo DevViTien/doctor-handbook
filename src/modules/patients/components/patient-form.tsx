@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { routes } from "@/config/routes";
 import { useOnlineStatus } from "@/hooks/use-online-status";
+import { APP_UPDATE_MESSAGES, isStaleActionError } from "@/lib/pwa/app-update";
 import type { ActionResult } from "@/lib/result";
 import { parseBirthInput, todayInVietnam } from "@/modules/patients/birth";
 import { BirthField } from "@/modules/patients/components/birth-field";
@@ -86,6 +87,11 @@ const NETWORK_FAILURE: ActionResult<SavedPatient> = {
   error: { code: "INTERNAL", message: PATIENT_MESSAGES.offline },
 };
 
+const STALE_PAGE: ActionResult<SavedPatient> = {
+  ok: false,
+  error: { code: "INTERNAL", message: APP_UPDATE_MESSAGES.patientForm },
+};
+
 /**
  * Add and edit form of a patient (spec patient-records, design §5, mockup of change
  * add-patient-records). One "Lưu" button (or Enter), no confirmation dialog (N2).
@@ -111,8 +117,9 @@ export function PatientForm(props: PatientFormProps) {
           props.mode === "create"
             ? await createPatientFormAction(null, formData)
             : await updatePatientFormAction(null, formData);
-      } catch {
-        result = NETWORK_FAILURE;
+      } catch (error) {
+        // An older page than the live app: "Lưu lại khi có mạng" would never work.
+        result = isStaleActionError(error) ? STALE_PAGE : NETWORK_FAILURE;
       }
 
       // Back must never return to the form that was just saved.

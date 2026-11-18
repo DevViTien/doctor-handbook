@@ -55,8 +55,15 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   typedRoutes: true,
   poweredByHeader: false,
-  // Written into every backup's manifest.json (spec data-backup).
-  env: { NEXT_PUBLIC_APP_VERSION: packageJson.version },
+  // Version skew: every build gives Server Actions new IDs. With the deployment id, a client-side
+  // navigation across deployments becomes a full page load, and an open page can compare itself
+  // with the live deployment (src/lib/pwa/app-update.ts). Unset outside Vercel.
+  deploymentId: process.env.VERCEL_DEPLOYMENT_ID,
+  env: {
+    // Written into every backup's manifest.json (spec data-backup).
+    NEXT_PUBLIC_APP_VERSION: packageJson.version,
+    NEXT_PUBLIC_DEPLOYMENT_ID: process.env.VERCEL_DEPLOYMENT_ID ?? "",
+  },
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },

@@ -149,6 +149,24 @@ keeping files off Vercel functions (≈4.5 MB body limit).
   (install button, dismissed, iPhone/iPad steps for every browser there, installed, unsupported).
 - `src/proxy.ts` lets `icons/`, `sw.js` and `offline.html` through without a session.
 
+### New deployments (version skew)
+
+Every build gives Server Actions new IDs, so a page loaded before a deploy can no longer save:
+Next answers its actions with `x-nextjs-action-not-found: 1` (`UnrecognizedActionError` on the
+client). Handled in three places:
+
+- `next.config.ts` sets `deploymentId` from `VERCEL_DEPLOYMENT_ID`: a client-side navigation
+  across deployments becomes a full page load. It is also inlined as
+  `NEXT_PUBLIC_DEPLOYMENT_ID`, and `/api/health` reports the live one.
+- `src/lib/pwa/app-update.ts` (started by `PwaSetup`) wraps `fetch` once to spot that header on
+  any action call, and compares with `/api/health` when the app returns to the foreground or comes
+  back online. Either way a lasting toast offers "Tải lại".
+- `src/app/error.tsx` shows "Ứng dụng vừa có bản mới" with "Tải lại trang" (not "Thử lại", which
+  would resend the unknown action); the patient form keeps what was typed and says why it did not
+  save. Note drafts survive the reload (IndexedDB).
+
+E2E builds with `VERCEL_DEPLOYMENT_ID=dpl_e2e` (`tests/e2e/app-update.spec.ts`).
+
 ## Logging and privacy
 
 Use `logger` from `server/logger.ts` only. Never log patient data or request bodies: log ids, error
