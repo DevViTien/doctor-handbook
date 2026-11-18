@@ -89,7 +89,13 @@ export const backupManifestSchema = z.object({
   appVersion: z.string().max(50),
   exportedAt: instant,
   account: z.object({ username: z.string().min(1).max(100) }),
-  counts: z.object({ patients: countSchema, notes: countSchema, todos: countSchema }),
+  counts: z.object({
+    patients: countSchema,
+    notes: countSchema,
+    todos: countSchema,
+    /** Avatars in `images/` (format 2). Informative: pictures are checked one by one. */
+    images: countSchema,
+  }),
 });
 
 export const backupDataSchema = z.object({
@@ -124,3 +130,18 @@ export const backupFileSchema = z
       issue("Counts do not match the data.");
     }
   });
+
+/** Avatar file names inside a backup: `images/<patient id>.(webp|jpg)`. */
+export const BACKUP_IMAGE_NAME = /^images\/([0-9a-f-]{36})\.(webp|jpg)$/;
+
+/** What `GET /api/backup` answers: the file's content plus where to fetch each avatar. */
+export const backupExportSchema = z.object({
+  manifest: z.unknown(),
+  data: z.unknown(),
+  images: z
+    .array(z.object({ patientId: z.uuid(), ext: z.enum(["webp", "jpg"]), url: z.url() }))
+    .max(BACKUP_LIMITS.patients),
+});
+
+/** Old patient id (in the file) → the storage path its avatar was uploaded to. */
+export const importImagesSchema = z.record(z.uuid(), z.string().max(200)).default({});

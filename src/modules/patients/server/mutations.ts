@@ -194,7 +194,7 @@ export async function deletePermanently(
   auth: AuthContext,
   patientId: string,
   db: DbExecutor = getDb(),
-): Promise<boolean> {
+): Promise<{ avatarPath: string | null } | null> {
   const deleted = await db
     .delete(patients)
     .where(
@@ -204,18 +204,54 @@ export async function deletePermanently(
         isNotNull(patients.deletedAt),
       ),
     )
-    .returning({ id: patients.id });
-  return deleted.length > 0;
+    .returning({ avatarPath: patients.avatarPath });
+  return deleted[0] ?? null;
 }
 
 /**
  * Daily maintenance (cron, not Admin code): deletes every patient that has been in the trash for
  * 30 days or more, with its notes, for all accounts. Reads no content; returns only a count.
  */
-export async function purgeExpiredTrash(db: DbExecutor = getDb()): Promise<number> {
+export async function purgeExpiredTrash(
+  db: DbExecutor = getDb(),
+): Promise<{ purged: number; avatarPaths: string[] }> {
   const purged = await db
     .delete(patients)
     .where(and(isNotNull(patients.deletedAt), trashIsExpired()))
-    .returning({ id: patients.id });
-  return purged.length;
+    .returning({ avatarPath: patients.avatarPath });
+  return {
+    purged: purged.length,
+    avatarPaths: purged.flatMap((row) => (row.avatarPath ? [row.avatarPath] : [])),
+  };
+}
+
+/**
+ * Sets the avatar of a kept patient of the session's account (spec patient-avatars, design §3)
+ * and returns the previous path, to delete. `undefined` when there is no such patient. A path
+ * another patient already uses is refused the same way: one object, one patient.
+ * `updated_at` moves: a new picture is a change (the backup reminder counts it, the list puts the
+ * patient on top), like any edit.
+ */
+export async function setAvatar(
+  auth: AuthContext,
+  patientId: string,
+  avatarPath: string | null,
+  db: DbExecutor = getDb(),
+): Promise<{ previous: string | null } | undefined> {
+  const rows = await db.execute<{ previous: string | null }>(sql`
+    UPDATE ${patients} AS p SET avatar_path = ${avatarPath}, updated_at = now()
+    FROM (
+      SELECT id, avatar_path AS previous FROM ${patients}
+      WHERE id = ${patientId}::uuid AND account_id = ${auth.account.id}::uuid
+        AND deleted_at IS NULL
+      FOR UPDATE
+    ) AS old
+    WHERE p.id = old.id
+      AND (${avatarPath}::text IS NULL OR NOT EXISTS (
+        SELECT 1 FROM ${patients} WHERE avatar_path = ${avatarPath} AND id <> ${patientId}::uuid
+      ))
+    RETURNING old.previous
+  `);
+  const [row] = rows;
+  return row ? { previous: row.previous } : undefined;
 }

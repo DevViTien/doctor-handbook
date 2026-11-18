@@ -51,6 +51,25 @@ export const NOTE_MESSAGES = {
   deleteFailedOffline: "Không xoá được vì mất mạng. Thử lại khi có mạng.",
 } as const;
 
+/** Avatars (spec patient-avatars, design §2). */
+export const AVATAR_LIMITS = {
+  /** Largest picture accepted from the camera or gallery, before shrinking. */
+  inputBytes: 25 * 1024 * 1024,
+  /** Side of the square the picture is cropped and scaled to. */
+  size: 384,
+  webpQuality: 0.8,
+  jpegQuality: 0.85,
+} as const;
+
+export const AVATAR_MESSAGES = {
+  unreadable: "Không đọc được ảnh này.",
+  tooLarge: `Ảnh quá lớn. Dung lượng tối đa ${AVATAR_LIMITS.inputBytes / (1024 * 1024)} MB.`,
+  offline: "Chưa lưu được ảnh vì mất mạng.",
+  saving: "Đang lưu ảnh…",
+  retry: "Thử lại",
+  removeOffline: "Chưa xoá được ảnh vì mất mạng. Thử lại khi có mạng.",
+} as const;
+
 /** Trash (spec patient-trash, idea.md BR3). */
 export { TRASH_RETENTION_DAYS } from "@/config/retention";
 /** How long the "Hoàn tác" notice stays up. */

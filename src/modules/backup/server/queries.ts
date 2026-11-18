@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, eq, isNull, or, type SQL, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, or, type SQL, sql } from "drizzle-orm";
 
 import { BACKUP_APP_ID, BACKUP_FORMAT_VERSION } from "@/modules/backup/constants";
 import type { BackupFileInput, BackupStatus } from "@/modules/backup/types";
@@ -35,6 +35,10 @@ export async function getBackupStatus(
     db
       .select({
         total: sql<number>`count(*) filter (where ${inBackup()})`.mapWith(Number),
+        images:
+          sql<number>`count(*) filter (where ${inBackup()} and ${patients.avatarPath} is not null)`.mapWith(
+            Number,
+          ),
         trashed: sql<number>`count(*) filter (where ${trashIsLive()})`.mapWith(Number),
         // Moving to the trash leaves updated_at alone but sets deleted_at: both are changes.
         lastChangeAt: latest(sql`max(greatest(${patients.updatedAt}, ${patients.deletedAt}))`),
@@ -74,6 +78,7 @@ export async function getBackupStatus(
       trashed: patientStats.trashed,
       notes: noteStats.total,
       todos: todoStats.total,
+      images: patientStats.images,
     },
   };
 }
@@ -85,7 +90,7 @@ export async function getBackupStatus(
 export async function getBackupSnapshot(
   auth: AuthContext,
   appVersion: string,
-): Promise<BackupFileInput> {
+): Promise<{ file: BackupFileInput; avatars: { patientId: string; path: string }[] }> {
   const id = auth.account.id;
   return getDb().transaction(
     async (tx) => {
@@ -109,6 +114,7 @@ export async function getBackupSnapshot(
           createdAt: patients.createdAt,
           updatedAt: patients.updatedAt,
           deletedAt: patients.deletedAt,
+          avatarPath: patients.avatarPath,
         })
         .from(patients)
         .where(and(eq(patients.accountId, id), inBackup()))
@@ -141,35 +147,61 @@ export async function getBackupSnapshot(
         .orderBy(asc(todos.createdAt), asc(todos.id));
 
       return {
-        manifest: {
-          app: BACKUP_APP_ID,
-          formatVersion: BACKUP_FORMAT_VERSION,
-          appVersion,
-          exportedAt: now.at.toISOString(),
-          account: { username: auth.account.username },
-          counts: { patients: patientRows.length, notes: noteRows.length, todos: todoRows.length },
-        },
-        data: {
-          patients: patientRows.map((row) => ({
-            ...row,
-            createdAt: row.createdAt.toISOString(),
-            updatedAt: row.updatedAt.toISOString(),
-            deletedAt: iso(row.deletedAt),
-          })),
-          notes: noteRows.map((row) => ({
-            ...row,
-            createdAt: row.createdAt.toISOString(),
-            updatedAt: row.updatedAt.toISOString(),
-          })),
-          todos: todoRows.map((row) => ({
-            ...row,
-            completedAt: iso(row.completedAt),
-            createdAt: row.createdAt.toISOString(),
-            updatedAt: row.updatedAt.toISOString(),
-          })),
+        // Never in the file: the storage path. The route signs URLs for the browser instead.
+        avatars: patientRows.flatMap((row) =>
+          row.avatarPath ? [{ patientId: row.id, path: row.avatarPath }] : [],
+        ),
+        file: {
+          manifest: {
+            app: BACKUP_APP_ID,
+            formatVersion: BACKUP_FORMAT_VERSION,
+            appVersion,
+            exportedAt: now.at.toISOString(),
+            account: { username: auth.account.username },
+            counts: {
+              patients: patientRows.length,
+              notes: noteRows.length,
+              todos: todoRows.length,
+              // Set by the route once the pictures are signed (only those it can serve count).
+              images: 0,
+            },
+          },
+          data: {
+            patients: patientRows.map(({ avatarPath: _avatarPath, ...row }) => ({
+              ...row,
+              createdAt: row.createdAt.toISOString(),
+              updatedAt: row.updatedAt.toISOString(),
+              deletedAt: iso(row.deletedAt),
+            })),
+            notes: noteRows.map((row) => ({
+              ...row,
+              createdAt: row.createdAt.toISOString(),
+              updatedAt: row.updatedAt.toISOString(),
+            })),
+            todos: todoRows.map((row) => ({
+              ...row,
+              completedAt: iso(row.completedAt),
+              createdAt: row.createdAt.toISOString(),
+              updatedAt: row.updatedAt.toISOString(),
+            })),
+          },
         },
       };
     },
     { isolationLevel: "repeatable read", accessMode: "read only" },
   );
+}
+
+/** Which of these avatar paths a patient of the session's account still uses. */
+export async function usedAvatarPaths(
+  auth: AuthContext,
+  paths: readonly string[],
+  db: DbExecutor = getDb(),
+): Promise<Set<string>> {
+  if (paths.length === 0) return new Set();
+  const rows = await db
+    .select({ path: patients.avatarPath })
+    .from(patients)
+    .where(and(eq(patients.accountId, auth.account.id), inArray(patients.avatarPath, [...paths])));
+  return new Set(rows.flatMap((row) => (row.path ? [row.path] : [])));
 }

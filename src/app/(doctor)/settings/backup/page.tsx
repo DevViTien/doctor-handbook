@@ -21,7 +21,8 @@ export default async function BackupPage() {
     ? `Lần sao lưu gần nhất: ${describeLastBackup(lastBackupAt, new Date())} (${formatDate(lastBackupAt)})`
     : describeLastBackup(null, new Date());
   const trashed = counts.trashed > 0 ? ` (${counts.trashed} trong thùng rác)` : "";
-  const holdings = `Đang có ${counts.patients} bệnh nhân${trashed}, ${counts.notes} ghi chú, ${counts.todos} việc`;
+  const images = counts.images > 0 ? `, ${counts.images} ảnh` : "";
+  const holdings = `Đang có ${counts.patients} bệnh nhân${trashed}, ${counts.notes} ghi chú, ${counts.todos} việc${images}`;
 
   return (
     <PageContainer className="pb-6">

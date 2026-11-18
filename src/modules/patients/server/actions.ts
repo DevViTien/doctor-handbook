@@ -9,7 +9,9 @@ import {
   deleteNoteSchema,
   patientFormSchema,
   patientIdInputSchema,
+  prepareAvatarUploadSchema,
   saveNoteSchema,
+  setAvatarSchema,
   toPatientInput,
   updatePatientFormSchema,
 } from "@/modules/patients/schemas";
@@ -20,10 +22,19 @@ import {
   moveToTrash,
   restoreFromTrash,
   saveNote,
+  setAvatar,
   updatePatient,
 } from "@/modules/patients/server/mutations";
+import { avatarUrlFor, getPatient } from "@/modules/patients/server/queries";
 import type { PatientNote } from "@/modules/patients/types";
 import { createAction, createFormAction } from "@/server/actions/create-action";
+import {
+  createSignedUploadUrl,
+  isAvatarPathOf,
+  newAvatarObjectPath,
+  removeAvatarsQuietly,
+  STORAGE_BUCKETS,
+} from "@/server/storage/objects";
 
 /**
  * Patient form actions (spec patient-records). Doctors only; the account always comes from the
@@ -121,10 +132,55 @@ export const restoreFromTrashAction = createAction(
 export const deletePermanentlyAction = createAction(
   { name: "patients.trash.delete", schema: patientIdInputSchema, access: "doctor" },
   async ({ patientId }, { auth }): Promise<{ deleted: true }> => {
-    if (!(await deletePermanently(auth, patientId))) {
-      throw new AppError("NOT_FOUND", PATIENT_MESSAGES.notFound);
-    }
+    const deleted = await deletePermanently(auth, patientId);
+    if (!deleted) throw new AppError("NOT_FOUND", PATIENT_MESSAGES.notFound);
+    // The picture goes with the patient (spec patient-avatars "Ảnh bị xoá cùng bệnh nhân").
+    await removeAvatarsQuietly([deleted.avatarPath]);
     revalidateTrashViews(patientId);
     return { deleted: true };
+  },
+);
+
+/**
+ * Step 1 of setting an avatar (design §3): a signed URL the browser uploads the shrunk picture
+ * to, directly (it never passes through a Vercel Function). Only for a kept patient of the
+ * session's account; the path is a fresh random name under that account.
+ */
+export const prepareAvatarUploadAction = createAction(
+  { name: "patients.avatar.prepare", schema: prepareAvatarUploadSchema, access: "doctor" },
+  async ({ patientId, format }, { auth }): Promise<{ uploadUrl: string; path: string }> => {
+    if (!(await getPatient(auth, patientId))) {
+      throw new AppError("NOT_FOUND", PATIENT_MESSAGES.notFound);
+    }
+    const path = newAvatarObjectPath(auth.account.id, format);
+    const { signedUrl } = await createSignedUploadUrl(STORAGE_BUCKETS.avatars, path);
+    return { uploadUrl: signedUrl, path };
+  },
+);
+
+/** Step 2: attach the uploaded picture; the previous one is deleted from storage. */
+export const setAvatarAction = createAction(
+  { name: "patients.avatar.set", schema: setAvatarSchema, access: "doctor" },
+  async ({ patientId, path }, { auth }): Promise<{ avatarUrl: string }> => {
+    // Only a path under THIS account: never another doctor's picture (spec "Gắn ảnh của tài
+    // khoản khác").
+    if (!isAvatarPathOf(auth.account.id, path)) throw new AppError("VALIDATION_FAILED");
+    const result = await setAvatar(auth, patientId, path);
+    if (!result) throw new AppError("NOT_FOUND", PATIENT_MESSAGES.notFound);
+    if (result.previous !== path) await removeAvatarsQuietly([result.previous]);
+    revalidatePath(routes.doctor.patients);
+    return { avatarUrl: avatarUrlFor(patientId, path) ?? "" };
+  },
+);
+
+/** "Xoá ảnh", after the confirmation: back to initials, the object is deleted. */
+export const removeAvatarAction = createAction(
+  { name: "patients.avatar.remove", schema: patientIdInputSchema, access: "doctor" },
+  async ({ patientId }, { auth }): Promise<{ removed: true }> => {
+    const result = await setAvatar(auth, patientId, null);
+    if (!result) throw new AppError("NOT_FOUND", PATIENT_MESSAGES.notFound);
+    await removeAvatarsQuietly([result.previous]);
+    revalidatePath(routes.doctor.patients);
+    return { removed: true };
   },
 );

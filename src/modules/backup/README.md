@@ -6,7 +6,8 @@ The doctor's safety net: the free database may lose data (idea.md D8). Specs: `d
 ## Scope
 
 - **Export** everything into one `.zip` built in the browser (`archive.ts`, `fflate`):
-  `manifest.json` + `data.json`. Saved as `doctor-handbook_<username>_<yyyy-mm-dd>.zip`.
+  `manifest.json` + `data.json` + `images/<patient id>.webp|jpg` (format 2). The browser fetches
+  each picture straight from Storage with the signed URLs `GET /api/backup` lists. Saved as `doctor-handbook_<username>_<yyyy-mm-dd>.zip`.
 - **Import** = replace all (D20): the browser unpacks and checks the file, shows a summary,
   saves a backup of the current data first (`…_truoc-khi-nhap.zip`) when there is any, then the
   server checks it again and swaps everything in one transaction.
@@ -17,22 +18,22 @@ The doctor's safety net: the free database may lose data (idea.md D8). Specs: `d
 
 ## Layout
 
-| File                          | Role                                                                    |
-| ----------------------------- | ----------------------------------------------------------------------- |
-| `schemas.ts`                  | `backupFileSchema`: the format, shared by browser and server            |
-| `format.ts`                   | `readBackup` (version check + upgraders), `backupFileName`              |
-| `archive.ts`                  | `.zip` pack/unpack (64 MB unpacked limit), gzip JSON for the wire       |
-| `reminder.ts`                 | `shouldRemind`, `describeLastBackup` (Vietnam calendar days)            |
-| `backup-client.ts`            | `downloadBackup`, `sendImport` (browser only)                           |
-| `server/queries.ts`           | `getBackupStatus`, `getBackupSnapshot` (REPEATABLE READ)                |
-| `server/mutations.ts`         | `recordBackup`, `replaceAllData`                                        |
-| `server/actions.ts`           | `recordBackupAction`                                                    |
-| `src/app/api/backup/route.ts` | `GET` export data, `PUT` replace-all import; gzip JSON, ≤ 4 MB each way |
+| File                          | Role                                                                             |
+| ----------------------------- | -------------------------------------------------------------------------------- |
+| `schemas.ts`                  | `backupFileSchema`: the format, shared by browser and server                     |
+| `format.ts`                   | `readBackup` (version check + upgraders), `backupFileName`                       |
+| `archive.ts`                  | `.zip` pack/unpack (128 MB unpacked, 512 KB per picture), gzip JSON for the wire |
+| `reminder.ts`                 | `shouldRemind`, `describeLastBackup` (Vietnam calendar days)                     |
+| `backup-client.ts`            | `downloadBackup`, `sendImport` (browser only)                                    |
+| `server/queries.ts`           | `getBackupStatus`, `getBackupSnapshot` (REPEATABLE READ)                         |
+| `server/mutations.ts`         | `recordBackup`, `replaceAllData`                                                 |
+| `server/actions.ts`           | `recordBackupAction`                                                             |
+| `src/app/api/backup/route.ts` | `GET` export data + signed picture URLs, `PUT` replace-all; gzip JSON ≤ 4 MB     |
 
 The `.zip` never reaches the server; only its JSON does, gzip-compressed, so it stays far below
 the ~4.5 MB a Vercel Function accepts (about 25 MB of text fits in 4 MB compressed).
 
-## Format (version 1)
+## Format (version 2)
 
 ```jsonc
 // manifest.json
@@ -62,6 +63,13 @@ the ~4.5 MB a Vercel Function accepts (about 25 MB of text fits in 4 MB compress
 - The server only accepts the current version; the browser upgrades first.
 
 ## Import details
+
+- Pictures first: `prepareImportUploadsAction` gives one signed upload URL per picture (fresh
+  random paths), the browser uploads them, then `PUT /api/backup` sends `images: { <old patient
+id>: <path> }`; every path must pass `isAvatarPathOf`. `replaceAllData` attaches them in the
+  transaction and deletes the replaced data's pictures after the commit. A failed import calls
+  `discardImportUploadsAction` (only paths no patient uses).
+- `.zip` up to 50 MB (pictures included); the JSON sent to the server stays ≤ 4 MB gzip.
 
 - One import at a time per account: the transaction first locks the `accounts` row.
 - Without the `x-replace-existing: 1` header (sent only after the confirmation and the automatic

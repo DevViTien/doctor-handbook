@@ -146,3 +146,12 @@ export const patientIdInputSchema = z.object({ patientId: z.uuid() });
 
 /** Patient id taken from a URL: anything that is not a UUID is simply "not found". */
 export const patientIdSchema = z.uuid();
+
+/** Asking for an upload URL for a new avatar (spec patient-avatars). */
+export const prepareAvatarUploadSchema = z.object({
+  patientId: z.uuid(),
+  format: z.enum(["webp", "jpg"]),
+});
+
+/** Attaching an uploaded avatar; the path is checked against the session's account. */
+export const setAvatarSchema = z.object({ patientId: z.uuid(), path: z.string().max(200) });

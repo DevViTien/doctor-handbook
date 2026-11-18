@@ -4,7 +4,15 @@ import { findPossibleDuplicates } from "@/modules/patients/duplicates";
 import type { PatientListItem } from "@/modules/patients/types";
 
 function patient(id: string, fullName: string, birthYear: number | null): PatientListItem {
-  return { id, fullName, birthYear, birthDate: null, gender: null, hometown: null };
+  return {
+    id,
+    fullName,
+    birthYear,
+    birthDate: null,
+    gender: null,
+    hometown: null,
+    avatarUrl: null,
+  };
 }
 
 const an1979 = patient("p1", "Nguyễn Văn An", 1979);

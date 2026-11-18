@@ -25,21 +25,25 @@ import { unpackBackup } from "@/modules/backup/archive";
 import {
   BackupConflictError,
   BackupError,
+  discardImportUploads,
   downloadBackup,
   sendImport,
+  uploadImportImages,
 } from "@/modules/backup/backup-client";
 import { BACKUP_LIMITS, BACKUP_MESSAGES, PRE_IMPORT_SUFFIX } from "@/modules/backup/constants";
 import { describeCounts } from "@/modules/backup/format";
-import type { BackupCounts, BackupFile, ImportResult } from "@/modules/backup/types";
+import type { BackupCounts, BackupFile, BackupImage, ImportResult } from "@/modules/backup/types";
 
-type Picked = { file: BackupFile; fileName: string; size: number };
+type Picked = { file: BackupFile; images: BackupImage[]; fileName: string; size: number };
+type Step = "backup" | "images" | "import";
+type Progress = { done: number; total: number };
 
 type ImportState =
   | { kind: "idle" }
   | { kind: "reading" }
   | { kind: "rejected"; message: string; newer: boolean }
   | ({ kind: "ready" } & Picked)
-  | ({ kind: "running"; step: "backup" | "import" } & Picked)
+  | ({ kind: "running"; step: Step; progress: Progress | null } & Picked)
   | ({ kind: "failed"; backedUp: boolean; message: string; offline: boolean } & Picked)
   | { kind: "done"; result: ImportResult; preImportFile: string | null };
 
@@ -114,16 +118,27 @@ export function ImportPanel({
       return;
     }
     setPreImportFile(null);
-    setState({ kind: "ready", file: result.file, fileName: chosen.name, size: chosen.size });
+    setState({
+      kind: "ready",
+      file: result.file,
+      images: result.images,
+      fileName: chosen.name,
+      size: chosen.size,
+    });
   };
 
   const run = async (from: Picked, backedUp: boolean) => {
     // Only the file itself: `from` may be a whole state object, whose `kind` must not leak in.
-    const picked: Picked = { file: from.file, fileName: from.fileName, size: from.size };
+    const picked: Picked = {
+      file: from.file,
+      images: from.images,
+      fileName: from.fileName,
+      size: from.size,
+    };
     let saved = backedUp;
     let preImport = backedUp ? preImportFile : null;
     if (!saved && hasData) {
-      setState({ kind: "running", step: "backup", ...picked });
+      setState({ kind: "running", step: "backup", progress: null, ...picked });
       try {
         const { fileName } = await downloadBackup({ suffix: PRE_IMPORT_SUFFIX });
         preImport = fileName;
@@ -145,12 +160,46 @@ export function ImportPanel({
       }
     }
 
-    setState({ kind: "running", step: "import", ...picked });
+    // The file's pictures go to storage first; nothing changes if one cannot be uploaded.
+    let uploaded: { paths: Record<string, string>; uploaded: string[] } = {
+      paths: {},
+      uploaded: [],
+    };
+    if (picked.images.length > 0) {
+      setState({
+        kind: "running",
+        step: "images",
+        progress: { done: 0, total: picked.images.length },
+        ...picked,
+      });
+      try {
+        uploaded = await uploadImportImages(picked.images, (done, total) =>
+          setState({ kind: "running", step: "images", progress: { done, total }, ...picked }),
+        );
+      } catch (error) {
+        setState({
+          kind: "failed",
+          backedUp: saved,
+          message:
+            error instanceof BackupError ? error.message : BACKUP_MESSAGES.imagesUploadFailed,
+          offline: error instanceof BackupError ? error.offline : true,
+          ...picked,
+        });
+        return;
+      }
+    }
+
+    setState({ kind: "running", step: "import", progress: null, ...picked });
     try {
-      const result = await sendImport(picked.file, saved);
+      const result = await sendImport(picked.file, saved, uploaded.paths);
       setState({ kind: "done", result, preImportFile: preImport });
       router.refresh();
     } catch (error) {
+      // Only after a definite refusal: a lost answer or a timeout may still commit on the server,
+      // and the pictures it points at must then exist. Orphans of a failed try stay unreachable.
+      if (error instanceof BackupError && !error.offline) {
+        void discardImportUploads(uploaded.uploaded);
+      }
       if (error instanceof BackupConflictError) {
         // Data appeared since this page loaded (another device, a page restored by "Back"):
         // fresh counts make the next try ask first and save a backup.
@@ -264,9 +313,10 @@ export function ImportPanel({
             <>
               <ImportSteps
                 withBackup={hasData}
-                backupDone={state.kind === "running" ? state.step === "import" : state.backedUp}
-                importing={state.kind === "running" && state.step === "import"}
-                backingUp={state.kind === "running" && state.step === "backup"}
+                withImages={state.images.length > 0}
+                current={state.kind === "running" ? state.step : null}
+                progress={state.kind === "running" ? state.progress : null}
+                backupDone={state.kind === "running" ? state.step !== "backup" : state.backedUp}
               />
               {state.kind === "running" ? (
                 <p className="text-sm text-muted-foreground">
@@ -382,12 +432,13 @@ function FileSummary({ picked }: { picked: Picked }) {
           lúc {time}
         </small>
       </p>
-      <dl className="grid grid-cols-3 gap-2">
+      <dl className="grid grid-cols-4 gap-1.5">
         {(
           [
             ["bệnh nhân", counts.patients],
             ["ghi chú", counts.notes],
             ["việc", counts.todos],
+            ["ảnh", picked.images.length],
           ] as const
         ).map(([label, value]) => (
           <div key={label} className="grid rounded-lg border bg-card px-2.5 py-2">
@@ -405,57 +456,69 @@ function FileSummary({ picked }: { picked: Picked }) {
 
 function ImportSteps({
   withBackup,
+  withImages,
+  current,
+  progress,
   backupDone,
-  backingUp,
-  importing,
 }: {
   withBackup: boolean;
+  withImages: boolean;
+  current: Step | null;
+  progress: Progress | null;
   backupDone: boolean;
-  backingUp: boolean;
-  importing: boolean;
 }) {
-  const mark = (state: "done" | "doing" | "todo", number: number) => (
-    <span
-      className={cn(
-        "grid size-7 shrink-0 place-items-center rounded-full border bg-card text-sm font-bold tabular-nums",
-        state === "done" && "border-primary bg-primary text-primary-foreground",
-        state === "doing" && "border-primary text-primary",
-      )}
-      aria-hidden
-    >
-      {state === "done" ? (
-        <CheckIcon className="size-4" />
-      ) : state === "doing" ? (
-        <Spinner className="size-4" label={null} />
-      ) : (
-        number
-      )}
-    </span>
+  const order: Step[] = ["backup", "images", "import"];
+  const steps = order.filter(
+    (step) => (step !== "backup" || withBackup) && (step !== "images" || withImages),
   );
-  const backupState = backupDone ? "done" : backingUp ? "doing" : "todo";
-  const importState = importing ? "doing" : "todo";
+  const stateOf = (step: Step): "done" | "doing" | "todo" => {
+    if (step === "backup" && backupDone) return "done";
+    if (current === null) return "todo";
+    if (step === current) return "doing";
+    return order.indexOf(step) < order.indexOf(current) ? "done" : "todo";
+  };
+  const label = (step: Step, doing: boolean) => {
+    if (step === "backup")
+      return doing ? "Đang sao lưu dữ liệu hiện tại…" : "Sao lưu dữ liệu hiện tại";
+    if (step === "images") {
+      return doing && progress
+        ? BACKUP_MESSAGES.uploadingImages(progress.done, progress.total)
+        : "Tải ảnh lên";
+    }
+    return doing ? "Đang nhập dữ liệu từ file…" : "Nhập dữ liệu từ file";
+  };
   return (
     <ol className="grid gap-2.5" aria-live="polite">
-      {withBackup ? (
-        <li
-          className={cn(
-            "flex items-center gap-2.5 font-medium",
-            backupState === "todo" && "text-muted-foreground",
-          )}
-        >
-          {mark(backupState, 1)}
-          {backingUp ? "Đang sao lưu dữ liệu hiện tại…" : "Sao lưu dữ liệu hiện tại"}
-        </li>
-      ) : null}
-      <li
-        className={cn(
-          "flex items-center gap-2.5 font-medium",
-          importState === "todo" && "text-muted-foreground",
-        )}
-      >
-        {mark(importState, withBackup ? 2 : 1)}
-        {importing ? "Đang nhập dữ liệu từ file…" : "Nhập dữ liệu từ file"}
-      </li>
+      {steps.map((step, index) => {
+        const state = stateOf(step);
+        return (
+          <li
+            key={step}
+            className={cn(
+              "flex items-center gap-2.5 font-medium tabular-nums",
+              state === "todo" && "text-muted-foreground",
+            )}
+          >
+            <span
+              className={cn(
+                "grid size-7 shrink-0 place-items-center rounded-full border bg-card text-sm font-bold",
+                state === "done" && "border-primary bg-primary text-primary-foreground",
+                state === "doing" && "border-primary text-primary",
+              )}
+              aria-hidden
+            >
+              {state === "done" ? (
+                <CheckIcon className="size-4" />
+              ) : state === "doing" ? (
+                <Spinner className="size-4" label={null} />
+              ) : (
+                index + 1
+              )}
+            </span>
+            {label(step, state === "doing")}
+          </li>
+        );
+      })}
     </ol>
   );
 }

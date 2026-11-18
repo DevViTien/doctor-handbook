@@ -27,6 +27,7 @@ export default async function TrashPage() {
       meta: describePatientMeta(patient, today),
       expiry: `Xoá ngày ${formatDate(patient.deletedAt)} · còn ${left} ngày`,
       lastDay: left === 1,
+      avatarSrc: patient.avatarUrl,
     };
   });
 

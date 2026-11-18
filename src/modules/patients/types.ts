@@ -15,6 +15,8 @@ export type PatientListItem = Birth & {
   fullName: string;
   gender: Gender | null;
   hometown: string | null;
+  /** App URL of the avatar (never the storage path), or `null` for initials. */
+  avatarUrl: string | null;
 };
 
 /** Everything the detail and edit pages show. `version` guards against overwriting (design §4). */

@@ -15,6 +15,8 @@ export type SearchablePatient = {
   hometown: string | null;
   meta: string;
   href: Route;
+  /** App URL of the picture, or `null` for initials (spec patient-avatars). */
+  avatarSrc: string | null;
 };
 
 /** A deep-search hit: only the id and where it matched, never the matched content. */

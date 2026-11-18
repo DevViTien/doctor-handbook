@@ -13,7 +13,7 @@ export function sampleBackup(): BackupFileInput {
       appVersion: "0.1.0",
       exportedAt: "2026-11-10T01:30:00.000Z",
       account: { username: "bs.lan" },
-      counts: { patients: 2, notes: 3, todos: 1 },
+      counts: { patients: 2, notes: 3, todos: 1, images: 0 },
     },
     data: {
       patients: [

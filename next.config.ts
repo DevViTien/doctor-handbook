@@ -5,6 +5,19 @@ import packageJson from "./package.json" with { type: "json" };
 const isDev = process.env.NODE_ENV !== "production";
 
 /**
+ * Origin of Supabase Storage (avatars are loaded from and uploaded to it directly). From
+ * `SUPABASE_URL` at build time, so E2E can point at its fake Storage; any Supabase project
+ * otherwise.
+ */
+const storageOrigin = (() => {
+  try {
+    return new URL(process.env.SUPABASE_URL ?? "").origin;
+  } catch {
+    return "https://*.supabase.co";
+  }
+})();
+
+/**
  * Content Security Policy.
  * - Supabase is the only third-party origin: private images are served via signed URLs
  *   and uploads go straight from the browser to Supabase Storage.
@@ -15,10 +28,10 @@ const contentSecurityPolicy = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' blob: data: https://*.supabase.co",
+  `img-src 'self' blob: data: ${storageOrigin}`,
   "font-src 'self'",
   // `ws:` lets the development server's hot reload connect; not needed in production.
-  `connect-src 'self' https://*.supabase.co${isDev ? " ws:" : ""}`,
+  `connect-src 'self' ${storageOrigin}${isDev ? " ws:" : ""}`,
   "worker-src 'self'",
   "manifest-src 'self'",
   "frame-ancestors 'none'",

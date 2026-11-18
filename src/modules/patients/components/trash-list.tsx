@@ -25,6 +25,7 @@ export type TrashRow = {
   expiry: string;
   /** Last day: shown in warning colour, with the words saying it too. */
   lastDay: boolean;
+  avatarSrc: string | null;
 };
 
 type Pending = { id: string; kind: "restore" | "delete" } | null;
@@ -113,7 +114,7 @@ export function TrashList({ accountId, rows }: { accountId: string; rows: TrashR
         {items.map((row) => (
           <li key={row.id} className="grid gap-2.5 py-3 pr-3 pl-3.5">
             <div className="flex min-w-0 items-center gap-3">
-              <InitialsAvatar name={row.fullName} />
+              <InitialsAvatar name={row.fullName} src={row.avatarSrc} />
               <div className="grid min-w-0 flex-1 gap-px">
                 <span className="truncate font-semibold">{row.fullName}</span>
                 {row.meta ? (

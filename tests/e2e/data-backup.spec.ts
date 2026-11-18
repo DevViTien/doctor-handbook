@@ -1,3 +1,5 @@
+import { randomBytes } from "node:crypto";
+
 import { expect, type Page, test } from "@playwright/test";
 
 import { loginAs } from "./fixtures/auth";
@@ -10,10 +12,12 @@ import {
   lastBackupAt,
   resetDatabase,
   setAccountCreated,
+  setAvatarPath,
   setLastBackup,
   SKIP_WITHOUT_DATABASE,
   trashPatient,
 } from "./fixtures/db";
+import { putStoredObject, TINY_WEBP } from "./fixtures/storage";
 
 /** Scenarios of openspec spec data-backup (change add-data-backup). */
 
@@ -88,7 +92,7 @@ test.describe("data-backup", () => {
         await download(page, () => downloadButton(page).click()),
       );
 
-      expect(backup.manifest.counts).toEqual({ patients: 2, notes: 3, todos: 0 });
+      expect(backup.manifest.counts).toEqual({ patients: 2, notes: 3, todos: 0, images: 0 });
       expect(backup.manifest.account.username).toBe("bs.lan");
       const trashed = backup.data.patients.find((p) => p.fullName === "Trần Thị Bình");
       expect(trashed?.deletedAt).not.toBeNull();
@@ -107,6 +111,24 @@ test.describe("data-backup", () => {
 
       expect(backup.dataText).toContain("Nguyễn Văn An");
       expect(backup.dataText).not.toContain("Lê Văn Tâm");
+    });
+  });
+
+  test.describe("Ảnh trong file sao lưu", () => {
+    test("File có ảnh", async ({ page }) => {
+      const an = await insertPatient("lan", { fullName: "Nguyễn Văn An" });
+      await insertPatient("lan", { fullName: "Trần Thị Bình" });
+      const path = await setAvatarPath(an, `${randomBytes(16).toString("hex")}.webp`);
+      await putStoredObject(`avatars/${path}`, TINY_WEBP);
+      await loginAs(page, "lan", "/settings/backup");
+      await expect(page.getByRole("main")).toContainText("1 ảnh");
+
+      const backup = await readDownloadedBackup(
+        await download(page, () => downloadButton(page).click()),
+      );
+      expect(backup.manifest.counts.images).toBe(1);
+      expect(backup.images).toEqual([`images/${an}.webp`]);
+      expect(backup.dataText).not.toContain(path);
     });
   });
 

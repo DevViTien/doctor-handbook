@@ -32,6 +32,8 @@ export const routes = {
     health: "/api/health",
     /** Deep patient search (POST, JSON body): the query never goes in the URL. */
     patientSearch: "/api/patients/search",
+    /** A patient's avatar: checks ownership, then redirects to a short-lived signed URL. */
+    patientAvatar: (id: string, version: string) => `/api/patients/${id}/avatar?v=${version}`,
     /** Backup data (GET) and replace-all import (PUT), gzip JSON both ways. */
     backup: "/api/backup",
     /** Drops a dead session cookie, then sends the user to login (see guards.ts). */

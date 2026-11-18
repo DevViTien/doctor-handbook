@@ -125,6 +125,14 @@ account id: storage functions only accept the branded `AccountObjectPath` return
 `.`/`..` segments (path traversal). Browsers upload and download directly with signed URLs,
 keeping files off Vercel functions (≈4.5 MB body limit).
 
+- Bucket `avatars` (private): `<accountId>/<32 random hex>.(webp|jpg)`. A path sent back by a
+  browser is accepted only if `isAvatarPathOf(sessionAccountId, path)`.
+- Pictures are shown through `GET /api/patients/<id>/avatar`, which checks ownership and
+  redirects to a signed URL; the storage path never reaches the browser.
+- CSP `img-src` / `connect-src` allow the origin of `SUPABASE_URL` (read at build time).
+- E2E runs a fake Storage (`tests/e2e/fake-storage.mjs`, port 54321) implementing only the
+  storage-js routes the app uses, plus `/__fake/*` routes the tests use to inspect objects.
+
 ## Logging and privacy
 
 Use `logger` from `server/logger.ts` only. Never log patient data or request bodies: log ids, error

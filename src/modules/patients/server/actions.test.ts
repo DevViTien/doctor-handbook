@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 
 import { NOTE_MESSAGES, PATIENT_MESSAGES } from "@/modules/patients/constants";
 import { PATIENT_FIELD_NAMES as F } from "@/modules/patients/schemas";
@@ -7,8 +7,11 @@ import {
   deleteNoteAction,
   deletePermanentlyAction,
   moveToTrashAction,
+  prepareAvatarUploadAction,
+  removeAvatarAction,
   restoreFromTrashAction,
   saveNoteAction,
+  setAvatarAction,
   updatePatientFormAction,
 } from "@/modules/patients/server/actions";
 import {
@@ -18,10 +21,13 @@ import {
   moveToTrash,
   restoreFromTrash,
   saveNote,
+  setAvatar,
   updatePatient,
 } from "@/modules/patients/server/mutations";
+import { getPatient } from "@/modules/patients/server/queries";
 import { getSessionToken } from "@/server/auth/cookies";
 import { type AuthContext, validateSessionToken } from "@/server/auth/session";
+import { removeAvatarsQuietly } from "@/server/storage/objects";
 
 // Real guards (requireAccess), fake session lookup: tests the access rule end to end.
 vi.mock("@/server/auth/cookies", () => ({ getSessionToken: vi.fn() }));
@@ -34,8 +40,22 @@ vi.mock("@/modules/patients/server/mutations", () => ({
   moveToTrash: vi.fn(),
   restoreFromTrash: vi.fn(),
   deletePermanently: vi.fn(),
+  setAvatar: vi.fn(),
 }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("@/server/storage/objects", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  createSignedUploadUrl: vi.fn(async () => ({
+    signedUrl: "https://storage/upload",
+    token: "t",
+    path: "p",
+  })),
+  removeAvatarsQuietly: vi.fn(async () => undefined),
+}));
+vi.mock("@/modules/patients/server/queries", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  getPatient: vi.fn(),
+}));
 vi.mock("next/headers", () => ({ headers: vi.fn(async () => new Headers()) }));
 
 const PATIENT_ID = "0b7f8f0e-6a3c-4a8e-9f5c-2d1e0c9b8a76";
@@ -291,7 +311,9 @@ describe("trash actions", () => {
   ] as const;
 
   beforeEach(() => {
-    for (const [, , mutation] of actions) vi.mocked(mutation).mockResolvedValue(true);
+    vi.mocked(moveToTrash).mockResolvedValue(true);
+    vi.mocked(restoreFromTrash).mockResolvedValue(true);
+    vi.mocked(deletePermanently).mockResolvedValue({ avatarPath: null });
   });
 
   it.each(actions)(
@@ -310,7 +332,9 @@ describe("trash actions", () => {
     "Xoá bệnh nhân của bác sĩ khác: %s reports NOT_FOUND",
     async (_name, action, mutation) => {
       signedInAs(minh);
-      vi.mocked(mutation).mockResolvedValue(false);
+      (vi.mocked(mutation) as unknown as Mock).mockResolvedValue(
+        mutation === deletePermanently ? null : false,
+      );
 
       await expect(action({ patientId: PATIENT_ID })).resolves.toMatchObject({
         ok: false,
@@ -340,5 +364,80 @@ describe("trash actions", () => {
       error: { code: "VALIDATION_FAILED" },
     });
     expect(moveToTrash).not.toHaveBeenCalled();
+  });
+});
+
+describe("avatar actions", () => {
+  const OTHER_ACCOUNT = "0a1c1b0e-6c1a-4c37-9d55-1f0a8c1e2b3d";
+  const MINH_ACCOUNT = "7b1c1b0e-6c1a-4c37-9d55-1f0a8c1e2b3d";
+  const minhUuid: AuthContext = { ...minh, account: { ...minh.account, id: MINH_ACCOUNT } };
+  const name = "0123456789abcdef0123456789abcdef";
+
+  it("prepare: a fresh path under the session's account, only for its own patient", async () => {
+    signedInAs(minhUuid);
+    vi.mocked(getPatient).mockResolvedValue({ id: PATIENT_ID } as never);
+    const result = await prepareAvatarUploadAction({ patientId: PATIENT_ID, format: "webp" });
+    expect(result).toMatchObject({ ok: true, data: { uploadUrl: "https://storage/upload" } });
+    expect(result.ok && result.data.path).toMatch(
+      new RegExp(`^${MINH_ACCOUNT}/[0-9a-f]{32}[.]webp$`),
+    );
+
+    vi.mocked(getPatient).mockResolvedValue(null);
+    expect(
+      await prepareAvatarUploadAction({ patientId: PATIENT_ID, format: "webp" }),
+    ).toMatchObject({
+      ok: false,
+      error: { code: "NOT_FOUND" },
+    });
+  });
+
+  it("Gắn ảnh của tài khoản khác: a path outside the account is refused", async () => {
+    signedInAs(minhUuid);
+    for (const path of [`${OTHER_ACCOUNT}/${name}.webp`, `${MINH_ACCOUNT}/../${name}.webp`]) {
+      expect(await setAvatarAction({ patientId: PATIENT_ID, path })).toMatchObject({
+        ok: false,
+        error: { code: "VALIDATION_FAILED" },
+      });
+    }
+    expect(setAvatar).not.toHaveBeenCalled();
+  });
+
+  it("set: attaches the picture and deletes the previous one", async () => {
+    signedInAs(minhUuid);
+    vi.mocked(setAvatar).mockResolvedValue({ previous: `${MINH_ACCOUNT}/${"f".repeat(32)}.webp` });
+    const path = `${MINH_ACCOUNT}/${name}.webp`;
+    expect(await setAvatarAction({ patientId: PATIENT_ID, path })).toEqual({
+      ok: true,
+      data: { avatarUrl: `/api/patients/${PATIENT_ID}/avatar?v=${name}` },
+    });
+    expect(setAvatar).toHaveBeenCalledWith(minhUuid, PATIENT_ID, path);
+    expect(removeAvatarsQuietly).toHaveBeenCalledWith([`${MINH_ACCOUNT}/${"f".repeat(32)}.webp`]);
+  });
+
+  it("set / remove: another doctor's patient is NOT_FOUND", async () => {
+    signedInAs(minhUuid);
+    vi.mocked(setAvatar).mockResolvedValue(undefined);
+    expect(
+      await setAvatarAction({ patientId: PATIENT_ID, path: `${MINH_ACCOUNT}/${name}.webp` }),
+    ).toMatchObject({ ok: false, error: { code: "NOT_FOUND" } });
+    expect(await removeAvatarAction({ patientId: PATIENT_ID })).toMatchObject({
+      ok: false,
+      error: { code: "NOT_FOUND" },
+    });
+  });
+
+  it.each([
+    ["not signed in", null, "UNAUTHENTICATED"],
+    ["an Admin", admin, "FORBIDDEN"],
+  ])("%s cannot touch avatars", async (_label, auth, code) => {
+    signedInAs(auth);
+    for (const result of [
+      await prepareAvatarUploadAction({ patientId: PATIENT_ID, format: "webp" }),
+      await setAvatarAction({ patientId: PATIENT_ID, path: `${MINH_ACCOUNT}/${name}.webp` }),
+      await removeAvatarAction({ patientId: PATIENT_ID }),
+    ]) {
+      expect(result).toMatchObject({ ok: false, error: { code } });
+    }
+    expect(setAvatar).not.toHaveBeenCalled();
   });
 });

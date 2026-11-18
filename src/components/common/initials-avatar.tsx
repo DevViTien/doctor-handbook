@@ -1,10 +1,11 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AvatarPhoto } from "@/components/common/avatar-photo";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/text/initials";
 import { cn } from "@/lib/utils";
 
 type InitialsAvatarProps = {
   name: string;
-  /** Signed URL of a private image; falls back to initials while loading or when absent. */
+  /** App URL of a private picture; the initials show while it loads, when absent or broken. */
   src?: string | null;
   className?: string;
 };
@@ -16,8 +17,8 @@ type InitialsAvatarProps = {
 export function InitialsAvatar({ name, src, className }: InitialsAvatarProps) {
   return (
     <Avatar aria-hidden className={cn("size-10", className)}>
-      {src ? <AvatarImage src={src} alt="" /> : null}
       <AvatarFallback className="font-medium">{getInitials(name)}</AvatarFallback>
+      {src ? <AvatarPhoto src={src} /> : null}
     </Avatar>
   );
 }

@@ -17,6 +17,8 @@ export type SeedPatient = {
   updatedAt?: string;
   deletedAt?: string | null;
   notes?: { content: string; createdAt?: string; updatedAt?: string }[];
+  /** A picture stored as images/<id>.webp (format 2). */
+  image?: Buffer;
 };
 
 export const daysAgoIso = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString();
@@ -54,18 +56,30 @@ export function backupZip(options: {
     ),
     todos: [],
   };
+  const formatVersion = options.formatVersion ?? 2;
+  const pictures = patients.flatMap(({ id, patient }) =>
+    patient.image ? [{ id, image: patient.image }] : [],
+  );
   const manifest = {
     app: "doctor-handbook",
-    formatVersion: options.formatVersion ?? 1,
+    formatVersion,
     appVersion: "0.1.0",
     exportedAt: options.exportedAt ?? daysAgoIso(1),
     account: { username: options.username ?? "bs.lan" },
-    counts: { patients: data.patients.length, notes: data.notes.length, todos: 0 },
+    counts: {
+      patients: data.patients.length,
+      notes: data.notes.length,
+      todos: 0,
+      ...(formatVersion >= 2 ? { images: pictures.length } : {}),
+    },
   };
   return Buffer.from(
     zipSync({
       "manifest.json": strToU8(JSON.stringify(manifest)),
       "data.json": strToU8(JSON.stringify(data)),
+      ...Object.fromEntries(
+        pictures.map(({ id, image }) => [`images/${id}.webp`, new Uint8Array(image)]),
+      ),
     }),
   );
 }
@@ -74,7 +88,7 @@ export type ReadBackup = {
   manifest: {
     exportedAt: string;
     account: { username: string };
-    counts: { patients: number; notes: number; todos: number };
+    counts: { patients: number; notes: number; todos: number; images?: number };
   };
   data: {
     patients: { fullName: string; deletedAt: string | null }[];
@@ -84,6 +98,8 @@ export type ReadBackup = {
   /** `data.json` as text, to look for what must not be there. */
   dataText: string;
   bytes: Buffer;
+  /** Names of the pictures in images/. */
+  images: string[];
 };
 
 export async function readDownloadedBackup(download: Download): Promise<ReadBackup> {
@@ -94,7 +110,14 @@ export async function readDownloadedBackup(download: Download): Promise<ReadBack
   const data = entries["data.json"];
   if (!manifest || !data) throw new Error("Downloaded file is not a backup");
   const dataText = strFromU8(data);
-  return { manifest: JSON.parse(strFromU8(manifest)), data: JSON.parse(dataText), dataText, bytes };
+  const images = Object.keys(entries).filter((name) => name.startsWith("images/"));
+  return {
+    manifest: JSON.parse(strFromU8(manifest)),
+    data: JSON.parse(dataText),
+    dataText,
+    bytes,
+    images,
+  };
 }
 
 /** "19/11/2026" and "2026-11-19" for a date in Vietnam time. */

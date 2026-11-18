@@ -43,12 +43,20 @@ The doctor's "contact book" of patients. Behaviour: `openspec/specs/patient-reco
   note of the session's account and patient, so re-sends never duplicate and foreign ids change
   nothing (`NOT_FOUND`). `editing` decides whether `updated_at` moves (shown as "Đã sửa").
 
-## Next changes
+## Avatars (change `add-patient-avatars`, spec `patient-avatars`)
 
-1. `add-patient-avatars`: compressed in the browser, uploaded straight to the private `avatars`
-   bucket through a signed URL; displayed through short-lived signed URLs.
-2. `add-patient-trash`: soft delete via `deleted_at`, restore within 30 days (BR3). Every query
-   already skips rows with `deleted_at`.
+- `avatar-image.ts` shrinks in the browser: largest centred square, 384 × 384, WebP (JPEG when the
+  browser cannot encode WebP), via `createImageBitmap` + canvas. No library.
+- `avatar-client.ts`: `prepareAvatarUploadAction` (signed upload URL, fresh random path
+  `<accountId>/<32 hex>.webp`) → `PUT` straight to Storage → `setAvatarAction` (the path is
+  checked with `isAvatarPathOf`; the previous object is deleted).
+- Display: DTOs carry `avatarUrl` (`/api/patients/<id>/avatar?v=<file name>`), never the storage
+  path. The route checks ownership and redirects (307) to a 24 h signed URL, cached privately
+  for 23 h; `AvatarPhoto` lazy-loads it over the initials and falls back to them on error.
+- Setting or removing a picture moves `updated_at`: it is a change (the backup reminder counts it,
+  the list puts the patient on top).
+- Objects are deleted with the patient: "Xoá vĩnh viễn", the daily purge, a replaced picture,
+  and an import (`removeAvatarsQuietly`, best effort: failures only log a count).
 
 ## Rules
 

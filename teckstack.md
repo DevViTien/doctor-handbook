@@ -26,7 +26,7 @@
 | PWA | Manifest có sẵn của Next.js + **Serwist** (service worker) | Cài lên màn hình chính, cache giao diện |
 | Nháp offline | **IndexedDB** qua `idb-keyval` | Không mất ghi chú khi mất mạng |
 | Sao lưu / nhập | File **.zip** đóng gói ngay trên trình duyệt bằng **fflate** | Né giới hạn kích thước request/response của Vercel |
-| Nén ảnh | **browser-image-compression** | Nén trên điện thoại trước khi tải lên |
+| Nén ảnh | `createImageBitmap` + canvas của trình duyệt | Cắt vuông, thu nhỏ 384 px, nén WebP trên điện thoại trước khi tải lên. Không cần thư viện (change `add-patient-avatars`) |
 | Ngày giờ | **date-fns** (locale `vi`) | Hiển thị theo giờ Việt Nam |
 | Kiểm thử | **Vitest** (unit) + **Playwright** (E2E) | Bắt buộc có test chặn truy cập chéo dữ liệu (S3) |
 | Hosting | **Vercel Hobby**, function đặt tại **Singapore (`sin1`)** | Theo định hướng, độ trễ thấp về Việt Nam |
@@ -221,11 +221,12 @@ sequenceDiagram
     N-->>U: Signed URL
     U->>S: Tải ảnh lên trực tiếp
     U->>N: Lưu khóa ảnh vào hồ sơ bệnh nhân
-    Note over U,S: Khi hiển thị: server tạo signed URL hết hạn sau ~1 giờ
+    Note over U,S: Khi hiển thị: /api/patients/[id]/avatar kiểm chủ sở hữu rồi chuyển hướng tới signed URL 24 giờ
 ```
 
 - Đường dẫn ảnh dạng `<accountId>/<patientId>.webp`. Ảnh không đoán được và không có link công khai.
 - Ảnh không đi qua function của Vercel (K4), nên không vướng giới hạn kích thước.
+- Tên file ngẫu nhiên, đổi mỗi lần đổi ảnh. URL ký sống 24 giờ, và lệnh chuyển hướng được trình duyệt nhớ 23 giờ: mỗi ảnh chỉ tải lại khoảng một lần mỗi ngày, mỗi máy, nên băng thông nằm trong gói miễn phí (change `add-patient-avatars`).
 
 ### 4.7 Tìm kiếm tiếng Việt
 
@@ -308,9 +309,9 @@ flowchart LR
     B --> C["Zod kiểm tra manifest + data<br/>(phiên bản, cấu trúc)"]
     C --> D[Hiện tóm tắt, xác nhận]
     D --> E[Tự xuất bản sao lưu dữ liệu hiện tại]
-    E --> F[Tải ảnh lên vùng tạm của Storage]
+    E --> F[Tải ảnh lên bucket avatars, tên ngẫu nhiên]
     F --> G["PUT /api/backup (data.json nén gzip):<br/>1 transaction xóa dữ liệu cũ → ghi dữ liệu mới → gắn ảnh"]
-    G -->|Lỗi| H[Rollback + xóa ảnh tạm]
+    G -->|Lỗi| H[Rollback + xóa ảnh vừa tải lên]
     G -->|Thành công| I[Xóa ảnh cũ, báo kết quả]
 ```
 
@@ -329,7 +330,7 @@ flowchart LR
 | Ngày giờ | `date-fns` + locale `vi`. DB lưu `timestamptz` (UTC), hiển thị theo `Asia/Ho_Chi_Minh`. Ngày hạn của todo dùng kiểu `date` |
 | Thông báo nhỏ (toast) | `sonner` (đi kèm shadcn/ui) |
 | Icon | `lucide-react` |
-| Nén ảnh | `browser-image-compression` |
+| Nén ảnh | Không dùng thư viện: `createImageBitmap` + canvas |
 | Zip | `fflate` |
 | IndexedDB | `idb-keyval` |
 | Tự nhận diện link trong text | Hàm nhỏ tự viết hoặc `linkify-react` |

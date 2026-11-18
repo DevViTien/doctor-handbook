@@ -46,6 +46,7 @@ export default async function PatientsPage() {
     hometown: patient.hometown,
     meta: describePatientMeta(patient, today),
     href: routes.doctor.patient(patient.id),
+    avatarSrc: patient.avatarUrl,
   }));
 
   return (

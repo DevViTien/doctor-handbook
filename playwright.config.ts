@@ -4,6 +4,7 @@ import {
   E2E_ACCESS_CODE_PEPPER,
   E2E_CLIENT_IP,
   E2E_CRON_SECRET,
+  FAKE_STORAGE_URL,
 } from "./tests/e2e/fixtures/constants";
 
 /**
@@ -30,7 +31,7 @@ const serverEnv: Record<string, string> = {
   ...(databaseUrl
     ? {
         DATABASE_URL: databaseUrl,
-        SUPABASE_URL: "http://127.0.0.1:54321",
+        SUPABASE_URL: FAKE_STORAGE_URL,
         SUPABASE_SERVICE_ROLE_KEY: "e2e-placeholder-not-used",
         ACCESS_CODE_PEPPER: E2E_ACCESS_CODE_PEPPER,
         CRON_SECRET: E2E_CRON_SECRET,
@@ -60,11 +61,20 @@ export default defineConfig({
   ],
   webServer: process.env.E2E_BASE_URL
     ? undefined
-    : {
-        command: `pnpm build && pnpm exec next start -p ${PORT}`,
-        url: `${baseURL}/api/health`,
-        env: serverEnv,
-        reuseExistingServer: !process.env.CI,
-        timeout: 300_000,
-      },
+    : [
+        // Stand-in for Supabase Storage (change add-patient-avatars): the app's SUPABASE_URL.
+        {
+          command: "node tests/e2e/fake-storage.mjs",
+          url: `${FAKE_STORAGE_URL}/health`,
+          reuseExistingServer: !process.env.CI,
+          timeout: 30_000,
+        },
+        {
+          command: `pnpm build && pnpm exec next start -p ${PORT}`,
+          url: `${baseURL}/api/health`,
+          env: serverEnv,
+          reuseExistingServer: !process.env.CI,
+          timeout: 300_000,
+        },
+      ],
 });

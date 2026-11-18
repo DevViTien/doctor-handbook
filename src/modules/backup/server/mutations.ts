@@ -12,6 +12,7 @@ import type { BackupFile, ImportResult } from "@/modules/backup/types";
 import type { AuthContext } from "@/server/auth/session";
 import { getDb } from "@/server/db/client";
 import { accounts, notes, patients, todos } from "@/server/db/schema";
+import { removeAvatarsQuietly } from "@/server/storage/objects";
 
 /** Writes of the backup module, always scoped to the SESSION's account (idea.md S3). */
 
@@ -43,8 +44,13 @@ export async function recordBackup(auth: AuthContext): Promise<void> {
 export async function replaceAllData(
   auth: AuthContext,
   file: BackupFile,
-  options: { replacingExisting: boolean },
+  options: {
+    replacingExisting: boolean;
+    /** Old patient id → uploaded avatar path, already checked against this account. */
+    images?: Readonly<Record<string, string>>;
+  },
 ): Promise<ImportResult> {
+  const images = options.images ?? {};
   const accountId = auth.account.id;
   const { manifest } = file;
   // Patients the trash would no longer show (deleted 30+ days ago): not brought back to life.
@@ -59,7 +65,7 @@ export async function replaceAllData(
     todos: file.data.todos,
   };
 
-  return getDb().transaction(async (tx) => {
+  const result = await getDb().transaction(async (tx) => {
     // One import at a time per account: under READ COMMITTED, a second import's DELETE would
     // not see the first one's uncommitted rows, and both files would end up merged.
     await tx
@@ -86,7 +92,11 @@ export async function replaceAllData(
     }
 
     await tx.delete(todos).where(eq(todos.accountId, accountId));
-    await tx.delete(patients).where(eq(patients.accountId, accountId));
+    // The replaced data's pictures: deleted from storage once this transaction has committed.
+    const replaced = await tx
+      .delete(patients)
+      .where(eq(patients.accountId, accountId))
+      .returning({ avatarPath: patients.avatarPath });
 
     const patientIds = new Map(data.patients.map((patient) => [patient.id, randomUUID()]));
 
@@ -95,6 +105,7 @@ export async function replaceAllData(
         batch.map((patient) => ({
           id: patientIds.get(patient.id),
           accountId,
+          avatarPath: images[patient.id] ?? null,
           fullName: patient.fullName,
           birthYear: patient.birthYear,
           birthDate: patient.birthDate,
@@ -158,6 +169,21 @@ export async function replaceAllData(
       })
       .where(eq(accounts.id, accountId));
 
-    return { patients: data.patients.length, notes: data.notes.length, todos: data.todos.length };
+    return {
+      counts: {
+        patients: data.patients.length,
+        notes: data.notes.length,
+        todos: data.todos.length,
+        images: data.patients.filter((patient) => images[patient.id]).length,
+      },
+      replacedAvatars: replaced.map((row) => row.avatarPath),
+    };
   });
+
+  // After the commit only: the old pictures, and uploads for patients not kept (expired trash).
+  const unused = Object.entries(images)
+    .filter(([patientId]) => !keptIds.has(patientId))
+    .map(([, path]) => path);
+  await removeAvatarsQuietly([...result.replacedAvatars, ...unused]);
+  return result.counts;
 }

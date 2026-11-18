@@ -1,10 +1,14 @@
+import { randomBytes } from "node:crypto";
+import { writeFile } from "node:fs/promises";
 import { gzipSync } from "node:zlib";
 
 import { expect, type Page, test } from "@playwright/test";
 
 import { loginAs } from "./fixtures/auth";
 import { backupZip, daysAgoIso, readDownloadedBackup, type SeedPatient } from "./fixtures/backup";
+import { FAKE_STORAGE_URL } from "./fixtures/constants";
 import {
+  avatarPathOf,
   closeDatabase,
   hasDatabase,
   insertNote,
@@ -13,9 +17,11 @@ import {
   listPatientRows,
   listPatientSnapshot,
   resetDatabase,
+  setAvatarPath,
   SKIP_WITHOUT_DATABASE,
   trashPatient,
 } from "./fixtures/db";
+import { listStoredObjects, putStoredObject, TINY_WEBP } from "./fixtures/storage";
 
 /** Scenarios of openspec spec data-import (change add-data-backup). */
 
@@ -148,9 +154,12 @@ test.describe("data-import", () => {
 
     test("File quá lớn", async ({ page }) => {
       await loginAs(page, "lan", "/settings/backup");
-      await choose(page, Buffer.alloc(4 * 1024 * 1024 + 1));
+      // Over Playwright's in-memory limit: pass it as a file on disk.
+      const big = test.info().outputPath("qua-lon.zip");
+      await writeFile(big, Buffer.alloc(50 * 1024 * 1024 + 1));
+      await page.locator('input[type="file"]').setInputFiles(big);
       await expect(page.getByRole("main").getByRole("alert")).toContainText(
-        "File quá lớn. Dung lượng tối đa 4 MB.",
+        "File quá lớn. Dung lượng tối đa 50 MB.",
       );
     });
   });
@@ -344,6 +353,67 @@ test.describe("data-import", () => {
 
       expect(await listPatientSnapshot("lan")).toEqual(patientsBefore);
       expect(await listAccountNotes("lan")).toEqual(notesBefore);
+    });
+  });
+
+  test.describe("Nhập ảnh đại diện", () => {
+    test("Nhập file có ảnh", async ({ page }) => {
+      const binh = await insertPatient("lan", { fullName: "Trần Thị Bình" });
+      const oldPath = await setAvatarPath(binh, `${randomBytes(16).toString("hex")}.webp`);
+      await putStoredObject(`avatars/${oldPath}`, TINY_WEBP);
+      await loginAs(page, "lan", "/settings/backup");
+      await choose(page, backupZip({ patients: [{ ...AN, image: TINY_WEBP }] }));
+      await expect(page.getByRole("group", { name: /File sao lưu ngày/ })).toContainText("ảnh");
+      await importButton(page).click();
+      const preImport = page.waitForEvent("download");
+      await dialog(page).getByRole("button", { name: "Thay thế dữ liệu" }).click();
+      // The automatic backup carries the current picture too.
+      expect((await readDownloadedBackup(await preImport)).images).toEqual([`images/${binh}.webp`]);
+      await expect(page.getByRole("status").filter({ hasText: "Đã nhập" })).toBeVisible();
+
+      const [an] = await listPatientRows("lan");
+      if (!an) throw new Error("An was not imported");
+      const newPath = await avatarPathOf(an.id);
+      expect(newPath).not.toBeNull();
+      expect(await listStoredObjects(`avatars/${newPath}`)).toHaveLength(1);
+      await expect.poll(() => listStoredObjects(`avatars/${oldPath}`)).toEqual([]);
+
+      await page.goto(`/patients/${an.id}`);
+      const photo = page.getByRole("button", { name: "Ảnh đại diện" }).locator("img");
+      await expect
+        .poll(() => photo.evaluate((img: HTMLImageElement) => img.naturalWidth))
+        .toBeGreaterThan(0);
+    });
+
+    test("Nhập file định dạng cũ không có ảnh", async ({ page }) => {
+      await loginAs(page, "lan", "/settings/backup");
+      await choose(page, backupZip({ formatVersion: 1, patients: [AN] }));
+      await importButton(page).click();
+      await expect(page.getByRole("status").filter({ hasText: "Đã nhập" })).toContainText(
+        "Đã nhập 1 bệnh nhân, 1 ghi chú, 0 việc.",
+      );
+      const [an] = await listPatientRows("lan");
+      expect(an && (await avatarPathOf(an.id))).toBeNull();
+    });
+
+    test("Mất mạng khi tải ảnh lên", async ({ page }) => {
+      await insertPatient("lan", { fullName: "Trần Thị Bình" });
+      await loginAs(page, "lan", "/settings/backup");
+      await page.route(`${FAKE_STORAGE_URL}/**`, (route) =>
+        route.request().method() === "PUT" ? route.abort("internetdisconnected") : route.continue(),
+      );
+      await choose(page, backupZip({ patients: [{ ...AN, image: TINY_WEBP }] }));
+      await importButton(page).click();
+      const preImport = page.waitForEvent("download");
+      await dialog(page).getByRole("button", { name: "Thay thế dữ liệu" }).click();
+      await preImport;
+
+      const alert = page.getByRole("main").getByRole("alert");
+      await expect(alert).toContainText(
+        "Chưa tải được ảnh lên vì mất mạng. Dữ liệu chưa thay đổi.",
+      );
+      await expect(page.getByRole("button", { name: "Thử lại" })).toBeVisible();
+      expect(await names("lan")).toEqual(["Trần Thị Bình"]);
     });
   });
 

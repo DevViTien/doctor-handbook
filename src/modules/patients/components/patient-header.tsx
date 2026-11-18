@@ -1,7 +1,7 @@
 import { IdCardIcon, PhoneIcon } from "lucide-react";
 
-import { InitialsAvatar } from "@/components/common/initials-avatar";
 import type { CalendarDay } from "@/modules/patients/birth";
+import { PatientAvatar } from "@/modules/patients/components/patient-avatar";
 import { describePatientDetailMeta, telHref } from "@/modules/patients/format";
 import type { PatientDetail } from "@/modules/patients/types";
 
@@ -14,15 +14,12 @@ export function PatientHeader({ patient, today }: { patient: PatientDetail; toda
 
   return (
     <>
-      <div className="flex min-w-0 items-center gap-3.5 pt-2 pb-4">
-        <InitialsAvatar name={patient.fullName} className="size-14 text-lg" />
-        <div className="grid min-w-0 gap-0.5">
-          <h1 className="text-[1.4rem] leading-tight font-bold tracking-tight break-words">
-            {patient.fullName}
-          </h1>
-          {meta ? <p className="text-[0.95rem] text-muted-foreground">{meta}</p> : null}
-        </div>
-      </div>
+      <PatientAvatar patientId={patient.id} name={patient.fullName} avatarUrl={patient.avatarUrl}>
+        <h1 className="text-[1.4rem] leading-tight font-bold tracking-tight break-words">
+          {patient.fullName}
+        </h1>
+        {meta ? <p className="text-[0.95rem] text-muted-foreground">{meta}</p> : null}
+      </PatientAvatar>
 
       {patient.phone || patient.patientCode ? (
         <ul className="mb-4 divide-y rounded-2xl border bg-card">

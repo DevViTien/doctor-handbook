@@ -240,6 +240,7 @@ export function PatientSearch({
         href={patient.href}
         name={patient.fullName}
         meta={patient.meta}
+        avatarSrc={patient.avatarSrc}
         hint={kind ? <MatchHint kind={kind} /> : undefined}
       />
     </li>

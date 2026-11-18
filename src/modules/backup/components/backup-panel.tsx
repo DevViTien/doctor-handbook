@@ -12,7 +12,7 @@ import { BACKUP_MESSAGES } from "@/modules/backup/constants";
 
 type PanelState =
   | { kind: "idle" }
-  | { kind: "busy" }
+  | { kind: "busy"; progress: { done: number; total: number } | null }
   | { kind: "done"; fileName: string }
   | { kind: "error"; message: string; offline: boolean };
 
@@ -46,9 +46,12 @@ export function BackupPanel({
   const [state, setState] = useState<PanelState>({ kind: "idle" });
 
   const download = async () => {
-    setState({ kind: "busy" });
+    setState({ kind: "busy", progress: null });
     try {
-      const { fileName } = await downloadBackup();
+      const { fileName } = await downloadBackup({
+        onProgress: (done, total) =>
+          setState({ kind: "busy", progress: total > 0 ? { done, total } : null }),
+      });
       setState({ kind: "done", fileName });
       router.refresh();
     } catch (error) {
@@ -107,7 +110,9 @@ export function BackupPanel({
         {state.kind === "busy" ? (
           <>
             <Spinner className="size-5" label={null} />
-            Đang tạo file…
+            {state.progress
+              ? BACKUP_MESSAGES.downloadingImages(state.progress.done, state.progress.total)
+              : "Đang tạo file…"}
           </>
         ) : (
           <>

@@ -4,6 +4,7 @@ import { pruneAuthAttempts } from "@/server/auth/attempts";
 import { safeEqual } from "@/server/auth/crypto";
 import { toErrorResponse } from "@/server/http/responses";
 import { logger } from "@/server/logger";
+import { removeAvatarsQuietly } from "@/server/storage/objects";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ export const dynamic = "force-dynamic";
  *    holidays (teckstack.md §4.3).
  * 2. Prunes rate-limit rows that are no longer needed.
  * 3. Deletes for good the patients that have been in the trash for 30 days (spec patient-trash
- *    "Tự xoá hẳn sau 30 ngày"), with their notes. Only the count is logged.
+ *    "Tự xoá hẳn sau 30 ngày"), with their notes and avatars. Only counts are logged.
  */
 export async function GET(request: Request) {
   try {
@@ -28,7 +29,9 @@ export async function GET(request: Request) {
     // Independent jobs: one failing must not keep the other (e.g. the trash purge) from running.
     const [attempts, trash] = await Promise.allSettled([pruneAuthAttempts(), purgeExpiredTrash()]);
     const prunedAuthAttempts = attempts.status === "fulfilled" ? attempts.value : null;
-    const purgedPatients = trash.status === "fulfilled" ? trash.value : null;
+    const purgedPatients = trash.status === "fulfilled" ? trash.value.purged : null;
+    // Their avatars go too (spec patient-avatars); a storage failure only logs a count.
+    if (trash.status === "fulfilled") await removeAvatarsQuietly(trash.value.avatarPaths);
     for (const [job, outcome] of [
       ["pruneAuthAttempts", attempts],
       ["purgeExpiredTrash", trash],

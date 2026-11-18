@@ -19,6 +19,12 @@ vi.mock("@/modules/backup/server/mutations", () => ({
   replaceAllData: vi.fn(),
   recordBackup: vi.fn(),
 }));
+vi.mock("@/server/storage/objects", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  createSignedReadUrls: vi.fn(async (_bucket: string, paths: string[]) => {
+    return new Map(paths.map((path) => [path, `https://storage.example/${path}?token=t`]));
+  }),
+}));
 vi.mock("next/headers", () => ({ headers: vi.fn(async () => new Headers()) }));
 
 const lan: AuthContext = {
@@ -57,8 +63,8 @@ function putRequest(body: Uint8Array | string, headers: Record<string, string> =
 const gz = (value: unknown) => new Uint8Array(gzipSync(JSON.stringify(value)));
 
 beforeEach(() => {
-  vi.mocked(getBackupSnapshot).mockResolvedValue(sampleBackup());
-  vi.mocked(replaceAllData).mockResolvedValue({ patients: 2, notes: 3, todos: 1 });
+  vi.mocked(getBackupSnapshot).mockResolvedValue({ file: sampleBackup(), avatars: [] });
+  vi.mocked(replaceAllData).mockResolvedValue({ patients: 2, notes: 3, todos: 1, images: 0 });
 });
 
 describe("GET /api/backup", () => {
@@ -71,7 +77,7 @@ describe("GET /api/backup", () => {
     expect(response.headers.get("content-type")).toBe("application/gzip");
     expect(response.headers.get("cache-control")).toBe("no-store");
     const body = JSON.parse(gunzipSync(Buffer.from(await response.arrayBuffer())).toString("utf8"));
-    expect(body).toEqual(sampleBackup());
+    expect(body).toEqual({ ...sampleBackup(), images: [] });
     expect(getBackupSnapshot).toHaveBeenCalledWith(lan, expect.any(String));
   });
 
@@ -107,13 +113,13 @@ describe("PUT /api/backup", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toBe("no-store");
-    expect(await response.json()).toEqual({ patients: 2, notes: 3, todos: 1 });
+    expect(await response.json()).toEqual({ patients: 2, notes: 3, todos: 1, images: 0 });
     expect(replaceAllData).toHaveBeenCalledWith(
       lan,
       expect.objectContaining({
         manifest: expect.objectContaining({ account: { username: "bs.lan" } }),
       }),
-      { replacingExisting: false },
+      { replacingExisting: false, images: {} },
     );
   });
 
@@ -122,6 +128,7 @@ describe("PUT /api/backup", () => {
     await PUT(putRequest(gz(sampleBackup()), { "x-replace-existing": "1" }));
     expect(replaceAllData).toHaveBeenCalledWith(lan, expect.anything(), {
       replacingExisting: true,
+      images: {},
     });
   });
 
@@ -160,9 +167,9 @@ describe("PUT /api/backup", () => {
 
   it("refuses a body over the limit", async () => {
     signedInAs(lan);
-    const response = await PUT(putRequest(new Uint8Array(BACKUP_LIMITS.fileBytes + 1)));
+    const response = await PUT(putRequest(new Uint8Array(BACKUP_LIMITS.dataBytes + 1)));
     expect(response.status).toBe(422);
-    expect((await response.json()).error.message).toBe(BACKUP_MESSAGES.fileTooLarge);
+    expect((await response.json()).error.message).toBe(BACKUP_MESSAGES.dataTooLarge);
     expect(replaceAllData).not.toHaveBeenCalled();
   });
 
@@ -195,5 +202,42 @@ describe("recordBackupAction", () => {
     const result = await recordBackupAction({});
     expect(result).toMatchObject({ ok: false, error: { code } });
     expect(recordBackup).not.toHaveBeenCalled();
+  });
+});
+
+describe("backup with avatars", () => {
+  const ACCOUNT = "account-lan";
+  it("GET lists a signed URL per avatar, outside the file, and counts them", async () => {
+    signedInAs(lan);
+    const path = "6f1c1b0e-6c1a-4c37-9d55-1f0a8c1e2b3d/0123456789abcdef0123456789abcdef.webp";
+    vi.mocked(getBackupSnapshot).mockResolvedValue({
+      file: sampleBackup(),
+      avatars: [{ patientId: sampleBackup().data.patients[0]!.id, path }],
+    });
+    const response = await GET(getRequest());
+    const body = JSON.parse(gunzipSync(Buffer.from(await response.arrayBuffer())).toString("utf8"));
+    expect(body.images).toEqual([
+      {
+        patientId: sampleBackup().data.patients[0]!.id,
+        ext: "webp",
+        url: `https://storage.example/${path}?token=t`,
+      },
+    ]);
+    expect(body.manifest.counts.images).toBe(1);
+    expect(JSON.stringify(body.data)).not.toContain(path);
+  });
+
+  it("PUT refuses a picture path outside the session's account", async () => {
+    signedInAs(lan);
+    const file = sampleBackup();
+    const patientId = file.data.patients[0]!.id;
+    for (const path of [
+      "0a1c1b0e-6c1a-4c37-9d55-1f0a8c1e2b3d/0123456789abcdef0123456789abcdef.webp",
+      `${ACCOUNT}/../x.webp`,
+    ]) {
+      const response = await PUT(putRequest(gz({ ...file, images: { [patientId]: path } })));
+      expect(response.status).toBe(422);
+    }
+    expect(replaceAllData).not.toHaveBeenCalled();
   });
 });

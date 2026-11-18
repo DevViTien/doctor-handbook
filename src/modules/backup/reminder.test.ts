@@ -11,7 +11,7 @@ function status(overrides: Partial<BackupStatus> = {}): BackupStatus {
     lastBackupAt: daysAgo(12),
     accountCreatedAt: daysAgo(60),
     lastChangeAt: daysAgo(3),
-    counts: { patients: 4, trashed: 0, notes: 9, todos: 0 },
+    counts: { patients: 4, trashed: 0, notes: 9, todos: 0, images: 0 },
     ...overrides,
   };
 }
@@ -45,7 +45,7 @@ describe("shouldRemind", () => {
   });
 
   it("no data, no reminder", () => {
-    const empty = { patients: 0, trashed: 0, notes: 0, todos: 0 };
+    const empty = { patients: 0, trashed: 0, notes: 0, todos: 0, images: 0 };
     expect(shouldRemind(status({ counts: empty, lastBackupAt: null }), now)).toBe(false);
   });
 });

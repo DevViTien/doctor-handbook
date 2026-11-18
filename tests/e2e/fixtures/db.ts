@@ -14,6 +14,7 @@ import postgres from "postgres";
 import { buildSearchText } from "@/lib/text/normalize-vi";
 
 import { E2E_ACCESS_CODE_PEPPER, E2E_CLIENT_IP } from "./constants";
+import { resetStorage } from "./storage";
 
 export const E2E_DATABASE_URL = process.env.E2E_DATABASE_URL;
 export const hasDatabase = Boolean(E2E_DATABASE_URL);
@@ -74,6 +75,8 @@ function passwordHash(key: AccountKey): Promise<string> {
 
 /** Fresh state: the four sample accounts, no sessions, no access codes, no recorded failures. */
 export async function resetDatabase(): Promise<void> {
+  // The fake Storage holds the avatars of the rows about to be wiped.
+  await resetStorage();
   const db = sql();
   await db`TRUNCATE accounts, access_codes, auth_attempts RESTART IDENTITY CASCADE`;
   for (const key of Object.keys(ACCOUNTS) as AccountKey[]) {
@@ -517,6 +520,33 @@ export async function listTodoRows(owner: AccountKey): Promise<TodoDbRow[]> {
     WHERE a.username = ${ACCOUNTS[owner].username}
     ORDER BY t.created_at, t.id
   `;
+}
+
+// --- Avatars (change add-patient-avatars) -----------------------------------------------
+
+/** Sets a patient's stored avatar path ("<accountId>/<hex>.webp"); returns it. */
+export async function setAvatarPath(patientId: string, name: string): Promise<string> {
+  const [row] = await sql()<{ path: string }[]>`
+    UPDATE patients SET avatar_path = account_id::text || '/' || ${name}
+    WHERE id = ${patientId} RETURNING avatar_path AS path
+  `;
+  if (!row) throw new Error("setAvatarPath: no such patient");
+  return row.path;
+}
+
+export async function avatarPathOf(patientId: string): Promise<string | null> {
+  const [row] = await sql()<{ path: string | null }[]>`
+    SELECT avatar_path AS path FROM patients WHERE id = ${patientId}
+  `;
+  return row?.path ?? null;
+}
+
+export async function accountIdOf(key: AccountKey): Promise<string> {
+  const [row] = await sql()<{ id: string }[]>`
+    SELECT id FROM accounts WHERE username = ${ACCOUNTS[key].username}
+  `;
+  if (!row) throw new Error("accountIdOf: no such account");
+  return row.id;
 }
 
 export async function closeDatabase(): Promise<void> {

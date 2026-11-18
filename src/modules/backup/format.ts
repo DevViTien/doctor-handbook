@@ -5,11 +5,20 @@ import type { BackupCounts, BackupFile } from "@/modules/backup/types";
 
 /**
  * Reading any format version (design §2). `UPGRADERS[v]` turns the `{ manifest, data }` of
- * version `v` into version `v + 1`; there is none yet, version 1 being the first. Each one must
+ * version `v` into version `v + 1`. Each one must
  * be kept forever: a file written today may be imported years from now.
  */
 type RawBackup = { manifest: Record<string, unknown>; data: unknown };
-const UPGRADERS: Partial<Record<number, (backup: RawBackup) => RawBackup>> = {};
+const UPGRADERS: Partial<Record<number, (backup: RawBackup) => RawBackup>> = {
+  // 1 → 2 (change add-patient-avatars): files may carry `images/`; v1 files have none.
+  1: (backup) => ({
+    ...backup,
+    manifest: {
+      ...backup.manifest,
+      counts: { ...(backup.manifest.counts as Record<string, unknown>), images: 0 },
+    },
+  }),
+};
 
 export type ReadBackupResult =
   { ok: true; file: BackupFile } | { ok: false; reason: "broken" | "newer" };

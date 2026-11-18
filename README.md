@@ -37,7 +37,9 @@ pnpm dev                          # http://localhost:3000
    for development/preview — never point Preview deployments at production.
 2. Copy the pooler connection strings into `DATABASE_URL` (transaction, port 6543) and
    `DIRECT_DATABASE_URL` (session, port 5432).
-3. Storage: create **private** buckets `avatars` and `imports`.
+3. Storage: create a **private** bucket `avatars` (file size limit 1 MB, allowed MIME types
+   `image/webp`, `image/jpeg`). After the first deploy, try once on Preview: set a picture,
+   back up, import the file back.
 4. Settings → API: copy the project URL and the `service_role` key (server-only secret).
 5. Optional hardening: disable the Data API. Migrations already enable RLS (without policies) on
    every table and revoke the `anon` / `authenticated` privileges, so it cannot read anything.

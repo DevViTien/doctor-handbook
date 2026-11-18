@@ -11,6 +11,7 @@ const an: PatientListItem = {
   birthDate: null,
   gender: "male",
   hometown: "Nghệ An",
+  avatarUrl: null,
 };
 
 describe("patient display", () => {
