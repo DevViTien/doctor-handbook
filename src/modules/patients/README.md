@@ -6,6 +6,8 @@ The doctor's "contact book" of patients. Behaviour: `openspec/specs/patient-reco
 ## Done
 
 - **List** `/patients`: name, gender, age, hometown only (S7), most recently added/edited first.
+  With patients, the page renders the searchable list of module `search` (rows are the shared
+  `PersonRow`); `PatientList` keeps the empty-notebook state.
 - **Add** `/patients/new`: only the full name is required (BR1); "Có phải người này?" hint on
   a same-name, non-contradicting birth year (BR2, `duplicates.ts`), never blocking.
 - **Detail** `/patients/<id>`: phone as a `tel:` link, patient code, summary with `http(s)` links
@@ -33,10 +35,9 @@ The doctor's "contact book" of patients. Behaviour: `openspec/specs/patient-reco
 
 ## Next changes
 
-1. `add-patient-search`: accent-insensitive instant search, fuzzy, summary/notes, voice.
-2. `add-patient-avatars`: compressed in the browser, uploaded straight to the private `avatars`
+1. `add-patient-avatars`: compressed in the browser, uploaded straight to the private `avatars`
    bucket through a signed URL; displayed through short-lived signed URLs.
-3. `add-patient-trash`: soft delete via `deleted_at`, restore within 30 days (BR3). Every query
+2. `add-patient-trash`: soft delete via `deleted_at`, restore within 30 days (BR3). Every query
    already skips rows with `deleted_at`.
 
 ## Rules

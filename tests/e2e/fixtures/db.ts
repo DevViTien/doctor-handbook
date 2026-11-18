@@ -10,6 +10,9 @@ import { createHash, createHmac, randomInt } from "node:crypto";
 import { hash } from "@node-rs/argon2";
 import postgres from "postgres";
 
+// The app's single normalization, so seeded rows are searchable exactly like real ones.
+import { buildSearchText } from "@/lib/text/normalize-vi";
+
 import { E2E_ACCESS_CODE_PEPPER, E2E_CLIENT_IP } from "./constants";
 
 export const E2E_DATABASE_URL = process.env.E2E_DATABASE_URL;
@@ -320,12 +323,13 @@ export async function insertPatient(owner: AccountKey, patient: PatientSeed): Pr
   const [row] = await db<{ id: string }[]>`
     INSERT INTO patients (
       account_id, full_name, birth_year, birth_date, gender, hometown, phone, patient_code,
-      summary, created_at, updated_at
+      summary, search_text, created_at, updated_at
     )
     SELECT
       id, ${patient.fullName}, ${patient.birthYear ?? null}, ${patient.birthDate ?? null},
       ${patient.gender ?? null}, ${patient.hometown ?? null}, ${patient.phone ?? null},
       ${patient.patientCode ?? null}, ${patient.summary ?? null},
+      ${buildSearchText(patient.fullName, patient.hometown, patient.phone, patient.patientCode)},
       now() - make_interval(mins => ${patient.minutesAgo ?? 60}),
       now() - make_interval(mins => ${patient.minutesAgo ?? 60})
     FROM accounts WHERE username = ${ACCOUNTS[owner].username}
@@ -371,8 +375,8 @@ export async function insertNote(
 ): Promise<string> {
   const createdAt = note.createdAt ?? new Date(Date.now() - 3_600_000).toISOString();
   const [row] = await sql()<{ id: string }[]>`
-    INSERT INTO notes (patient_id, account_id, content, created_at, updated_at)
-    SELECT id, account_id, ${note.content}, ${createdAt}::timestamptz,
+    INSERT INTO notes (patient_id, account_id, content, search_text, created_at, updated_at)
+    SELECT id, account_id, ${note.content}, ${buildSearchText(note.content)}, ${createdAt}::timestamptz,
       ${note.editedAt ?? createdAt}::timestamptz
     FROM patients WHERE id = ${patientId}
     RETURNING id

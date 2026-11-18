@@ -18,7 +18,7 @@ import { parseBirthInput, todayInVietnam } from "@/modules/patients/birth";
 import { BirthField } from "@/modules/patients/components/birth-field";
 import { DuplicateHint } from "@/modules/patients/components/duplicate-hint";
 import { GenderField } from "@/modules/patients/components/gender-field";
-import { PATIENT_MESSAGES } from "@/modules/patients/constants";
+import { PATIENT_LIMITS, PATIENT_MESSAGES } from "@/modules/patients/constants";
 import { findPossibleDuplicates } from "@/modules/patients/duplicates";
 import { PATIENT_FIELD_NAMES as F } from "@/modules/patients/schemas";
 import {
@@ -27,6 +27,7 @@ import {
   updatePatientFormAction,
 } from "@/modules/patients/server/actions";
 import type { PatientFormValues, PatientListItem } from "@/modules/patients/types";
+import { NEW_PATIENT_NAME_KEY, SEARCH_LIMITS } from "@/modules/search/constants";
 
 type PatientFormProps =
   | { mode: "create"; initialValues: PatientFormValues; candidates: PatientListItem[] }
@@ -141,11 +142,38 @@ export function PatientForm(props: PatientFormProps) {
         })
       : [];
 
-  // Adding: the cursor waits in "Họ tên" (spec "Form bệnh nhân dùng tốt trên điện thoại").
+  // Adding: the cursor waits in "Họ tên" (spec "Form bệnh nhân dùng tốt trên điện thoại"),
+  // prefilled with the name searched for on the list, carried in this tab's sessionStorage
+  // (spec patient-search "Không thấy bệnh nhân nào"), read once and removed.
   useEffect(() => {
-    if (props.mode === "create") {
-      formRef.current?.querySelector<HTMLInputElement>(`[name="${F.fullName}"]`)?.focus();
-    }
+    if (props.mode !== "create") return;
+    const input = formRef.current?.querySelector<HTMLInputElement>(`[name="${F.fullName}"]`);
+    input?.focus();
+    const prefill = setTimeout(() => {
+      let name: string | null = null;
+      try {
+        const stored = JSON.parse(sessionStorage.getItem(NEW_PATIENT_NAME_KEY) ?? "null") as {
+          name?: unknown;
+          at?: unknown;
+        } | null;
+        sessionStorage.removeItem(NEW_PATIENT_NAME_KEY);
+        // Only a fresh value: a stale one belongs to an add that never opened.
+        if (
+          typeof stored?.name === "string" &&
+          typeof stored.at === "number" &&
+          Date.now() - stored.at < SEARCH_LIMITS.prefillMaxAgeMs
+        ) {
+          name = stored.name.slice(0, PATIENT_LIMITS.fullName);
+        }
+      } catch {
+        // Storage blocked or garbage: nothing to prefill.
+      }
+      if (name && input && !input.value) {
+        input.value = name;
+        setFullNameText(name);
+      }
+    }, 0);
+    return () => clearTimeout(prefill);
   }, [props.mode]);
 
   // After a failed save: focus the first field in error, or the form-level message.

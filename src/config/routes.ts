@@ -28,6 +28,8 @@ export const routes = {
   },
   api: {
     health: "/api/health",
+    /** Deep patient search (POST, JSON body): the query never goes in the URL. */
+    patientSearch: "/api/patients/search",
     /** Drops a dead session cookie, then sends the user to login (see guards.ts). */
     clearSession: "/api/auth/clear-session",
     cron: "/api/cron",

@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Local mockup for review: open this file directly in a browser. Never upload it to an external service. -->
+<title>Mockup tìm bệnh nhân</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
+<style>
+/* Review sheet over a gallery of device frames; frames render the approved app tokens (palette A "Mực bút bi").
+   The one bold element is the birth-field interpretation line ("45t" → "Năm sinh 1981 · 45 tuổi"). Everything else stays quiet. */
+:root {
+  --font: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --sheet-bg: #EEF1F6; --sheet-fg: #111827; --sheet-muted: #525C70; --sheet-line: #CDD4E0;
+  --sheet-control: #FFFFFF; --sheet-selected: #111827; --sheet-selected-fg: #FFFFFF;
+
+  --a-bg: #F6F7FA; --a-card: #FFFFFF; --a-fg: #111827; --a-muted: #525C70; --a-subtle: #EDF0F5;
+  --a-border: #DCE1EA; --a-input: #7D879A; --a-primary: #1E40AF; --a-primary-fg: #FFFFFF; --a-ring: #1E40AF;
+  --a-danger: #B42318; --a-danger-bg: #FDECEA; --a-warn: #8A4B00; --a-warn-bg: #FFF4E0;
+  --a-shadow: 0 6px 16px rgb(17 24 39 / 0.18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --sheet-bg: #090D15; --sheet-fg: #E9EDF5; --sheet-muted: #9BA5B8; --sheet-line: #283244;
+    --sheet-control: #151C2A; --sheet-selected: #E9EDF5; --sheet-selected-fg: #0D121C;
+    --a-bg: #0D121C; --a-card: #151C2A; --a-fg: #E9EDF5; --a-muted: #9BA5B8; --a-subtle: #1C2536;
+    --a-border: #283244; --a-input: #68748B; --a-primary: #8EA8FF; --a-primary-fg: #0D121C; --a-ring: #8EA8FF;
+    --a-danger: #FF8A80; --a-danger-bg: #3A1614; --a-warn: #FFC56B; --a-warn-bg: #33240A;
+    --a-shadow: 0 6px 16px rgb(0 0 0 / 0.5);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --sheet-bg: #090D15; --sheet-fg: #E9EDF5; --sheet-muted: #9BA5B8; --sheet-line: #283244;
+  --sheet-control: #151C2A; --sheet-selected: #E9EDF5; --sheet-selected-fg: #0D121C;
+  --a-bg: #0D121C; --a-card: #151C2A; --a-fg: #E9EDF5; --a-muted: #9BA5B8; --a-subtle: #1C2536;
+  --a-border: #283244; --a-input: #68748B; --a-primary: #8EA8FF; --a-primary-fg: #0D121C; --a-ring: #8EA8FF;
+  --a-danger: #FF8A80; --a-danger-bg: #3A1614; --a-warn: #FFC56B; --a-warn-bg: #33240A;
+  --a-shadow: 0 6px 16px rgb(0 0 0 / 0.5);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; background: var(--sheet-bg); color: var(--sheet-fg); font: 15px/1.55 var(--font);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.sheet { max-width: 1680px; margin: 0 auto; padding-block: 28px 56px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+.sheet > * { min-width: 0; }
+.sheet h1 { margin: 0; font-size: 1.6rem; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+.lede { margin: 6px 0 0; color: var(--sheet-muted); max-width: 78ch; }
+.lede code { font-size: 0.9em; }
+.decisions { margin: 10px 0 0; padding-left: 18px; color: var(--sheet-muted); max-width: 78ch; font-size: 0.92rem; }
+.decisions li + li { margin-top: 3px; }
+.decisions strong { color: var(--sheet-fg); }
+
+.controls { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-end; }
+.control { display: grid; gap: 6px; min-width: 0; }
+.control-label { font-size: 0.82rem; font-weight: 600; color: var(--sheet-muted); }
+.seg { display: flex; flex-wrap: wrap; border: 1px solid var(--sheet-line); border-radius: 10px; overflow: hidden; background: var(--sheet-control); }
+.seg button { font: inherit; font-size: 0.84rem; border: 0; background: transparent; color: var(--sheet-fg); padding: 6px 10px; cursor: pointer; border-right: 1px solid var(--sheet-line); }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--sheet-selected); color: var(--sheet-selected-fg); font-weight: 600; }
+.seg button:focus-visible { outline: 3px solid var(--a-ring); outline-offset: 2px; }
+
+.gallery { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+.screen { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; min-width: 0; flex: 0 1 390px; }
+.screen h2 { margin: 0; font-size: 1rem; font-weight: 600; }
+.screen h2 code { font-size: 0.85em; font-weight: 500; color: var(--sheet-muted); }
+.notes { margin: 0; padding-left: 18px; color: var(--sheet-muted); font-size: 0.86rem; max-width: 390px; }
+.notes li + li { margin-top: 2px; }
+.frame {
+  width: 390px; max-width: 100%; height: 800px; overflow: hidden; position: relative;
+  border: 1px solid var(--sheet-line); border-radius: 28px; background: var(--a-bg);
+}
+body[data-viewport="desktop"] .gallery { flex-direction: column; }
+body[data-viewport="desktop"] .screen { width: 100%; flex: none; }
+body[data-viewport="desktop"] .frame { width: 100%; height: 760px; border-radius: 14px; }
+body[data-viewport="desktop"] .notes { max-width: 78ch; }
+
+/* ---------- App ---------- */
+.app { height: 100%; display: flex; flex-direction: column; background: var(--a-bg); color: var(--a-fg); font-family: var(--font); font-size: 16px; line-height: 1.5; position: relative; }
+.a-status-bar { height: 44px; flex: none; }
+body[data-viewport="desktop"] .a-status-bar { display: none; }
+.a-icon { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.a-icon.sm { width: 16px; height: 16px; }
+.app :is(button, a, input, textarea):focus-visible { outline: 3px solid var(--a-ring); outline-offset: 2px; }
+.a-main { flex: 1; overflow: auto; min-height: 0; }
+.a-page { max-width: 672px; margin: 0 auto; padding: 0 16px 24px; }
+.a-page.has-fab { padding-bottom: 96px; }
+
+/* Bottom navigation (approved) */
+.a-nav { flex: none; border-top: 1px solid var(--a-border); background: var(--a-card); padding-bottom: 16px; }
+body[data-viewport="desktop"] .a-nav { padding-bottom: 0; }
+.a-nav ul { list-style: none; margin: 0 auto; padding: 0; display: flex; max-width: 672px; }
+.a-nav li { flex: 1; }
+.a-nav a { min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 0.75rem; font-weight: 500; color: var(--a-muted); text-decoration: none; }
+.a-nav a[aria-current="page"] { color: var(--a-primary); }
+
+/* Page header */
+.a-page-header { padding: 16px 0 12px; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.a-page-header h1 { margin: 0; font-size: 1.25rem; font-weight: 700; }
+.a-count { color: var(--a-muted); font-size: 0.875rem; white-space: nowrap; }
+
+/* Top bar for sub-pages */
+.a-topbar { max-width: 672px; margin: 0 auto; display: flex; align-items: center; gap: 4px; padding: 6px 8px 6px 4px; min-width: 0; }
+.a-back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; min-width: 44px; padding: 0 8px; border-radius: 10px; color: var(--a-fg); text-decoration: none; font-weight: 600; font-size: 0.95rem; border: 0; background: transparent; cursor: pointer; font-family: inherit; }
+.app .a-topbar-title { flex: 1; min-width: 0; margin: 0; font-size: 1.1rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a-spacer { flex: 1; }
+
+/* Patient list */
+.a-list { list-style: none; margin: 0; padding: 0; background: var(--a-card); border: 1px solid var(--a-border); border-radius: 14px; overflow: hidden; }
+.a-list li + li { border-top: 1px solid var(--a-border); }
+.a-row { display: flex; gap: 12px; align-items: center; min-height: 64px; padding: 10px 12px 10px 14px; color: inherit; text-decoration: none; min-width: 0; }
+.a-row:hover { background: var(--a-subtle); }
+.a-avatar { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--a-subtle); color: var(--a-fg); font-weight: 600; font-size: 0.9rem; flex: none; }
+.a-avatar.lg { width: 56px; height: 56px; font-size: 1.1rem; }
+.a-row-body { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.a-row-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a-row-meta { color: var(--a-muted); font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a-row .a-icon { color: var(--a-muted); }
+
+.a-fab {
+  position: absolute; right: 16px; bottom: calc(56px + 16px + 16px); z-index: 5;
+  height: 52px; padding: 0 20px 0 16px; border-radius: 999px; border: 0; display: inline-flex; align-items: center; gap: 8px;
+  background: var(--a-primary); color: var(--a-primary-fg); font: inherit; font-weight: 600; box-shadow: var(--a-shadow); cursor: pointer; text-decoration: none;
+}
+body[data-viewport="desktop"] .a-fab { right: max(16px, calc((100% - 672px) / 2 + 16px)); bottom: calc(56px + 20px); }
+
+.a-empty { display: grid; justify-items: center; gap: 12px; text-align: center; padding: 48px 24px; background: var(--a-card); border: 1px solid var(--a-border); border-radius: 14px; }
+.a-empty-icon { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: var(--a-subtle); color: var(--a-muted); }
+.a-empty-icon.danger { background: var(--a-danger-bg); color: var(--a-danger); }
+.a-empty p { margin: 0; }
+.a-empty .t { font-weight: 600; font-size: 1.05rem; }
+.a-empty .d { color: var(--a-muted); font-size: 0.92rem; max-width: 34ch; }
+
+.a-skel { background: var(--a-subtle); border-radius: 8px; animation: a-pulse 1.4s ease-in-out infinite; }
+@keyframes a-pulse { 50% { opacity: 0.55; } }
+@media (prefers-reduced-motion: reduce) { .a-skel { animation: none; } }
+
+/* Buttons */
+.a-btn {
+  height: 48px; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 16px;
+  font: inherit; font-weight: 600; border-radius: 10px; border: 1px solid transparent; cursor: pointer;
+  background: var(--a-primary); color: var(--a-primary-fg); white-space: nowrap; text-decoration: none;
+}
+.a-btn[disabled] { opacity: 0.7; cursor: progress; }
+.a-btn[data-variant="outline"] { background: var(--a-card); color: var(--a-fg); border-color: var(--a-input); }
+.a-btn.auto { width: auto; }
+.a-btn.small { height: 44px; width: auto; font-size: 0.92rem; padding: 0 14px; }
+.a-spin { animation: a-spin 0.8s linear infinite; }
+@keyframes a-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .a-spin { animation: none; } }
+.a-text-btn { border: 0; background: transparent; font: inherit; font-weight: 600; color: inherit; min-height: 44px; padding: 0 4px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Form */
+.a-form { display: grid; gap: 18px; padding-top: 4px; }
+.a-field { display: grid; gap: 6px; min-width: 0; }
+.a-label { font-size: 0.95rem; font-weight: 600; display: flex; align-items: baseline; gap: 8px; }
+.a-label .req { color: var(--a-muted); font-weight: 500; font-size: 0.82rem; }
+.a-hint { color: var(--a-muted); font-size: 0.875rem; margin: 0; }
+.a-input, .a-textarea {
+  width: 100%; height: 48px; padding: 0 14px; font: inherit; font-size: 16px; color: var(--a-fg);
+  background: var(--a-card); border: 1px solid var(--a-input); border-radius: 10px;
+}
+.a-textarea { height: auto; min-height: 152px; padding: 12px 14px; resize: vertical; line-height: 1.5; }
+.a-input::placeholder, .a-textarea::placeholder { color: var(--a-muted); opacity: 1; }
+.a-input[aria-invalid="true"] { border-color: var(--a-danger); border-width: 2px; padding-left: 13px; }
+.a-input.focus { outline: 3px solid var(--a-ring); outline-offset: 2px; }
+.a-field-error { display: flex; gap: 6px; align-items: flex-start; color: var(--a-danger); font-size: 0.875rem; margin: 0; }
+.a-field-error .a-icon { width: 16px; height: 16px; margin-top: 2px; }
+
+/* The memorable element: how the app understood the birth input */
+.a-reading { display: flex; gap: 8px; align-items: center; margin: 0; padding: 6px 10px; border-left: 3px solid var(--a-primary); background: var(--a-subtle); border-radius: 0 8px 8px 0; color: var(--a-fg); font-size: 0.92rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.a-reading .a-icon { width: 16px; height: 16px; color: var(--a-primary); }
+
+.a-gender { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.a-gender button { height: 44px; border-radius: 10px; border: 1px solid var(--a-input); background: var(--a-card); color: var(--a-fg); font: inherit; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.a-gender button[aria-checked="true"] { background: var(--a-primary); border-color: var(--a-primary); color: var(--a-primary-fg); font-weight: 600; }
+
+.a-alert { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 10px; background: var(--a-danger-bg); color: var(--a-danger); font-size: 0.95rem; font-weight: 500; }
+.a-alert[data-tone="warn"] { background: var(--a-warn-bg); color: var(--a-warn); }
+.a-alert .a-icon { margin-top: 2px; }
+.a-alert-body { display: grid; gap: 2px; min-width: 0; }
+.a-alert .a-text-btn { justify-self: start; min-height: 36px; padding: 0; }
+
+.a-dup { border: 1px solid var(--a-border); background: var(--a-subtle); border-radius: 12px; padding: 12px; display: grid; gap: 10px; }
+.a-dup-title { margin: 0; font-weight: 700; font-size: 0.95rem; }
+.a-dup-card { display: flex; gap: 12px; align-items: center; background: var(--a-card); border: 1px solid var(--a-border); border-radius: 10px; padding: 8px 8px 8px 12px; min-width: 0; }
+.a-dup-card .a-row-body { gap: 0; }
+.a-link { color: var(--a-primary); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; display: inline-flex; align-items: center; min-height: 44px; padding: 0 6px; flex: none; }
+.a-dup-note { margin: 0; color: var(--a-muted); font-size: 0.875rem; }
+
+.a-savebar { flex: none; border-top: 1px solid var(--a-border); background: var(--a-card); padding: 10px 16px; }
+.a-savebar-inner { max-width: 640px; margin: 0 auto; }
+
+/* Detail */
+.a-head { display: flex; gap: 14px; align-items: center; padding: 8px 0 16px; min-width: 0; }
+.a-head-body { min-width: 0; display: grid; gap: 2px; }
+.a-head h1 { margin: 0; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.01em; line-height: 1.25; overflow-wrap: anywhere; }
+.a-head-meta { color: var(--a-muted); font-size: 0.95rem; }
+.a-card { background: var(--a-card); border: 1px solid var(--a-border); border-radius: 14px; }
+.a-info { list-style: none; margin: 0 0 16px; padding: 0; }
+.a-info li { display: flex; gap: 12px; align-items: center; padding: 6px 14px; min-height: 56px; }
+.a-info li + li { border-top: 1px solid var(--a-border); }
+.a-info .a-icon { color: var(--a-muted); }
+.a-info-body { flex: 1; min-width: 0; display: grid; }
+.a-info-label { color: var(--a-muted); font-size: 0.8rem; }
+.a-info-value { font-weight: 600; overflow-wrap: anywhere; }
+.a-tel { color: var(--a-primary); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; min-height: 44px; }
+.a-summary { padding: 14px 16px 16px; display: grid; gap: 8px; }
+.a-summary h2 { margin: 0; font-size: 0.95rem; font-weight: 600; color: var(--a-muted); }
+.a-summary-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
+.a-summary-text a { color: var(--a-primary); font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+.a-summary-empty { margin: 0; color: var(--a-muted); }
+
+
+/* ---------- Search (change add-patient-search) ----------
+   The one accent: the search field itself (52 px, primary focus ring, mic that turns solid primary
+   while listening). Match hints are quiet primary text under the row, never coloured badges. */
+.frame.tall { height: 900px; }
+body[data-viewport="desktop"] .frame.tall { height: 820px; }
+.a-sticky { position: sticky; top: 0; z-index: 4; background: var(--a-bg); padding-bottom: 10px; }
+.a-search { position: relative; display: flex; align-items: center; height: 52px; border: 1px solid var(--a-input); border-radius: 12px; background: var(--a-card); padding: 0 4px 0 12px; gap: 4px; }
+.a-search[data-focus="true"] { border: 2px solid var(--a-primary); padding-left: 11px; }
+.a-search > .a-icon { color: var(--a-muted); }
+.a-search input { flex: 1; min-width: 0; height: 100%; border: 0; background: transparent; font: inherit; font-size: 16px; color: var(--a-fg); padding: 0 4px; outline: none; }
+.a-search input::placeholder { color: var(--a-muted); opacity: 1; }
+.a-search-btn { width: 44px; height: 44px; flex: none; display: grid; place-items: center; border: 0; border-radius: 10px; background: transparent; color: var(--a-muted); cursor: pointer; position: relative; }
+.a-search-btn[aria-pressed="true"] { background: var(--a-primary); color: var(--a-primary-fg); }
+.a-search-btn[aria-pressed="true"]::after { content: ""; position: absolute; inset: -4px; border-radius: 13px; border: 2px solid var(--a-primary); opacity: .5; animation: a-ring 1.6s ease-out infinite; }
+@keyframes a-ring { from { transform: scale(.9); opacity: .6; } to { transform: scale(1.12); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .a-search-btn[aria-pressed="true"]::after { animation: none; } }
+.a-search-status { margin: 8px 2px 0; display: flex; gap: 6px; align-items: center; font-size: 0.875rem; color: var(--a-muted); min-height: 20px; }
+.a-search-status .a-icon { width: 16px; height: 16px; }
+.a-search-status[data-tone="listen"] { color: var(--a-primary); font-weight: 600; }
+.a-search-status[data-tone="warn"] { color: var(--a-warn); }
+.a-search-status[data-tone="error"] { color: var(--a-danger); }
+.a-match { display: inline-flex; align-items: center; gap: 4px; margin-top: 2px; font-size: 0.8125rem; font-weight: 600; color: var(--a-primary); }
+.a-match .a-icon { width: 14px; height: 14px; }
+.a-group-title { margin: 14px 2px 8px; font-size: 0.95rem; font-weight: 700; }
+.a-none { display: grid; justify-items: center; gap: 10px; text-align: center; padding: 32px 20px; background: var(--a-card); border: 1px solid var(--a-border); border-radius: 14px; }
+.a-none p { margin: 0; }
+.a-none .t { font-weight: 600; }
+.a-none .d { color: var(--a-muted); font-size: 0.9rem; max-width: 34ch; overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-todo" viewBox="0 0 24 24"><rect x="3" y="5" width="6" height="6" rx="1"/><path d="m3 17 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+  <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/></symbol>
+  <symbol id="i-id-card" viewBox="0 0 24 24"><path d="M16 10h2"/><path d="M16 14h2"/><path d="M6.17 15a3 3 0 0 1 5.66 0"/><circle cx="9" cy="11" r="2"/><rect x="2" y="5" width="20" height="14" rx="2"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></symbol>
+  <symbol id="i-triangle" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-loader" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></symbol>
+  <symbol id="i-wifi-off" viewBox="0 0 24 24"><path d="M12 20h.01"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/><path d="M2 8.82a15 15 0 0 1 4.177-2.643"/><path d="M22 8.82a15 15 0 0 0-11.288-3.764"/><path d="m2 2 20 20"/></symbol>
+  <symbol id="i-search-x" viewBox="0 0 24 24"><path d="m13.5 8.5-5 5"/><path d="m8.5 8.5 5 5"/><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-corner" viewBox="0 0 24 24"><path d="m15 10 5 5-5 5"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+
+  <symbol id="i-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><path d="M12 19v3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><rect x="9" y="2" width="6" height="13" rx="3"/></symbol>
+  <symbol id="i-mic-off" viewBox="0 0 24 24"><path d="M12 19v3"/><path d="M15 9.34V5a3 3 0 0 0-5.68-1.33"/><path d="M16.95 16.95A7 7 0 0 1 5 12v-2"/><path d="M18.89 13.23A7 7 0 0 0 19 12v-2"/><path d="m2 2 20 20"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12"/></symbol>
+  <symbol id="i-notebook" viewBox="0 0 24 24"><path d="M2 6h4"/><path d="M2 10h4"/><path d="M2 14h4"/><path d="M2 18h4"/><rect width="16" height="20" x="4" y="2" rx="2"/><path d="M16 2v20"/></symbol>
+  <symbol id="i-file-text" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></symbol>
+  <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></symbol>
+</svg>
+
+<main class="sheet">
+  <header>
+    <h1>Tìm bệnh nhân trên danh sách</h1>
+    <p class="lede">Mockup cho change <code>add-patient-search</code> (change 3/5 của module bệnh nhân), bảng màu A, không thêm màu mới. Chọn trạng thái, chế độ sáng/tối và khung điện thoại (390 px) hay máy tính. Tên và nội dung đều là ví dụ.</p>
+    <ul class="decisions">
+      <li><strong>Lọc tức thì theo tên và quê</strong> ngay trên máy, không dấu, từ theo thứ tự nào cũng được, không cần mạng.</li>
+      <li><strong>Tìm sâu trên server</strong> sau 0,3 giây: số điện thoại, mã bệnh nhân, tóm tắt, ghi chú. Kết quả gộp vào danh sách với nhãn "Khớp trong ghi chú"… nhưng <strong>không bao giờ hiện đoạn nội dung</strong> (bệnh nhân có thể nhìn màn hình).</li>
+      <li><strong>Gần đúng</strong> chỉ khi không ai khớp: "Có phải bạn tìm…?" (tối đa 5).</li>
+      <li><strong>Không thấy ai</strong>: nút "Thêm bệnh nhân" mở form với họ tên điền sẵn (truyền trong tab, không qua URL).</li>
+      <li><strong>Giọng nói</strong>: nút micro trong ô tìm; trình duyệt không hỗ trợ thì không có nút. Từ khoá không lên URL, không được lưu khi rời trang.</li>
+    </ul>
+  </header>
+
+  <div class="controls" role="group" aria-label="Tuỳ chọn xem mockup">
+    <div class="control">
+      <span class="control-label" id="lbl-state">Trạng thái tìm</span>
+      <div class="seg" data-screen="search" aria-labelledby="lbl-state">
+        <button type="button" data-value="idle" aria-pressed="true">Chưa gõ</button>
+        <button type="button" data-value="local" aria-pressed="false">Lọc tên</button>
+        <button type="button" data-value="searching" aria-pressed="false">Đang tìm sâu</button>
+        <button type="button" data-value="deep" aria-pressed="false">Khớp ghi chú/tóm tắt</button>
+        <button type="button" data-value="phone" aria-pressed="false">Khớp SĐT</button>
+        <button type="button" data-value="fuzzy" aria-pressed="false">Gần đúng</button>
+        <button type="button" data-value="none" aria-pressed="false">Không thấy ai</button>
+        <button type="button" data-value="offline" aria-pressed="false">Mất mạng</button>
+        <button type="button" data-value="listening" aria-pressed="false">Đang nghe</button>
+        <button type="button" data-value="micerror" aria-pressed="false">Lỗi micro</button>
+        <button type="button" data-value="nomic" aria-pressed="false">Không hỗ trợ giọng nói</button>
+      </div>
+    </div>
+    <div class="control">
+      <span class="control-label" id="lbl-theme">Chế độ</span>
+      <div class="seg" data-control="theme" aria-labelledby="lbl-theme">
+        <button type="button" data-value="system" aria-pressed="true">Theo máy</button>
+        <button type="button" data-value="light" aria-pressed="false">Sáng</button>
+        <button type="button" data-value="dark" aria-pressed="false">Tối</button>
+      </div>
+    </div>
+    <div class="control">
+      <span class="control-label" id="lbl-viewport">Khung</span>
+      <div class="seg" data-control="viewport" aria-labelledby="lbl-viewport">
+        <button type="button" data-value="phone" aria-pressed="true">Điện thoại</button>
+        <button type="button" data-value="desktop" aria-pressed="false">Máy tính</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="gallery">
+    <section class="screen" aria-labelledby="s-list" style="flex-basis:390px">
+      <h2 id="s-list">Danh sách <code>/patients</code></h2>
+      <div class="frame tall"><div class="app" id="app"></div></div>
+      <ul class="notes">
+        <li>Tiêu đề và ô tìm dính ở trên khi cuộn; bàn phím mở không che ô tìm.</li>
+        <li>Dòng trạng thái nhỏ dưới ô tìm: đang tìm sâu, mất mạng, đang nghe, lỗi micro.</li>
+        <li>Nhãn khớp là chữ xanh nhỏ dưới dòng phụ, chỉ nói <em>khớp ở đâu</em>, không nói nội dung.</li>
+      </ul>
+    </section>
+  </div>
+</main>
+
+<script>
+(() => {
+  const root = document.documentElement;
+  const body = document.body;
+  const icon = (id, cls = "") => `<svg class="a-icon ${cls}" aria-hidden="true"><use href="#i-${id}"/></svg>`;
+  const nav = `<nav class="a-nav" aria-label="Điều hướng chính"><ul>
+      <li><a href="#" aria-current="page">${icon("users")}Bệnh nhân</a></li>
+      <li><a href="#">${icon("todo")}Việc cần làm</a></li>
+      <li><a href="#">${icon("settings")}Cài đặt</a></li>
+    </ul></nav>`;
+  const all = [
+    { i: "TB", n: "Trần Thị Bình", m: "Nữ · 62 tuổi · Hà Tĩnh" },
+    { i: "NA", n: "Nguyễn Văn An", m: "Nam · 47 tuổi · Nghệ An" },
+    { i: "PH", n: "Phạm Gia Huy", m: "Nam · Dưới 1 tuổi · Hà Nội" },
+    { i: "NA", n: "Nguyễn Văn An", m: "Nam · 31 tuổi · Thanh Hoá" },
+    { i: "LM", n: "Lê Minh", m: "" },
+    { i: "HĐ", n: "Hoàng Văn Đức", m: "Nam · 75 tuổi" },
+    { i: "VL", n: "Võ Thị Lan", m: "Nữ · 54 tuổi · Quảng Nam" },
+    { i: "NH", n: "Nguyễn Thị Hồng", m: "Nữ · 40 tuổi · Nghệ An" },
+  ];
+  const row = (p) => `<li><a class="a-row" href="#">
+      <span class="a-avatar" aria-hidden="true">${p.i}</span>
+      <span class="a-row-body"><span class="a-row-name">${p.n}</span>${p.m ? `<span class="a-row-meta">${p.m}</span>` : ""}${p.match ? `<span class="a-match">${icon(p.matchIcon)}${p.match}</span>` : ""}</span>
+      ${icon("chevron-right")}</a></li>`;
+  const list = (items) => `<ul class="a-list">${items.map(row).join("")}</ul>`;
+
+  function searchBox({ value = "", focus = false, mic = "idle" }) {
+    const micBtn = mic === "none" ? "" : `<button class="a-search-btn" type="button" aria-pressed="${mic === "listening"}" aria-label="${mic === "listening" ? "Dừng nghe" : "Tìm bằng giọng nói"}">${icon("mic")}</button>`;
+    return `<div class="a-search" data-focus="${focus}">
+      ${icon("search")}
+      <input type="search" aria-label="Tìm bệnh nhân" autocomplete="off" placeholder="Tìm tên, quê, SĐT, mã BN, ghi chú…" value="${value}">
+      ${value ? `<button class="a-search-btn" type="button" aria-label="Xoá từ khoá">${icon("x")}</button>` : ""}
+      ${micBtn}
+    </div>`;
+  }
+  const status = (tone, ic, text) => `<p class="a-search-status" role="status" ${tone ? `data-tone="${tone}"` : ""}>${ic ? icon(ic, ic === "loader" ? "a-spin" : "") : ""}${text}</p>`;
+
+  function page({ value, focus, mic, count, statusHtml = "", content }) {
+    return `<div class="a-status-bar"></div>
+      <div class="a-main"><div class="a-page has-fab">
+        <div class="a-sticky">
+          <div class="a-page-header"><h1>Bệnh nhân</h1><span class="a-count">${count}</span></div>
+          ${searchBox({ value, focus, mic })}
+          ${statusHtml}
+        </div>
+        ${content}
+      </div></div>
+      <a class="a-fab" href="#">${icon("plus")}Thêm bệnh nhân</a>${nav}`;
+  }
+
+  function render(state) {
+    const el = document.getElementById("app");
+    const an = all.filter((p) => p.n === "Nguyễn Văn An");
+    const map = {
+      idle: { value: "", count: "8 bệnh nhân", content: list(all) },
+      local: { value: "nguyen", focus: true, count: "3 kết quả", content: list(all.filter((p) => p.n.startsWith("Nguyễn"))) },
+      searching: { value: "nguyen", focus: true, count: "3 kết quả", statusHtml: status("", "loader", "Đang tìm trong SĐT, mã BN, tóm tắt, ghi chú…"), content: list(all.filter((p) => p.n.startsWith("Nguyễn"))) },
+      deep: { value: "penicillin", focus: true, count: "2 kết quả", content: list([
+        { ...all[1], match: "Khớp trong ghi chú", matchIcon: "notebook" },
+        { ...all[6], match: "Khớp trong tóm tắt", matchIcon: "file-text" },
+      ]) },
+      phone: { value: "0912345", focus: true, count: "1 kết quả", content: list([{ ...all[1], match: "Khớp số điện thoại", matchIcon: "phone" }]) },
+      fuzzy: { value: "nguyn van an", focus: true, count: "0 kết quả", content: `<h2 class="a-group-title">Có phải bạn tìm…?</h2>${list(an)}` },
+      none: { value: "Phạm Thu Hà", focus: true, count: "0 kết quả", content: `<div class="a-none">
+          <div class="a-empty-icon">${icon("search-x")}</div>
+          <p class="t">Không thấy bệnh nhân nào khớp</p>
+          <p class="d">Họ tên sẽ được điền sẵn: Phạm Thu Hà</p>
+          <a class="a-btn auto" href="#">${icon("plus")}Thêm bệnh nhân</a>
+        </div>` },
+      offline: { value: "penicillin", focus: true, count: "0 kết quả", statusHtml: status("warn", "wifi-off", "Chưa tìm được trong ghi chú vì mất mạng."), content: `<div class="a-none">
+          <div class="a-empty-icon">${icon("search-x")}</div>
+          <p class="t">Không thấy bệnh nhân nào khớp</p>
+          <p class="d">Tên và quê đã được lọc trên máy. Có mạng lại sẽ tự tìm trong ghi chú.</p>
+        </div>` },
+      listening: { value: "Trần Thị", mic: "listening", count: "1 kết quả", statusHtml: status("listen", "mic", "Đang nghe… nói tên bệnh nhân"), content: list([all[0]]) },
+      micerror: { value: "", count: "8 bệnh nhân", statusHtml: status("error", "mic-off", "Không dùng được micro. Hãy cho phép micro, hoặc gõ để tìm."), content: list(all) },
+      nomic: { value: "", mic: "none", count: "8 bệnh nhân", content: list(all) },
+    };
+    el.innerHTML = page(map[state]);
+  }
+
+  const globals = {
+    theme: (v) => (v === "system" ? root.removeAttribute("data-theme") : root.setAttribute("data-theme", v)),
+    viewport: (v) => (body.dataset.viewport = v),
+  };
+  document.querySelectorAll(".seg").forEach((group) => {
+    group.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-value]");
+      if (!button) return;
+      group.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
+      if (group.dataset.control) globals[group.dataset.control](button.dataset.value);
+      else render(button.dataset.value);
+    });
+  });
+  document.addEventListener("click", (e) => { if (e.target.closest(".frame a, .frame button")) e.preventDefault(); });
+  body.dataset.viewport = "phone";
+  render("idle");
+})();
+</script>
+</body>
+</html>

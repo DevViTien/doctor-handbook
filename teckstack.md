@@ -246,8 +246,8 @@ export const normalizeVi = (s: string) =>
 |---|---|
 | Lưu trữ | Bảng `patients` có cột `search_text` (họ tên + quê + SĐT + mã BN, đã chuẩn hóa). Bảng `notes` có `search_text` của nội dung. App tính khi ghi. Không dùng extension `unaccent` để tránh vấn đề index |
 | Index | **GIN `pg_trgm`** trên các cột `search_text`. Tăng tốc cho `ILIKE '%...%'` và `similarity()` |
-| **Tìm tên tức thì** | Khi mở màn hình Bệnh nhân, tải **danh sách gọn** (id, tên, năm sinh, giới, quê, ảnh, `search_text`). Vài trăm dòng chỉ vài chục KB. **Lọc ngay trên máy theo từng phím gõ**, không chờ mạng |
-| **Tìm trong ghi chú** | Gửi lên server sau khi ngừng gõ ~300ms, từ khóa ≥ 2 ký tự. Kết quả gộp vào danh sách, đánh dấu "khớp trong ghi chú" |
+| **Tìm tên tức thì** | Khi mở màn hình Bệnh nhân, tải **danh sách gọn** (id, tên, năm sinh, giới, quê, ảnh). Vài trăm dòng chỉ vài chục KB. **Lọc theo tên và quê ngay trên máy theo từng phím gõ**, không chờ mạng. **Không** gửi `search_text` xuống trình duyệt: cột này có số điện thoại và mã bệnh nhân, mà danh sách không được chứa hai thứ đó (S7, spec `patient-records`; change `add-patient-search`) |
+| **Tìm sâu** (SĐT, mã BN, tóm tắt, ghi chú) | Gửi lên server sau khi ngừng gõ ~300ms, từ khóa ≥ 2 ký tự. Server trả **chỉ id** và loại khớp; kết quả gộp vào danh sách, đánh dấu "khớp trong ghi chú"… không hiện nội dung |
 | **Tìm gần đúng** | Khi không có kết quả khớp chính xác, dùng `similarity()` của `pg_trgm` để gợi ý "Có phải bạn tìm...?" |
 
 Không cần Algolia, Meilisearch hay Elasticsearch ở quy mô này.
