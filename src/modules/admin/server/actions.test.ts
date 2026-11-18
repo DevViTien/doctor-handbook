@@ -3,12 +3,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ACCOUNT_MESSAGES, ADMIN_MESSAGES } from "@/modules/admin/constants";
 import {
   createAccessCodeFormAction,
+  createPasswordResetCodeAction,
   lockAccountAction,
   revokeAccessCodeAction,
   unlockAccountAction,
 } from "@/modules/admin/server/actions";
 import {
   insertAccessCode,
+  issuePasswordResetCode,
   revokeAccessCode,
   setDoctorAccountStatus,
 } from "@/modules/admin/server/mutations";
@@ -22,6 +24,7 @@ vi.mock("@/server/auth/cookies", () => ({ getSessionToken: vi.fn() }));
 vi.mock("@/server/auth/session", () => ({ validateSessionToken: vi.fn() }));
 vi.mock("@/modules/admin/server/mutations", () => ({
   insertAccessCode: vi.fn(),
+  issuePasswordResetCode: vi.fn(),
   revokeAccessCode: vi.fn(),
   setDoctorAccountStatus: vi.fn(),
 }));
@@ -225,5 +228,69 @@ describe("lockAccountAction / unlockAccountAction", () => {
 
     expect(result).toMatchObject({ ok: false, error: { code: "UNAUTHENTICATED" } });
     expect(setDoctorAccountStatus).not.toHaveBeenCalled();
+  });
+});
+
+describe("createPasswordResetCodeAction", () => {
+  beforeEach(() => {
+    signedInAs(admin);
+    vi.mocked(issuePasswordResetCode).mockResolvedValue({
+      status: "issued",
+      displayName: "Nguyễn Thị Lan",
+      username: "bs.lan",
+    });
+  });
+
+  it("Cấp mã đặt lại cho bác sĩ quên mật khẩu: returns the code once, with the username", async () => {
+    const result = await createPasswordResetCodeAction({ id: ACCOUNT_ID });
+
+    expect(result).toMatchObject({
+      ok: true,
+      data: { kind: "password_reset", recipientName: "Nguyễn Thị Lan", username: "bs.lan" },
+    });
+    if (!result.ok) return;
+    expect(result.data.code).toMatch(/^[A-Z2-9]{4}-[A-Z2-9]{4}$/);
+    const [accountId, stored] = vi.mocked(issuePasswordResetCode).mock.calls[0]!;
+    expect(accountId).toBe(ACCOUNT_ID);
+    expect(stored).toMatchObject({
+      codeHash: hashAccessCode(result.data.code),
+      createdById: "account-admin",
+    });
+  });
+
+  it("generates a new code when the hash collides", async () => {
+    vi.mocked(issuePasswordResetCode)
+      .mockRejectedValueOnce(uniqueViolation)
+      .mockResolvedValueOnce({ status: "issued", displayName: "Lan", username: "bs.lan" });
+
+    expect((await createPasswordResetCodeAction({ id: ACCOUNT_ID })).ok).toBe(true);
+    expect(issuePasswordResetCode).toHaveBeenCalledTimes(2);
+  });
+
+  it("answers NOT_FOUND for an unknown or admin account", async () => {
+    vi.mocked(issuePasswordResetCode).mockResolvedValue({ status: "not-found" });
+
+    await expect(createPasswordResetCodeAction({ id: ACCOUNT_ID })).resolves.toEqual({
+      ok: false,
+      error: { code: "NOT_FOUND", message: ACCOUNT_MESSAGES.notFound },
+    });
+  });
+
+  it("refuses a locked account with CONFLICT", async () => {
+    vi.mocked(issuePasswordResetCode).mockResolvedValue({ status: "locked" });
+
+    await expect(createPasswordResetCodeAction({ id: ACCOUNT_ID })).resolves.toEqual({
+      ok: false,
+      error: { code: "CONFLICT", message: ACCOUNT_MESSAGES.lockedNoReset },
+    });
+  });
+
+  it("Bác sĩ gửi yêu cầu cấp mã đặt lại: FORBIDDEN, no code created", async () => {
+    signedInAs(doctor);
+
+    const result = await createPasswordResetCodeAction({ id: ACCOUNT_ID });
+
+    expect(result).toMatchObject({ ok: false, error: { code: "FORBIDDEN" } });
+    expect(issuePasswordResetCode).not.toHaveBeenCalled();
   });
 });

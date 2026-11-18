@@ -173,6 +173,94 @@ test.describe("access-codes", () => {
     });
   });
 
+  test.describe("Admin cấp mã đặt lại mật khẩu", () => {
+    const ACCOUNTS_PAGE = "/admin/accounts";
+
+    function accountRow(page: Page, username: string) {
+      return page.getByRole("listitem").filter({ has: page.getByText(username, { exact: true }) });
+    }
+
+    async function issueResetCode(page: Page, username: string): Promise<string> {
+      await accountRow(page, username)
+        .getByRole("button", { name: "Cấp mã đặt lại mật khẩu" })
+        .click();
+      const dialog = page.getByRole("dialog");
+      const issued = dialog.getByTestId("issued-code");
+      await expect(issued).toHaveText(CODE_PATTERN);
+      const code = (await issued.textContent()) ?? "";
+      await dialog.getByRole("button", { name: "Đóng" }).click();
+      await expect(dialog).toBeHidden();
+      return code;
+    }
+
+    test("Cấp mã đặt lại cho bác sĩ quên mật khẩu", async ({ page }) => {
+      await loginAs(page, "admin", ACCOUNTS_PAGE);
+      await accountRow(page, "bs.lan")
+        .getByRole("button", { name: "Cấp mã đặt lại mật khẩu" })
+        .click();
+
+      const dialog = page.getByRole("dialog");
+      await expect(dialog).toContainText("Mã đặt lại mật khẩu cho Nguyễn Thị Lan");
+      await expect(dialog.getByTestId("issued-code")).toHaveText(CODE_PATTERN);
+      await expect(dialog).toContainText("bs.lan");
+      await expect(dialog.getByText(/Hết hạn \d{2}\/\d{2}\/\d{4} \d{2}:\d{2}/)).toBeVisible();
+    });
+
+    test("Cấp mã mới thì mã cũ bị huỷ", async ({ page, browser }) => {
+      await loginAs(page, "admin", ACCOUNTS_PAGE);
+      const first = await issueResetCode(page, "bs.lan");
+      const second = await issueResetCode(page, "bs.lan");
+      expect(second).not.toBe(first);
+
+      await page.goto(PAGE);
+      const rows = page.getByRole("listitem").filter({ hasText: "Đặt lại mật khẩu" });
+      await expect(rows).toHaveCount(2);
+      await expect(rows.nth(0)).toContainText("Còn hạn");
+      await expect(rows.nth(1)).toContainText("Đã huỷ");
+
+      const doctor = await browser.newContext();
+      const doctorPage = await doctor.newPage();
+      await doctorPage.goto("/reset-password");
+      await doctorPage.getByLabel("Mã đặt lại mật khẩu").fill(first);
+      await doctorPage.getByRole("button", { name: "Tiếp tục" }).click();
+      await expect(formAlert(doctorPage)).toContainText("Mã đặt lại mật khẩu không đúng");
+      await doctorPage.getByLabel("Mã đặt lại mật khẩu").fill(second);
+      await doctorPage.getByRole("button", { name: "Tiếp tục" }).click();
+      await expect(doctorPage.getByText("Đặt lại mật khẩu cho bs.lan")).toBeVisible();
+      await doctor.close();
+    });
+
+    test("Tài khoản bị khoá không có nút cấp mã đặt lại", async ({ page }) => {
+      await loginAs(page, "admin", ACCOUNTS_PAGE);
+
+      await expect(accountRow(page, "bs.khoa")).toContainText("Đã khoá");
+      await expect(
+        accountRow(page, "bs.khoa").getByRole("button", { name: "Cấp mã đặt lại mật khẩu" }),
+      ).toHaveCount(0);
+      await expect(
+        accountRow(page, "bs.lan").getByRole("button", { name: "Cấp mã đặt lại mật khẩu" }),
+      ).toBeVisible();
+    });
+
+    test("Mã đặt lại mật khẩu trong danh sách", async ({ page }) => {
+      await insertAccessCode({ recipient: "BS. Trần Thị B", createdMinutesAgo: 10 });
+      await insertAccessCode({
+        type: "password_reset",
+        forAccount: "lan",
+        recipient: "Nguyễn Thị Lan",
+        createdMinutesAgo: 5,
+      });
+      await loginAs(page, "admin", PAGE);
+
+      const reset = codeRow(page, "Nguyễn Thị Lan");
+      await expect(reset).toContainText("Đặt lại mật khẩu");
+      await expect(reset).toContainText("bs.lan");
+      await expect(reset.getByRole("button", { name: "Huỷ mã" })).toBeVisible();
+      await expect(codeRow(page, "BS. Trần Thị B")).toContainText("Kích hoạt");
+      await expect(page.getByRole("listitem").first()).toContainText("Đặt lại mật khẩu");
+    });
+  });
+
   test.describe("Huỷ mã chưa dùng", () => {
     test("Huỷ mã còn hạn", async ({ page }) => {
       const { code } = await insertAccessCode({ recipient: "BS. Trần Thị B" });

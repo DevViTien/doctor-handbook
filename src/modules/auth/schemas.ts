@@ -7,6 +7,7 @@ import {
   ACTIVATION_MESSAGES,
   DISPLAY_NAME_MAX_LENGTH,
   LOGIN_MESSAGES,
+  RESET_MESSAGES,
 } from "./constants";
 
 /**
@@ -40,18 +41,22 @@ export type LoginInput = z.output<typeof loginSchema>;
  * limiting). An over-long value is refused here with the same message without being counted:
  * it is never compared with a real code, so it reveals nothing.
  */
-const accessCodeInput = z
-  .string(ACTIVATION_MESSAGES.codeRequired)
-  .trim()
-  .min(1, ACTIVATION_MESSAGES.codeRequired)
-  .max(ACCESS_CODE_INPUT_MAX_LENGTH, ACTIVATION_MESSAGES.invalidCode);
+function accessCodeInput(messages: { codeRequired: string; invalidCode: string }) {
+  return z
+    .string(messages.codeRequired)
+    .trim()
+    .min(1, messages.codeRequired)
+    .max(ACCESS_CODE_INPUT_MAX_LENGTH, messages.invalidCode);
+}
+const activationCodeInput = accessCodeInput(ACTIVATION_MESSAGES);
+const resetCodeInput = accessCodeInput(RESET_MESSAGES);
 
 /** Step 1 of activation: check the code. */
-export const activationCodeSchema = z.object({ code: accessCodeInput });
+export const activationCodeSchema = z.object({ code: activationCodeInput });
 
 /** Step 2 of activation: create the account (the code travels in a hidden field). */
 export const activateAccountSchema = z.object({
-  code: accessCodeInput,
+  code: activationCodeInput,
   displayName: z
     .string(ACTIVATION_MESSAGES.displayNameRequired)
     .trim()
@@ -67,3 +72,12 @@ export const activateAccountSchema = z.object({
 });
 
 export type ActivateAccountInput = z.output<typeof activateAccountSchema>;
+
+/** Step 1 of password reset: check the code. */
+export const passwordResetCodeSchema = z.object({ code: resetCodeInput });
+
+/** Step 2 of password reset: the new password (the code travels in a hidden field). */
+export const resetPasswordSchema = z.object({
+  code: resetCodeInput,
+  password: passwordSchema,
+});

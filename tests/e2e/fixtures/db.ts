@@ -185,6 +185,8 @@ export async function insertAccessCode(
     type?: "activation" | "password_reset";
     createdMinutesAgo?: number;
     usedBy?: AccountKey;
+    /** Password reset: the account the code is for (default `lan`). */
+    forAccount?: AccountKey;
     revoked?: boolean;
   } = {},
 ): Promise<InsertedAccessCode> {
@@ -193,11 +195,12 @@ export async function insertAccessCode(
     type = "activation",
     createdMinutesAgo = 0,
     usedBy,
+    forAccount,
     revoked = false,
   } = options;
   const code = randomCode();
   const db = sql();
-  const accountKey = usedBy ?? (type === "password_reset" ? "lan" : undefined);
+  const accountKey = usedBy ?? forAccount ?? (type === "password_reset" ? "lan" : undefined);
   const [account] = accountKey
     ? await db<
         { id: string }[]

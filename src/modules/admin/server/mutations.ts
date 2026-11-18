@@ -70,3 +70,53 @@ export async function setDoctorAccountStatus(
     return true;
   });
 }
+
+export type PasswordResetCodeIssue =
+  | { status: "issued"; displayName: string; username: string }
+  | { status: "not-found" }
+  | { status: "locked" };
+
+/**
+ * Issues a password-reset code for an ACTIVE doctor account, in one transaction (design §3):
+ * the account row is locked (`FOR UPDATE`) so two issues for one account run one after the
+ * other; earlier usable reset codes of the account are revoked, so at most one can be used.
+ */
+export async function issuePasswordResetCode(
+  accountId: string,
+  code: { codeHash: string; expiresAt: Date; createdById: string },
+  db: DbExecutor = getDb(),
+): Promise<PasswordResetCodeIssue> {
+  return db.transaction(async (tx): Promise<PasswordResetCodeIssue> => {
+    const [account] = await tx
+      .select({
+        displayName: accounts.displayName,
+        username: accounts.username,
+        status: accounts.status,
+      })
+      .from(accounts)
+      .where(doctorAccountById(accountId))
+      .for("update");
+    if (!account) return { status: "not-found" };
+    if (account.status !== "active") return { status: "locked" };
+
+    await tx
+      .update(accessCodes)
+      .set({ revokedAt: sql`now()` })
+      .where(
+        and(
+          eq(accessCodes.accountId, accountId),
+          eq(accessCodes.type, "password_reset"),
+          accessCodeIsUsable(),
+        ),
+      );
+    await tx.insert(accessCodes).values({
+      type: "password_reset",
+      codeHash: code.codeHash,
+      recipientName: account.displayName,
+      accountId,
+      createdById: code.createdById,
+      expiresAt: code.expiresAt,
+    });
+    return { status: "issued", displayName: account.displayName, username: account.username };
+  });
+}

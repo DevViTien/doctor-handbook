@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { ACTIVATION_MESSAGES, LOGIN_MESSAGES } from "@/modules/auth/constants";
-import { activateAccountSchema, activationCodeSchema, loginSchema } from "@/modules/auth/schemas";
+import { ACTIVATION_MESSAGES, LOGIN_MESSAGES, RESET_MESSAGES } from "@/modules/auth/constants";
+import {
+  activateAccountSchema,
+  activationCodeSchema,
+  loginSchema,
+  passwordResetCodeSchema,
+  resetPasswordSchema,
+} from "@/modules/auth/schemas";
 
 describe("loginSchema", () => {
   it("Tên đăng nhập viết hoa và có khoảng trắng: normalizes to the stored form", () => {
@@ -133,5 +139,26 @@ describe("activateAccountSchema", () => {
     expect(errorsFor({ ...valid, displayName: "a".repeat(81) })).toEqual([
       { path: "displayName", message: ACTIVATION_MESSAGES.displayNameTooLong },
     ]);
+  });
+});
+
+describe("passwordResetCodeSchema / resetPasswordSchema", () => {
+  it("Bỏ trống mã đặt lại: reports the code field with the reset message", () => {
+    const result = passwordResetCodeSchema.safeParse({ code: "  " });
+    expect(result.error?.issues[0]).toMatchObject({
+      path: ["code"],
+      message: RESET_MESSAGES.codeRequired,
+    });
+  });
+
+  it("Mật khẩu mới quá ngắn: at least 8 characters, never trimmed", () => {
+    const result = resetPasswordSchema.safeParse({ code: "R4FT-EJTD", password: "1234567" });
+    expect(result.error?.issues[0]).toMatchObject({
+      path: ["password"],
+      message: "Mật khẩu cần tối thiểu 8 ký tự.",
+    });
+    expect(resetPasswordSchema.parse({ code: "R4FT-EJTD", password: " matkhau " }).password).toBe(
+      " matkhau ",
+    );
   });
 });

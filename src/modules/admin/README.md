@@ -5,15 +5,17 @@ Account administration for the single admin (the project owner). Behaviour is sp
 
 ## Implemented
 
-| Flow                     | Where                                                                                              |
-| ------------------------ | -------------------------------------------------------------------------------------------------- |
-| Issue activation code    | `components/create-access-code-form.tsx` → `server/actions.ts` `createAccessCodeFormAction`        |
-| Copy the message to send | `IssuedCodeCard` in the same component: code + `/activate` link + expiry, built in the browser     |
-| List codes by status     | `components/access-code-list.tsx` ← `server/queries.ts` `listAccessCodes`; `access-code-status.ts` |
-| Revoke an unused code    | `components/revoke-access-code-button.tsx` (`ConfirmDialog`) → `revokeAccessCodeAction`            |
-| Validation and messages  | `schemas.ts`, `constants.ts` (`ADMIN_MESSAGES`, `ACCOUNT_MESSAGES`)                                |
-| List doctor accounts     | `components/account-list.tsx` ← `server/queries.ts` `listDoctorAccounts`                           |
-| Lock / unlock an account | `components/account-status-button.tsx` → `lockAccountAction`, `unlockAccountAction`                |
+| Flow                      | Where                                                                                                                |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Issue activation code     | `components/create-access-code-form.tsx` → `server/actions.ts` `createAccessCodeFormAction`                          |
+| Copy the message to send  | `IssuedCodeDetails` (`issued-code-card.tsx`): code + `/activate` or `/reset-password` link + expiry                  |
+| List codes by status      | `components/access-code-list.tsx` ← `server/queries.ts` `listAccessCodes`; `access-code-status.ts`                   |
+| Revoke an unused code     | `components/revoke-access-code-button.tsx` (`ConfirmDialog`) → `revokeAccessCodeAction`                              |
+| Validation and messages   | `schemas.ts`, `constants.ts` (`ADMIN_MESSAGES`, `ACCOUNT_MESSAGES`)                                                  |
+| List doctor accounts      | `components/account-list.tsx` ← `server/queries.ts` `listDoctorAccounts`                                             |
+| Lock / unlock an account  | `components/account-status-button.tsx` → `lockAccountAction`, `unlockAccountAction`                                  |
+| Issue password-reset code | `components/password-reset-code-button.tsx` (dialog) → `createPasswordResetCodeAction` → `issuePasswordResetCode`    |
+| Show an issued code       | `components/issued-code-card.tsx` `IssuedCodeDetails` (both kinds; the copied message never holds the code in a URL) |
 
 Security properties to preserve:
 
@@ -27,10 +29,12 @@ Security properties to preserve:
   `role = 'doctor'` rows and always deletes every session of the account. Lock ends all devices
   at once (S8); unlock never revives a session ended by a lock. The admin account answers
   `NOT_FOUND`, like an unknown id.
+- A password-reset code is issued only for an active doctor; issuing revokes the account's
+  earlier usable reset codes in the same transaction (account row locked `FOR UPDATE`), so at
+  most one reset code per account can be used.
 
 ## Still to build (separate OpenSpec changes)
 
-- Password-reset codes for an existing account (the list and status helper already take a type).
 - Delete an account and all its data, confirmed by typing the username (D21).
 
 ## Hard rule (idea.md N6)

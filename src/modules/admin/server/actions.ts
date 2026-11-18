@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { routes } from "@/config/routes";
-import type { AccountStatus } from "@/lib/enums";
+import type { AccessCodeType, AccountStatus } from "@/lib/enums";
 import { AppError } from "@/lib/errors";
 import { ACCOUNT_MESSAGES, ADMIN_MESSAGES } from "@/modules/admin/constants";
 import {
@@ -13,6 +13,7 @@ import {
 } from "@/modules/admin/schemas";
 import {
   insertAccessCode,
+  issuePasswordResetCode,
   revokeAccessCode,
   setDoctorAccountStatus,
 } from "@/modules/admin/server/mutations";
@@ -23,15 +24,39 @@ import { isUniqueViolation } from "@/server/db/errors";
 
 /** What the admin sees once, right after creating a code. Never stored, never logged. */
 export type IssuedAccessCode = {
+  kind: AccessCodeType;
   /** Formatted for reading aloud and pasting, e.g. "K7HM-3QXR". */
   code: string;
   recipientName: string;
+  /** Password reset: the account the code is for. */
+  username?: string;
   /** ISO timestamp (serializable across the action boundary). */
   expiresAt: string;
 };
 
 /** A hash collision of two 40-bit codes is ~1e-12; a few retries make it a non-event. */
 const MAX_CODE_ATTEMPTS = 3;
+
+/**
+ * Generates a code and stores it through `store` (which receives only its hash), retrying with
+ * a new code on the rare hash collision. Returns the formatted code with `store`'s result.
+ * Not exported: "use server" files may only export actions.
+ */
+async function issueCode<T>(
+  store: (codeHash: string) => Promise<T>,
+): Promise<{ code: string; stored: T }> {
+  for (let attempt = 1; ; attempt++) {
+    const code = generateAccessCode();
+    try {
+      return { code: formatAccessCode(code), stored: await store(hashAccessCode(code)) };
+    } catch (error) {
+      if (attempt < MAX_CODE_ATTEMPTS && isUniqueViolation(error, "access_codes_code_hash_key")) {
+        continue;
+      }
+      throw error;
+    }
+  }
+}
 
 /**
  * Issues an activation code (spec access-codes). Only its HMAC is stored, so the code exists
@@ -41,31 +66,23 @@ export const createAccessCodeFormAction = createFormAction(
   { name: "admin.createAccessCode", schema: createAccessCodeSchema, access: "admin" },
   async (input, { auth }): Promise<IssuedAccessCode> => {
     const expiresAt = new Date(Date.now() + ACCESS_CODE_TTL_MS);
-
-    for (let attempt = 1; ; attempt++) {
-      const code = generateAccessCode();
-      try {
-        await insertAccessCode({
-          type: "activation",
-          codeHash: hashAccessCode(code),
-          recipientName: input.recipientName,
-          expiresAt,
-          createdById: auth.account.id,
-        });
-      } catch (error) {
-        if (attempt < MAX_CODE_ATTEMPTS && isUniqueViolation(error, "access_codes_code_hash_key")) {
-          continue;
-        }
-        throw error;
-      }
-
-      revalidatePath(routes.admin.accessCodes);
-      return {
-        code: formatAccessCode(code),
+    const { code } = await issueCode((codeHash) =>
+      insertAccessCode({
+        type: "activation",
+        codeHash,
         recipientName: input.recipientName,
-        expiresAt: expiresAt.toISOString(),
-      };
-    }
+        expiresAt,
+        createdById: auth.account.id,
+      }),
+    );
+
+    revalidatePath(routes.admin.accessCodes);
+    return {
+      kind: "activation",
+      code,
+      recipientName: input.recipientName,
+      expiresAt: expiresAt.toISOString(),
+    };
   },
 );
 
@@ -106,4 +123,35 @@ export const lockAccountAction = createAction(
 export const unlockAccountAction = createAction(
   { name: "admin.unlockAccount", schema: accountIdSchema, access: "admin" },
   async (input) => changeAccountStatus(input.id, "active"),
+);
+
+/**
+ * Issues a password-reset code for an active doctor account (spec access-codes "Admin cấp mã
+ * đặt lại mật khẩu"). Earlier usable reset codes of the account are revoked. The code is only
+ * in this response.
+ */
+export const createPasswordResetCodeAction = createAction(
+  { name: "admin.createPasswordResetCode", schema: accountIdSchema, access: "admin" },
+  async (input, { auth }): Promise<IssuedAccessCode> => {
+    const expiresAt = new Date(Date.now() + ACCESS_CODE_TTL_MS);
+    const { code, stored } = await issueCode((codeHash) =>
+      issuePasswordResetCode(input.id, { codeHash, expiresAt, createdById: auth.account.id }),
+    );
+
+    if (stored.status === "not-found") throw new AppError("NOT_FOUND", ACCOUNT_MESSAGES.notFound);
+    if (stored.status === "locked") {
+      // Nothing was stored: the row is shown with its real state after a refresh.
+      throw new AppError("CONFLICT", ACCOUNT_MESSAGES.lockedNoReset);
+    }
+
+    revalidatePath(routes.admin.accessCodes);
+    revalidatePath(routes.admin.accounts);
+    return {
+      kind: "password_reset",
+      code,
+      recipientName: stored.displayName,
+      username: stored.username,
+      expiresAt: expiresAt.toISOString(),
+    };
+  },
 );

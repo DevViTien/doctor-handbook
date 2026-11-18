@@ -6,6 +6,7 @@ import { routes } from "@/config/routes";
 import { formatDate, formatDateTime } from "@/lib/date/format";
 import { cn } from "@/lib/utils";
 import { AccountStatusButton } from "@/modules/admin/components/account-status-button";
+import { PasswordResetCodeButton } from "@/modules/admin/components/password-reset-code-button";
 import type { DoctorAccountListItem } from "@/modules/admin/server/queries";
 
 /** "Bác sĩ": every doctor account with its status, never any patient data (spec account-management). */
@@ -52,9 +53,9 @@ function AccountRow({ account }: { account: DoctorAccountListItem }) {
   return (
     <li
       data-status={account.status}
-      className="flex min-w-0 flex-wrap items-center gap-x-3 py-3 pr-3 pl-4 not-first:border-t"
+      className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2.5 py-3 pr-3 pl-4 not-first:border-t"
     >
-      <div className="grid min-w-0 flex-1 gap-0.5">
+      <div className="grid min-w-0 flex-[1_1_14rem] gap-0.5">
         <span className={cn("truncate font-semibold", locked && "text-muted-foreground")}>
           {account.displayName}
         </span>
@@ -81,11 +82,17 @@ function AccountRow({ account }: { account: DoctorAccountListItem }) {
             : "Chưa đăng nhập"}
         </span>
       </div>
-      <AccountStatusButton
-        id={account.id}
-        displayName={account.displayName}
-        status={account.status}
-      />
+      {/* Phone: the buttons go under the details, each as wide as the row (thumb-friendly). */}
+      <div className="flex w-full flex-wrap gap-2 md:w-auto [&>button]:flex-1 md:[&>button]:flex-none">
+        {locked ? null : (
+          <PasswordResetCodeButton id={account.id} displayName={account.displayName} />
+        )}
+        <AccountStatusButton
+          id={account.id}
+          displayName={account.displayName}
+          status={account.status}
+        />
+      </div>
     </li>
   );
 }

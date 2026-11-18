@@ -9,9 +9,13 @@ export const ADMIN_MESSAGES = {
 export const ACCOUNT_MESSAGES = {
   /** Also the answer for the admin account: never reveal which ids belong to an admin. */
   notFound: "Không tìm thấy tài khoản.",
+  lockedNoReset: "Tài khoản đang bị khoá. Mở khoá trước khi cấp mã đặt lại mật khẩu.",
 } as const;
 
 export const RECIPIENT_NAME_MAX_LENGTH = 80;
 
-/** The list shows the newest codes only; a small group never comes close (design §5). */
-export const ACCESS_CODE_LIST_LIMIT = 100;
+/**
+ * The list shows the newest codes of both kinds. Reissued reset codes add rows, so the cap is
+ * generous; a small group still never comes close.
+ */
+export const ACCESS_CODE_LIST_LIMIT = 200;

@@ -182,6 +182,8 @@ test.describe("account-session", () => {
     });
 
     test("Thiết bị khác vẫn đăng nhập", async ({ page, browser }) => {
+      // Skip before opening a second context: a skip thrown later would leave it open.
+      skipWhenSecureCookiesUnsupported(page);
       const otherDevice = await browser.newContext();
       const otherPage = await otherDevice.newPage();
       await loginAs(page, "lan");

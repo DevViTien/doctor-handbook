@@ -2,6 +2,7 @@ import "server-only";
 
 import { and, eq } from "drizzle-orm";
 
+import type { AccountStatus } from "@/lib/enums";
 import { accessCodeIsUsable } from "@/server/auth/access-codes";
 import { type DbExecutor, getDb } from "@/server/db/client";
 import { accessCodes, accounts } from "@/server/db/schema";
@@ -68,4 +69,31 @@ export async function usernameExists(username: string, db: DbExecutor = getDb())
     .where(eq(accounts.username, username))
     .limit(1);
   return Boolean(row);
+}
+
+/** A usable password-reset code by its hash, with the username of the account it is for. */
+export async function findUsablePasswordResetCode(
+  codeHash: string,
+  db: DbExecutor = getDb(),
+): Promise<{ username: string; expiresAt: Date; accountStatus: AccountStatus } | null> {
+  const [code] = await db
+    .select({
+      username: accounts.username,
+      expiresAt: accessCodes.expiresAt,
+      accountStatus: accounts.status,
+    })
+    .from(accessCodes)
+    .innerJoin(accounts, eq(accessCodes.accountId, accounts.id))
+    .where(usablePasswordResetCode(codeHash))
+    .limit(1);
+  return code ?? null;
+}
+
+/** Shared by the check (step 1) and the consuming UPDATE (step 2). */
+export function usablePasswordResetCode(codeHash: string) {
+  return and(
+    eq(accessCodes.codeHash, codeHash),
+    eq(accessCodes.type, "password_reset"),
+    accessCodeIsUsable(),
+  );
 }

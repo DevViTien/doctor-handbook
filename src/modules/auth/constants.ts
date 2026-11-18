@@ -24,6 +24,14 @@ export const ACTIVATION_MESSAGES = {
   termsRequired: "Bạn cần đọc và đồng ý lưu ý sử dụng.",
 } as const;
 
+/** User-facing password reset messages (spec password-reset). */
+export const RESET_MESSAGES = {
+  codeRequired: "Nhập mã đặt lại mật khẩu.",
+  /** Same text whatever the reason: unknown, used, revoked, expired or an activation code. */
+  invalidCode:
+    "Mã đặt lại mật khẩu không đúng hoặc đã hết hạn. Liên hệ quản trị viên để nhận mã mới.",
+} as const;
+
 export const DISPLAY_NAME_MAX_LENGTH = 80;
 /** Generous: people type dashes and spaces ("k7hm - 3qxr"); the server normalizes. */
 export const ACCESS_CODE_INPUT_MAX_LENGTH = 32;

@@ -26,7 +26,13 @@ function accountRow(page: Page, username: string) {
 async function signedInDoctor(browser: Browser, key: "lan" | "locked") {
   const context = await browser.newContext();
   const page = await context.newPage();
-  await loginAs(page, key);
+  try {
+    await loginAs(page, key);
+  } catch (error) {
+    // loginAs may skip the test (WebKit over HTTP): never leave this context open.
+    await context.close();
+    throw error;
+  }
   return { context, page };
 }
 

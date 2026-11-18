@@ -2,7 +2,7 @@ import "server-only";
 
 import { desc, eq } from "drizzle-orm";
 
-import type { AccountStatus } from "@/lib/enums";
+import type { AccessCodeType, AccountStatus } from "@/lib/enums";
 import { ACCESS_CODE_LIST_LIMIT } from "@/modules/admin/constants";
 import { type DbExecutor, getDb } from "@/server/db/client";
 import { accessCodes, accounts } from "@/server/db/schema";
@@ -18,10 +18,12 @@ export type AccessCodeListItem = {
   expiresAt: Date;
   usedAt: Date | null;
   revokedAt: Date | null;
-  usedByUsername: string | null;
+  type: AccessCodeType;
+  /** Activation: the account the code created. Password reset: the account it is for. */
+  accountUsername: string | null;
 };
 
-/** Activation codes, newest first (spec access-codes "Danh sách mã theo trạng thái"). */
+/** Every access code (both kinds), newest first (spec access-codes "Danh sách mã theo trạng thái"). */
 export async function listAccessCodes(db: DbExecutor = getDb()): Promise<AccessCodeListItem[]> {
   return db
     .select({
@@ -31,11 +33,11 @@ export async function listAccessCodes(db: DbExecutor = getDb()): Promise<AccessC
       expiresAt: accessCodes.expiresAt,
       usedAt: accessCodes.usedAt,
       revokedAt: accessCodes.revokedAt,
-      usedByUsername: accounts.username,
+      type: accessCodes.type,
+      accountUsername: accounts.username,
     })
     .from(accessCodes)
     .leftJoin(accounts, eq(accessCodes.accountId, accounts.id))
-    .where(eq(accessCodes.type, "activation"))
     .orderBy(desc(accessCodes.createdAt), desc(accessCodes.id))
     .limit(ACCESS_CODE_LIST_LIMIT);
 }

@@ -1,9 +1,9 @@
 import "server-only";
 
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
-import { usableActivationCode } from "@/modules/auth/server/queries";
-import { createSession } from "@/server/auth/session";
+import { usableActivationCode, usablePasswordResetCode } from "@/modules/auth/server/queries";
+import { createSession, invalidateAccountSessions } from "@/server/auth/session";
 import { type DbExecutor, getDb } from "@/server/db/client";
 import { isUniqueViolation } from "@/server/db/errors";
 import { accessCodes, accounts } from "@/server/db/schema";
@@ -84,4 +84,62 @@ export async function activateAccountWithCode(
     if (error instanceof UsernameTakenError) return { status: "username-taken" };
     throw error;
   }
+}
+
+export type PasswordResetResult =
+  | { status: "reset"; accountId: string; sessionToken: string }
+  | { status: "invalid-code" }
+  | { status: "account-locked" };
+
+/**
+ * Consumes a password-reset code and sets the new password, in one transaction (design §2).
+ *
+ * Lock order is account row first, then code rows — the same order as the admin issuing a reset
+ * code (`issuePasswordResetCode`) and locking an account — so these never deadlock:
+ *
+ * 1. Find the account of the usable code, then lock that account row (`FOR UPDATE`). Only an
+ *    ACTIVE doctor account goes on; a locked one changes nothing (the code stays usable).
+ * 2. A conditional `UPDATE … RETURNING` consumes the code only if it is still usable: with the
+ *    account row held, a concurrent submission of the same code finds it used.
+ * 3. Set the password, end every session of the account (idea.md §8.3), open this device's.
+ */
+export async function resetPasswordWithCode(
+  input: { codeHash: string; passwordHash: string; userAgent: string | null },
+  db: DbExecutor = getDb(),
+): Promise<PasswordResetResult> {
+  return db.transaction(async (tx): Promise<PasswordResetResult> => {
+    const [target] = await tx
+      .select({ accountId: accessCodes.accountId })
+      .from(accessCodes)
+      .where(usablePasswordResetCode(input.codeHash))
+      .limit(1);
+    if (!target?.accountId) return { status: "invalid-code" };
+    const accountId = target.accountId;
+
+    const [account] = await tx
+      .select({ status: accounts.status })
+      .from(accounts)
+      .where(and(eq(accounts.id, accountId), eq(accounts.role, "doctor")))
+      .for("update");
+    if (!account) return { status: "invalid-code" };
+    if (account.status !== "active") return { status: "account-locked" };
+
+    const [code] = await tx
+      .update(accessCodes)
+      .set({ usedAt: sql`now()` })
+      .where(and(usablePasswordResetCode(input.codeHash), eq(accessCodes.accountId, accountId)))
+      .returning({ id: accessCodes.id });
+    if (!code) return { status: "invalid-code" };
+
+    await tx
+      .update(accounts)
+      .set({ passwordHash: input.passwordHash, lastLoginAt: sql`now()` })
+      .where(eq(accounts.id, accountId));
+    await invalidateAccountSessions(accountId, {}, tx);
+
+    // The account row is held and active in this transaction, so a session is always created.
+    const session = await createSession(accountId, { userAgent: input.userAgent }, tx);
+    if (!session) throw new Error("active account without a session");
+    return { status: "reset", accountId, sessionToken: session.token };
+  });
 }

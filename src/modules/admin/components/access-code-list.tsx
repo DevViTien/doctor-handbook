@@ -5,6 +5,7 @@ import {
   ClockIcon,
   KeyRoundIcon,
   type LucideIcon,
+  UserPlusIcon,
 } from "lucide-react";
 
 import { EmptyState } from "@/components/common/empty-state";
@@ -81,6 +82,7 @@ function AccessCodeRow({ item, now }: { item: AccessCodeListItem; now: Date }) {
         >
           {item.recipientName}
         </span>
+        <AccessCodeKind item={item} />
         <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm">
           <span className={cn("inline-flex items-center gap-1.5 font-semibold", display.className)}>
             <Icon className="size-4" aria-hidden />
@@ -106,10 +108,10 @@ function StatusDetail({ item, status }: { item: AccessCodeListItem; status: Acce
     case "used":
       return (
         <span className="text-muted-foreground">
-          {item.usedByUsername ? (
+          {item.type === "activation" && item.accountUsername ? (
             <>
               <span translate="no" className="font-semibold text-foreground">
-                {item.usedByUsername}
+                {item.accountUsername}
               </span>
               ,{" "}
             </>
@@ -126,4 +128,24 @@ function StatusDetail({ item, status }: { item: AccessCodeListItem; status: Acce
         </span>
       );
   }
+}
+
+/** Which kind of code this is ("Kích hoạt" / "Đặt lại mật khẩu · bs.lan"): icon and text. */
+function AccessCodeKind({ item }: { item: AccessCodeListItem }) {
+  const isReset = item.type === "password_reset";
+  const Icon = isReset ? KeyRoundIcon : UserPlusIcon;
+  return (
+    <span className="inline-flex min-w-0 items-center gap-1.5 text-[0.82rem] font-medium text-muted-foreground">
+      <Icon className="size-4 shrink-0" aria-hidden />
+      {isReset ? "Đặt lại mật khẩu" : "Kích hoạt"}
+      {isReset && item.accountUsername ? (
+        <>
+          {" · "}
+          <span translate="no" className="break-all">
+            {item.accountUsername}
+          </span>
+        </>
+      ) : null}
+    </span>
+  );
 }
