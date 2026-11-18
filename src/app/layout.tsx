@@ -39,6 +39,16 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="vi" className={cn(fontSans.variable)} suppressHydrationWarning>
+      <head>
+        {/* Chrome may offer installing before React hydrates: keep the event (spec app-install). */}
+        <script
+          // A fixed snippet, no user input.
+          dangerouslySetInnerHTML={{
+            __html:
+              "addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__dhInstallPrompt=e;});",
+          }}
+        />
+      </head>
       <body className="min-h-dvh antialiased">
         <AppProviders>{children}</AppProviders>
       </body>

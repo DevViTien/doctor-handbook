@@ -58,7 +58,11 @@ const nextConfig: NextConfig = {
   // Written into every backup's manifest.json (spec data-backup).
   env: { NEXT_PUBLIC_APP_VERSION: packageJson.version },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      // The service worker must always be checked for a new version (spec app-install).
+      { source: "/sw.js", headers: [{ key: "Cache-Control", value: "no-cache" }] },
+    ];
   },
 };
 

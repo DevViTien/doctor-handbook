@@ -47,7 +47,8 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Everything except static assets and metadata files.
-    "/((?!_next/static|_next/image|favicon.ico|icon.svg|apple-icon|manifest.webmanifest|robots.txt).*)",
+    // Everything except static assets, metadata files and the PWA files a browser fetches
+    // without a session (icons, service worker, offline page; spec app-install).
+    "/((?!_next/static|_next/image|favicon.ico|icon.svg|apple-icon|manifest.webmanifest|robots.txt|icons/|sw[.]js$|offline[.]html$).*)",
   ],
 };

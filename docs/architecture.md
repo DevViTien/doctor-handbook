@@ -133,6 +133,22 @@ keeping files off Vercel functions (≈4.5 MB body limit).
 - E2E runs a fake Storage (`tests/e2e/fake-storage.mjs`, port 54321) implementing only the
   storage-js routes the app uses, plus `/__fake/*` routes the tests use to inspect objects.
 
+## PWA (change `add-pwa-install`, spec `app-install`)
+
+- `src/app/manifest.ts`: standalone, starts on `/patients`, PNG icons (192, 512, maskable 512) in
+  `public/icons/`, `src/app/apple-icon.png` (opaque), shortcuts "Thêm bệnh nhân" / "Việc cần làm".
+- `public/sw.js` (hand-written, registered by `PwaSetup` in production only; in development
+  `PwaSetup` unregisters any leftover worker): cache-first for `/_next/static/*` (hashed),
+  network-first for `/icons/*`, `/icon.svg`, `/offline.html` (unhashed, so deploys reach devices);
+  page navigations always go to the network (navigation preload) and fall back to
+  `/offline.html`; everything else (Server Actions, `/api/*`, signed Storage URLs) is not
+  touched. Pages are never cached, so no patient data is ever stored. The allow-list is
+  unit-tested on the file itself (`src/lib/pwa/service-worker.test.ts`).
+- An inline script in the root layout keeps `beforeinstallprompt` even if it fires before
+  hydration; `src/lib/pwa/install-prompt.ts` picks it up. Settings shows `InstallAppRow`
+  (install button, dismissed, iPhone/iPad steps for every browser there, installed, unsupported).
+- `src/proxy.ts` lets `icons/`, `sw.js` and `offline.html` through without a session.
+
 ## Logging and privacy
 
 Use `logger` from `server/logger.ts` only. Never log patient data or request bodies: log ids, error

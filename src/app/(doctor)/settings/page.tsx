@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { InitialsAvatar } from "@/components/common/initials-avatar";
+import { InstallAppRow } from "@/components/common/install-app-row";
 import { PageContainer } from "@/components/layout/page-container";
 import { PageHeader } from "@/components/layout/page-header";
 import { routes } from "@/config/routes";
@@ -50,6 +51,8 @@ export default async function SettingsPage() {
       <div className="mt-4">
         <ChangePasswordForm username={account.username} />
       </div>
+
+      <InstallAppRow />
 
       <Link
         href={routes.doctor.backup}

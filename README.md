@@ -56,6 +56,14 @@ pnpm dev                          # http://localhost:3000
 - `CRON_SECRET` protects `/api/cron/daily-maintenance` (daily: keeps the free Supabase project
   awake and prunes rate-limit rows).
 
+## App icons
+
+The home-screen icons (red medical cross on a notebook) come from `src/assets/app-icon.svg`;
+`src/app/icon.svg` is the simplified favicon. After changing them, run `pnpm icons` (renders
+the PNGs in `public/icons/` and `src/app/apple-icon.png` with Playwright's Chromium) and commit
+the PNGs. Check installing on a real Android phone (Chrome) and iPhone (Safari → Share → "Thêm
+vào MH chính").
+
 ## End-to-end tests
 
 `pnpm test:e2e` builds the app and serves it with `next start` on port **3100** (so it never

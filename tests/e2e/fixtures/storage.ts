@@ -87,8 +87,16 @@ export function makePng(
   ]);
 }
 
-/** Width × height of a WebP (VP8, VP8L, VP8X) or JPEG image. */
+/** Width × height of a PNG, WebP (VP8, VP8L, VP8X) or JPEG image. */
 export function imageSize(bytes: Buffer): { width: number; height: number; format: string } {
+  if (bytes.readUInt32BE(0) === 0x89504e47) {
+    // PNG: IHDR right after the signature; colour type 2 = RGB (opaque), 6 = RGBA.
+    return {
+      format: bytes[25] === 6 ? "png-rgba" : "png",
+      width: bytes.readUInt32BE(16),
+      height: bytes.readUInt32BE(20),
+    };
+  }
   if (bytes.toString("ascii", 0, 4) === "RIFF" && bytes.toString("ascii", 8, 12) === "WEBP") {
     const kind = bytes.toString("ascii", 12, 16);
     if (kind === "VP8 ") {

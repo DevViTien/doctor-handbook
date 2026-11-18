@@ -23,7 +23,7 @@
 | Form | **React Hook Form** | Form bệnh nhân nhiều trường, cần nhẹ trên điện thoại |
 | Tìm kiếm | Cột text **đã bỏ dấu** + index **`pg_trgm`**, lọc tức thì phía client cho tên | Không cần dịch vụ tìm kiếm riêng (D11) |
 | Giọng nói | **Web Speech API** của trình duyệt | Miễn phí, không cần thư viện (D11) |
-| PWA | Manifest có sẵn của Next.js + **Serwist** (service worker) | Cài lên màn hình chính, cache giao diện |
+| PWA | Manifest có sẵn của Next.js + **service worker tự viết** (`public/sw.js`, ~60 dòng) | Cài lên màn hình chính, cache tệp tĩnh, trang mất mạng. Không dùng Serwist: plugin cần webpack, Next 16 build bằng Turbopack (change `add-pwa-install`) |
 | Nháp offline | **IndexedDB** qua `idb-keyval` | Không mất ghi chú khi mất mạng |
 | Sao lưu / nhập | File **.zip** đóng gói ngay trên trình duyệt bằng **fflate** | Né giới hạn kích thước request/response của Vercel |
 | Nén ảnh | `createImageBitmap` + canvas của trình duyệt | Cắt vuông, thu nhỏ 384 px, nén WebP trên điện thoại trước khi tải lên. Không cần thư viện (change `add-patient-avatars`) |
@@ -268,7 +268,7 @@ Không cần Algolia, Meilisearch hay Elasticsearch ở quy mô này.
 | Thành phần | Công nghệ | Phạm vi MVP |
 |---|---|---|
 | Manifest (tên, icon, màu, chế độ `standalone`) | File `app/manifest.ts` có sẵn của Next.js | ✅ |
-| Service worker: cache giao diện, tải nhanh | **Serwist** (kế nhiệm `next-pwa`) | ✅ cache tài nguyên tĩnh |
+| Service worker: cache giao diện, tải nhanh | `public/sw.js` tự viết: cache-first cho `/_next/static/*`, network-first cho icon và `offline.html`; trang luôn lấy từ mạng, mất mạng thì `offline.html`. **Không bao giờ cache trang hay dữ liệu** | ✅ |
 | Bản nháp ghi chú | **IndexedDB** qua `idb-keyval`, khóa theo `patientId`. Lưu mỗi khi gõ (debounce), xóa sau khi server xác nhận | ✅ |
 | Hàng đợi gửi lại khi có mạng | Lắng nghe sự kiện `online`, gửi lại các nháp chưa lưu | ✅ |
 | Xem dữ liệu khi offline hoàn toàn | Cache dữ liệu vào IndexedDB | ❌ Phase 2 |
