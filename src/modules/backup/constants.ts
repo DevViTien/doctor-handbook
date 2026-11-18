@@ -17,8 +17,6 @@ export const BACKUP_LIMITS = {
   patients: 20_000,
   notes: 200_000,
   todos: 20_000,
-  /** The todos module has no feature yet; it will own this limit once it does. */
-  todoContent: 1000,
 } as const;
 
 /** The reminder shows once the last backup is older than this. */

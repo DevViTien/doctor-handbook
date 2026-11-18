@@ -1,16 +1,21 @@
 import type { Metadata } from "next";
 
-import { FeaturePlaceholder } from "@/components/common/feature-placeholder";
 import { PageContainer } from "@/components/layout/page-container";
-import { PageHeader } from "@/components/layout/page-header";
+import { vietnamIsoDay } from "@/lib/date/calendar";
+import { TodoList } from "@/modules/todos/components/todo-list";
+import { listTodos } from "@/modules/todos/server/queries";
+import { requirePageAccess } from "@/server/auth/guards";
 
+// A fixed title: never a to-do's text, which may name a patient (spec todo-list).
 export const metadata: Metadata = { title: "Việc cần làm" };
 
-export default function TodosPage() {
+export default async function TodosPage() {
+  const auth = await requirePageAccess("doctor");
+  const todos = await listTodos(auth);
+
   return (
-    <PageContainer>
-      <PageHeader title="Việc cần làm" />
-      <FeaturePlaceholder module="todos" />
+    <PageContainer className="pb-6">
+      <TodoList initial={todos} today={vietnamIsoDay(new Date())} />
     </PageContainer>
   );
 }

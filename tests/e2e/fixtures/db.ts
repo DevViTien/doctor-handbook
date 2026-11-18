@@ -479,6 +479,46 @@ export async function listPatientSnapshot(key: AccountKey): Promise<Record<strin
   `;
 }
 
+// --- To-do list (change add-todo-list) ------------------------------------------------
+
+/** Adds a to-do. `dueInDays` is relative to today in Vietnam (negative = overdue). */
+export async function insertTodo(
+  owner: AccountKey,
+  todo: { content: string; dueInDays?: number; minutesAgo?: number; doneMinutesAgo?: number },
+): Promise<string> {
+  const [row] = await sql()<{ id: string }[]>`
+    INSERT INTO todos (account_id, content, due_date, completed_at, created_at, updated_at)
+    SELECT id, ${todo.content},
+      CASE WHEN ${todo.dueInDays ?? null}::int IS NULL THEN NULL
+        ELSE (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date + ${todo.dueInDays ?? 0}::int END,
+      CASE WHEN ${todo.doneMinutesAgo ?? null}::int IS NULL THEN NULL
+        ELSE now() - make_interval(mins => ${todo.doneMinutesAgo ?? 0}) END,
+      now() - make_interval(mins => ${todo.minutesAgo ?? 60}),
+      now() - make_interval(mins => ${todo.minutesAgo ?? 60})
+    FROM accounts WHERE username = ${ACCOUNTS[owner].username}
+    RETURNING id
+  `;
+  if (!row) throw new Error("insertTodo: no row returned");
+  return row.id;
+}
+
+export type TodoDbRow = {
+  id: string;
+  content: string;
+  due_date: string | null;
+  completed_at: Date | null;
+};
+
+/** The to-dos of a sample account, oldest first. */
+export async function listTodoRows(owner: AccountKey): Promise<TodoDbRow[]> {
+  return sql()<TodoDbRow[]>`
+    SELECT t.id, t.content, t.due_date::text AS due_date, t.completed_at
+    FROM todos t JOIN accounts a ON a.id = t.account_id
+    WHERE a.username = ${ACCOUNTS[owner].username}
+    ORDER BY t.created_at, t.id
+  `;
+}
+
 export async function closeDatabase(): Promise<void> {
   await client?.end();
   client = undefined;

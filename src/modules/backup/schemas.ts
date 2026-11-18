@@ -3,6 +3,7 @@ import { z } from "zod";
 import { GENDERS } from "@/lib/enums";
 import { BACKUP_APP_ID, BACKUP_FORMAT_VERSION, BACKUP_LIMITS } from "@/modules/backup/constants";
 import { NOTE_LIMITS, PATIENT_LIMITS, PHONE_PATTERN } from "@/modules/patients/constants";
+import { TODO_LIMITS } from "@/modules/todos/constants";
 
 /**
  * The backup file, format version 1 (design §2). One schema for both sides: the browser checks a
@@ -67,7 +68,7 @@ const noteSchema = z.object({
 
 const todoSchema = z.object({
   id: z.uuid(),
-  content: requiredText(BACKUP_LIMITS.todoContent),
+  content: requiredText(TODO_LIMITS.content),
   dueDate: calendarDay.nullable(),
   completedAt: instant.nullable(),
   createdAt: instant,
