@@ -299,6 +299,66 @@ export async function countAuthAttempts(): Promise<number> {
   return row?.count ?? 0;
 }
 
+// --- Patients (change add-patient-records) --------------------------------------------
+
+export type PatientSeed = {
+  fullName: string;
+  birthYear?: number;
+  birthDate?: string;
+  gender?: "male" | "female" | "other";
+  hometown?: string;
+  phone?: string;
+  patientCode?: string;
+  summary?: string;
+  /** Added/edited that many minutes ago (the list puts the most recent first). Default 60. */
+  minutesAgo?: number;
+};
+
+/** Inserts a patient owned by a sample account and returns its id. */
+export async function insertPatient(owner: AccountKey, patient: PatientSeed): Promise<string> {
+  const db = sql();
+  const [row] = await db<{ id: string }[]>`
+    INSERT INTO patients (
+      account_id, full_name, birth_year, birth_date, gender, hometown, phone, patient_code,
+      summary, created_at, updated_at
+    )
+    SELECT
+      id, ${patient.fullName}, ${patient.birthYear ?? null}, ${patient.birthDate ?? null},
+      ${patient.gender ?? null}, ${patient.hometown ?? null}, ${patient.phone ?? null},
+      ${patient.patientCode ?? null}, ${patient.summary ?? null},
+      now() - make_interval(mins => ${patient.minutesAgo ?? 60}),
+      now() - make_interval(mins => ${patient.minutesAgo ?? 60})
+    FROM accounts WHERE username = ${ACCOUNTS[owner].username}
+    RETURNING id
+  `;
+  if (!row) throw new Error("insertPatient: no row returned");
+  return row.id;
+}
+
+export type PatientDbRow = {
+  id: string;
+  full_name: string;
+  birth_year: number | null;
+  birth_date: string | null;
+  gender: string | null;
+  hometown: string | null;
+  phone: string | null;
+  patient_code: string | null;
+  summary: string | null;
+  search_text: string;
+};
+
+/** The patients of a sample account, oldest first. */
+export async function listPatientRows(owner: AccountKey): Promise<PatientDbRow[]> {
+  return sql()<PatientDbRow[]>`
+    SELECT p.id, p.full_name, p.birth_year, p.birth_date::text AS birth_date, p.gender::text,
+      p.hometown, p.phone, p.patient_code, p.summary, p.search_text
+    FROM patients p JOIN accounts a ON a.id = p.account_id
+    WHERE a.username = ${ACCOUNTS[owner].username}
+    ORDER BY p.created_at, p.id
+  `;
+}
+
 export async function closeDatabase(): Promise<void> {
   await client?.end();
   client = undefined;

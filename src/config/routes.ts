@@ -1,3 +1,5 @@
+import type { Route } from "next";
+
 /**
  * Single source of truth for application paths.
  * Never hard-code a path string in components: import it from here so that renaming a
@@ -12,6 +14,10 @@ export const routes = {
   },
   doctor: {
     patients: "/patients",
+    newPatient: "/patients/new",
+    /** Patient pages carry only the random id, never patient data (spec patient-records). */
+    patient: (id: string) => `/patients/${id}` as Route,
+    editPatient: (id: string) => `/patients/${id}/edit` as Route,
     todos: "/todos",
     settings: "/settings",
   },
