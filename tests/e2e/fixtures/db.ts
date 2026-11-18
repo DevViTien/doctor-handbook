@@ -359,6 +359,45 @@ export async function listPatientRows(owner: AccountKey): Promise<PatientDbRow[]
   `;
 }
 
+// --- Notes (change add-patient-notes) -------------------------------------------------
+
+/**
+ * Inserts a note on a patient (owner taken from the patient). `createdAt` is an ISO instant;
+ * `editedAt` makes it an edited note (updated_at later than created_at).
+ */
+export async function insertNote(
+  patientId: string,
+  note: { content: string; createdAt?: string; editedAt?: string },
+): Promise<string> {
+  const createdAt = note.createdAt ?? new Date(Date.now() - 3_600_000).toISOString();
+  const [row] = await sql()<{ id: string }[]>`
+    INSERT INTO notes (patient_id, account_id, content, created_at, updated_at)
+    SELECT id, account_id, ${note.content}, ${createdAt}::timestamptz,
+      ${note.editedAt ?? createdAt}::timestamptz
+    FROM patients WHERE id = ${patientId}
+    RETURNING id
+  `;
+  if (!row) throw new Error("insertNote: no row returned");
+  return row.id;
+}
+
+export type NoteDbRow = {
+  id: string;
+  account_id: string;
+  content: string;
+  search_text: string;
+  created_at: Date;
+  updated_at: Date;
+};
+
+/** Notes of one patient, oldest first. */
+export async function listNoteRows(patientId: string): Promise<NoteDbRow[]> {
+  return sql()<NoteDbRow[]>`
+    SELECT id, account_id, content, search_text, created_at, updated_at
+    FROM notes WHERE patient_id = ${patientId} ORDER BY created_at, id
+  `;
+}
+
 export async function closeDatabase(): Promise<void> {
   await client?.end();
   client = undefined;

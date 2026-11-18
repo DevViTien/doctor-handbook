@@ -19,6 +19,11 @@ Every column a doctor can write must round-trip through export and import:
   `gender`, `hometown`, `phone`, `patient_code`, `summary`, `created_at`, `updated_at`,
   `deleted_at`. `search_text` is derived: recompute it on import with `buildSearchText`, do not
   trust the file.
+- `notes` (since change `add-patient-notes`): `id`, `patient_id`, `content`, `created_at`,
+  `updated_at`. `search_text` is derived: recompute it on import. Keep `updated_at` as is: it is
+  what shows "Đã sửa".
+- Note drafts in the browser's IndexedDB are NOT part of a backup: they live on one device only
+  until the server confirms them.
 
 ## Constraints
 

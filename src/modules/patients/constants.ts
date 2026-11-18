@@ -22,6 +22,35 @@ export const GENDER_LABELS: Record<Gender, string> = {
   other: "Khác",
 };
 
+/** Notes (spec patient-notes). */
+export const NOTE_LIMITS = {
+  content: 5000,
+  /** From this length on, the composer shows a character counter. */
+  counterFrom: 4500,
+} as const;
+
+/** Pause after the last keystroke before a note is sent (spec "Tự lưu ghi chú"). */
+export const NOTE_AUTOSAVE_DELAY_MS = 1000;
+/** While waiting for the network, retry this often even without an `online` event. */
+export const NOTE_RETRY_INTERVAL_MS = 15_000;
+/** A save not answered after this long is shown as "Đang chờ mạng" (it keeps waiting). */
+export const NOTE_SLOW_SEND_MS = 15_000;
+
+export const NOTE_MESSAGES = {
+  tooLong: `Ghi chú tối đa ${NOTE_LIMITS.content} ký tự.`,
+  empty: "Ghi chú đang trống.",
+  notFound: "Không lưu được: bệnh nhân hoặc ghi chú không còn trong sổ. Chữ vẫn còn trên máy.",
+  idle: "Tự lưu khi bạn ngừng gõ",
+  saving: "Đang lưu…",
+  saved: "Đã lưu",
+  offline: "Đang chờ mạng",
+  unsaved: "Chưa lưu",
+  /** Badge of a closed note the server refused (too long, not found…). */
+  refused: "Chưa lưu được",
+  restored: "Khôi phục ghi chú chưa gửi",
+  deleteFailedOffline: "Không xoá được vì mất mạng. Thử lại khi có mạng.",
+} as const;
+
 /** User-facing messages of the patients module. Never put patient data in them. */
 export const PATIENT_MESSAGES = {
   fullNameRequired: "Nhập họ tên bệnh nhân.",

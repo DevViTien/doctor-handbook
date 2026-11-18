@@ -1,6 +1,7 @@
 # Module: patients
 
-The doctor's "contact book" of patients. Behaviour: `openspec/specs/patient-records/`.
+The doctor's "contact book" of patients. Behaviour: `openspec/specs/patient-records/` and
+`openspec/specs/patient-notes/`.
 
 ## Done
 
@@ -13,14 +14,29 @@ The doctor's "contact book" of patients. Behaviour: `openspec/specs/patient-reco
   millisecond precision, `CONFLICT`).
 - "Năm sinh hoặc tuổi" field (`birth.ts`): `1979`, `45t` / `45`, `12/03/1979`; ages in Vietnam time.
 - A failed save (offline, validation, conflict) keeps everything typed (`patient-form.tsx`).
+- **Notes** on the detail page (`patient-notes.tsx`): newest first, autosave one second after the
+  last keystroke, no "Lưu" button; edit keeps the creation time ("Đã sửa …"); delete asks first.
+
+## Notes: drafts and sync
+
+- Every keystroke is written to IndexedDB first (`note-drafts.ts`, `idb-keyval`), key
+  `${accountId}/${noteId}`, validated with Zod when read. A draft is removed only once the server
+  stored exactly that content.
+- `note-sync.ts` (`sendNoteDraft`) is the ONLY path from a draft to the server: a per-note lock
+  (Web Locks, or an in-tab queue) and always the latest draft, so an older send never lands after
+  a newer one. Used by the composer hook, the "back online" retries and `NoteDraftSync`.
+- `NoteDraftSync` (mounted in the doctor layout) sends leftover drafts of the signed-in account
+  from any doctor page, on load, on `online` and when the app returns to the foreground.
+- The browser makes the note id; `saveNote` is a single insert-or-update that only touches a
+  note of the session's account and patient, so re-sends never duplicate and foreign ids change
+  nothing (`NOT_FOUND`). `editing` decides whether `updated_at` moves (shown as "Đã sửa").
 
 ## Next changes
 
-1. `add-patient-notes`: timestamped notes, newest first; IndexedDB draft until saved (§10.6).
-2. `add-patient-search`: accent-insensitive instant search, fuzzy, summary/notes, voice.
-3. `add-patient-avatars`: compressed in the browser, uploaded straight to the private `avatars`
+1. `add-patient-search`: accent-insensitive instant search, fuzzy, summary/notes, voice.
+2. `add-patient-avatars`: compressed in the browser, uploaded straight to the private `avatars`
    bucket through a signed URL; displayed through short-lived signed URLs.
-4. `add-patient-trash`: soft delete via `deleted_at`, restore within 30 days (BR3). Every query
+3. `add-patient-trash`: soft delete via `deleted_at`, restore within 30 days (BR3). Every query
    already skips rows with `deleted_at`.
 
 ## Rules

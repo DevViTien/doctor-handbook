@@ -26,6 +26,15 @@ export type PatientDetail = PatientListItem & {
   version: string;
 };
 
+/** One note of a patient (spec patient-notes). Dates as ISO strings: they cross to the client. */
+export type PatientNote = {
+  id: string;
+  content: string;
+  createdAt: string;
+  /** Equals `createdAt` until the note is edited with "Sửa" (design §2). */
+  updatedAt: string;
+};
+
 /** Values of the add/edit form, as typed (strings), kept when a save fails. */
 export type PatientFormValues = {
   fullName: string;

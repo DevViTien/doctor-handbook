@@ -2,7 +2,13 @@ import { z } from "zod";
 
 import { GENDERS } from "@/lib/enums";
 import { parseBirthInput, todayInVietnam } from "@/modules/patients/birth";
-import { PATIENT_LIMITS, PATIENT_MESSAGES, PHONE_PATTERN } from "@/modules/patients/constants";
+import {
+  NOTE_LIMITS,
+  NOTE_MESSAGES,
+  PATIENT_LIMITS,
+  PATIENT_MESSAGES,
+  PHONE_PATTERN,
+} from "@/modules/patients/constants";
 
 /**
  * Patient form fields (spec patient-records "Thêm bệnh nhân", "Giới hạn các ô thông tin").
@@ -113,6 +119,27 @@ export function toPatientInput(parsed: z.output<typeof patientFormSchema>): Pati
     summary: parsed[PATIENT_FIELD_NAMES.summary],
   };
 }
+
+const noteContent = text.pipe(
+  z.string().min(1, NOTE_MESSAGES.empty).max(NOTE_LIMITS.content, NOTE_MESSAGES.tooLong),
+);
+
+/**
+ * Autosave of one note (spec patient-notes, design §2). The browser makes `noteId` up front, so
+ * re-sending is an idempotent "insert or update". `editing` is true when the composer was opened
+ * with "Sửa" on an existing note: only then is the note shown as edited.
+ */
+export const saveNoteSchema = z.object({
+  patientId: z.uuid(),
+  noteId: z.uuid(),
+  content: noteContent,
+  editing: z.boolean(),
+});
+
+export const deleteNoteSchema = z.object({
+  patientId: z.uuid(),
+  noteId: z.uuid(),
+});
 
 /** Patient id taken from a URL: anything that is not a UUID is simply "not found". */
 export const patientIdSchema = z.uuid();

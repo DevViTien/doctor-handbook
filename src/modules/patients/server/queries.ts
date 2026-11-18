@@ -2,10 +2,10 @@ import "server-only";
 
 import { and, desc, eq, isNull } from "drizzle-orm";
 
-import type { PatientDetail, PatientListItem } from "@/modules/patients/types";
+import type { PatientDetail, PatientListItem, PatientNote } from "@/modules/patients/types";
 import type { AuthContext } from "@/server/auth/session";
 import { type DbExecutor, getDb } from "@/server/db/client";
-import { patients } from "@/server/db/schema";
+import { notes, patients } from "@/server/db/schema";
 
 /**
  * Reads of the patients module. Every query is scoped to the SESSION's account and skips
@@ -68,4 +68,31 @@ export async function getPatient(
   const { updatedAt, ...patient } = row;
   // A JS Date keeps milliseconds; the update compares at that precision (design §4).
   return { ...patient, version: updatedAt.toISOString() };
+}
+
+/**
+ * Notes of one patient of the session's account, newest first (spec patient-notes). Scoped by
+ * the denormalized `notes.account_id`, which a composite foreign key keeps equal to the
+ * patient's owner. `patientId` MUST already be a valid UUID.
+ */
+export async function listNotes(
+  auth: AuthContext,
+  patientId: string,
+  db: DbExecutor = getDb(),
+): Promise<PatientNote[]> {
+  const rows = await db
+    .select({
+      id: notes.id,
+      content: notes.content,
+      createdAt: notes.createdAt,
+      updatedAt: notes.updatedAt,
+    })
+    .from(notes)
+    .where(and(eq(notes.patientId, patientId), eq(notes.accountId, auth.account.id)))
+    .orderBy(desc(notes.createdAt), desc(notes.id));
+  return rows.map((row) => ({
+    ...row,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  }));
 }

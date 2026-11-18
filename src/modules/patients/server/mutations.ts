@@ -4,9 +4,10 @@ import { and, eq, isNull, sql } from "drizzle-orm";
 
 import { buildSearchText } from "@/lib/text/normalize-vi";
 import type { PatientInput } from "@/modules/patients/schemas";
+import type { PatientNote } from "@/modules/patients/types";
 import type { AuthContext } from "@/server/auth/session";
 import { type DbExecutor, getDb } from "@/server/db/client";
-import { patients } from "@/server/db/schema";
+import { notes, patients } from "@/server/db/schema";
 
 /**
  * Writes of the patients module, always scoped to the SESSION's account (idea.md S3).
@@ -63,4 +64,82 @@ export async function updatePatient(
   // Nothing written: tell "someone else's / gone" apart from "edited meanwhile".
   const [exists] = await db.select({ id: patients.id }).from(patients).where(owned).limit(1);
   return exists ? "stale" : "not-found";
+}
+
+type NoteRow = { id: string; created_at: Date | string; updated_at: Date | string };
+
+/**
+ * Saves one note (design §2), always scoped to the session's account AND the given patient.
+ *
+ * - `editing` (opened with "Sửa"): a plain UPDATE that moves `updated_at` ("Đã sửa"). It never
+ *   recreates a note deleted meanwhile: that is "not found", and the text stays on the device.
+ * - Otherwise an idempotent insert-or-update by the browser-made id. The INSERT only selects a
+ *   patient of the session's account that is not in the trash, so nothing is ever added to
+ *   another doctor's patient. ON CONFLICT only updates a note of the same account and patient,
+ *   so another doctor's note id changes nothing. A re-send keeps `updated_at`: a new note stays
+ *   "not edited", an edited one keeps its "Đã sửa".
+ *
+ * `null` when no row was written, reported by the caller as `NOT_FOUND`.
+ */
+export async function saveNote(
+  auth: AuthContext,
+  input: { patientId: string; noteId: string; content: string; editing: boolean },
+  db: DbExecutor = getDb(),
+): Promise<PatientNote | null> {
+  const accountId = auth.account.id;
+  const searchText = buildSearchText(input.content);
+
+  const rows = input.editing
+    ? await db.execute<NoteRow>(sql`
+        UPDATE ${notes}
+        SET content = ${input.content}, search_text = ${searchText}, updated_at = now()
+        WHERE id = ${input.noteId}::uuid AND account_id = ${accountId}::uuid
+          AND patient_id = ${input.patientId}::uuid
+          AND EXISTS (
+            SELECT 1 FROM ${patients} p
+            WHERE p.id = ${input.patientId}::uuid AND p.account_id = ${accountId}::uuid
+              AND p.deleted_at IS NULL
+          )
+        RETURNING id, created_at, updated_at
+      `)
+    : await db.execute<NoteRow>(sql`
+        INSERT INTO ${notes} (id, patient_id, account_id, content, search_text)
+        SELECT ${input.noteId}::uuid, p.id, p.account_id, ${input.content}, ${searchText}
+        FROM ${patients} p
+        WHERE p.id = ${input.patientId}::uuid AND p.account_id = ${accountId}::uuid
+          AND p.deleted_at IS NULL
+        ON CONFLICT (id) DO UPDATE
+          SET content = excluded.content, search_text = excluded.search_text
+          WHERE notes.account_id = ${accountId}::uuid
+            AND notes.patient_id = ${input.patientId}::uuid
+        RETURNING id, created_at, updated_at
+      `);
+
+  const [row] = rows;
+  if (!row) return null;
+  return {
+    id: row.id,
+    content: input.content,
+    createdAt: new Date(row.created_at).toISOString(),
+    updatedAt: new Date(row.updated_at).toISOString(),
+  };
+}
+
+/** Deletes one note of the session's account and patient. `false` when there was none. */
+export async function deleteNote(
+  auth: AuthContext,
+  input: { patientId: string; noteId: string },
+  db: DbExecutor = getDb(),
+): Promise<boolean> {
+  const deleted = await db
+    .delete(notes)
+    .where(
+      and(
+        eq(notes.id, input.noteId),
+        eq(notes.patientId, input.patientId),
+        eq(notes.accountId, auth.account.id),
+      ),
+    )
+    .returning({ id: notes.id });
+  return deleted.length > 0;
 }

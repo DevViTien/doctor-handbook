@@ -4,14 +4,22 @@ import { revalidatePath } from "next/cache";
 
 import { routes } from "@/config/routes";
 import { AppError } from "@/lib/errors";
-import { PATIENT_MESSAGES } from "@/modules/patients/constants";
+import { NOTE_MESSAGES, PATIENT_MESSAGES } from "@/modules/patients/constants";
 import {
+  deleteNoteSchema,
   patientFormSchema,
+  saveNoteSchema,
   toPatientInput,
   updatePatientFormSchema,
 } from "@/modules/patients/schemas";
-import { insertPatient, updatePatient } from "@/modules/patients/server/mutations";
-import { createFormAction } from "@/server/actions/create-action";
+import {
+  deleteNote,
+  insertPatient,
+  saveNote,
+  updatePatient,
+} from "@/modules/patients/server/mutations";
+import type { PatientNote } from "@/modules/patients/types";
+import { createAction, createFormAction } from "@/server/actions/create-action";
 
 /**
  * Patient form actions (spec patient-records). Doctors only; the account always comes from the
@@ -41,5 +49,30 @@ export const updatePatientFormAction = createFormAction(
     revalidatePath(routes.doctor.patients);
     revalidatePath(routes.doctor.patient(input.patientId));
     return { id: input.patientId };
+  },
+);
+
+/**
+ * Autosave of one note (spec patient-notes, design §2): idempotent insert-or-update by the
+ * browser-made `noteId`. No `revalidatePath`: it runs about once a second while typing, and the
+ * notes section updates itself from the returned note.
+ */
+export const saveNoteAction = createAction(
+  { name: "patients.notes.save", schema: saveNoteSchema, access: "doctor" },
+  async (input, { auth }): Promise<PatientNote> => {
+    const note = await saveNote(auth, input);
+    if (!note) throw new AppError("NOT_FOUND", NOTE_MESSAGES.notFound);
+    return note;
+  },
+);
+
+/** Permanently deletes one note, after the confirmation dialog (spec "Xoá ghi chú"). */
+export const deleteNoteAction = createAction(
+  { name: "patients.notes.delete", schema: deleteNoteSchema, access: "doctor" },
+  async (input, { auth }): Promise<{ deleted: true }> => {
+    if (!(await deleteNote(auth, input))) {
+      throw new AppError("NOT_FOUND", NOTE_MESSAGES.notFound);
+    }
+    return { deleted: true };
   },
 );

@@ -13,6 +13,8 @@ export default function PatientLoading() {
         </div>
       </div>
       <Skeleton className="h-28 w-full rounded-2xl" />
+      <Skeleton className="h-28 w-full rounded-2xl" />
+      <Skeleton className="h-5 w-24" />
       <Skeleton className="h-40 w-full rounded-2xl" />
     </PageContainer>
   );

@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Local mockup for review: open this file directly in a browser. Never upload it to an external service. -->
+<title>Mockup ghi chú bệnh nhân</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
+<style>
+/* Review sheet over a gallery of device frames; frames render the approved app tokens (palette A "Mực bút bi").
+   The one bold element is the birth-field interpretation line ("45t" → "Năm sinh 1981 · 45 tuổi"). Everything else stays quiet. */
+:root {
+  --font: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --sheet-bg: #EEF1F6; --sheet-fg: #111827; --sheet-muted: #525C70; --sheet-line: #CDD4E0;
+  --sheet-control: #FFFFFF; --sheet-selected: #111827; --sheet-selected-fg: #FFFFFF;
+
+  --a-bg: #F6F7FA; --a-card: #FFFFFF; --a-fg: #111827; --a-muted: #525C70; --a-subtle: #EDF0F5;
+  --a-border: #DCE1EA; --a-input: #7D879A; --a-primary: #1E40AF; --a-primary-fg: #FFFFFF; --a-ring: #1E40AF;
+  --a-danger: #B42318; --a-danger-bg: #FDECEA; --a-warn: #8A4B00; --a-warn-bg: #FFF4E0;
+  --a-shadow: 0 6px 16px rgb(17 24 39 / 0.18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --sheet-bg: #090D15; --sheet-fg: #E9EDF5; --sheet-muted: #9BA5B8; --sheet-line: #283244;
+    --sheet-control: #151C2A; --sheet-selected: #E9EDF5; --sheet-selected-fg: #0D121C;
+    --a-bg: #0D121C; --a-card: #151C2A; --a-fg: #E9EDF5; --a-muted: #9BA5B8; --a-subtle: #1C2536;
+    --a-border: #283244; --a-input: #68748B; --a-primary: #8EA8FF; --a-primary-fg: #0D121C; --a-ring: #8EA8FF;
+    --a-danger: #FF8A80; --a-danger-bg: #3A1614; --a-warn: #FFC56B; --a-warn-bg: #33240A;
+    --a-shadow: 0 6px 16px rgb(0 0 0 / 0.5);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --sheet-bg: #090D15; --sheet-fg: #E9EDF5; --sheet-muted: #9BA5B8; --sheet-line: #283244;
+  --sheet-control: #151C2A; --sheet-selected: #E9EDF5; --sheet-selected-fg: #0D121C;
+  --a-bg: #0D121C; --a-card: #151C2A; --a-fg: #E9EDF5; --a-muted: #9BA5B8; --a-subtle: #1C2536;
+  --a-border: #283244; --a-input: #68748B; --a-primary: #8EA8FF; --a-primary-fg: #0D121C; --a-ring: #8EA8FF;
+  --a-danger: #FF8A80; --a-danger-bg: #3A1614; --a-warn: #FFC56B; --a-warn-bg: #33240A;
+  --a-shadow: 0 6px 16px rgb(0 0 0 / 0.5);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; background: var(--sheet-bg); color: var(--sheet-fg); font: 15px/1.55 var(--font);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.sheet { max-width: 1680px; margin: 0 auto; padding-block: 28px 56px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+.sheet > * { min-width: 0; }
+.sheet h1 { margin: 0; font-size: 1.6rem; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+.lede { margin: 6px 0 0; color: var(--sheet-muted); max-width: 78ch; }
+.lede code { font-size: 0.9em; }
+.decisions { margin: 10px 0 0; padding-left: 18px; color: var(--sheet-muted); max-width: 78ch; font-size: 0.92rem; }
+.decisions li + li { margin-top: 3px; }
+.decisions strong { color: var(--sheet-fg); }
+
+.controls { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-end; }
+.control { display: grid; gap: 6px; min-width: 0; }
+.control-label { font-size: 0.82rem; font-weight: 600; color: var(--sheet-muted); }
+.seg { display: flex; flex-wrap: wrap; border: 1px solid var(--sheet-line); border-radius: 10px; overflow: hidden; background: var(--sheet-control); }
+.seg button { font: inherit; font-size: 0.84rem; border: 0; background: transparent; color: var(--sheet-fg); padding: 6px 10px; cursor: pointer; border-right: 1px solid var(--sheet-line); }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--sheet-selected); color: var(--sheet-selected-fg); font-weight: 600; }
+.seg button:focus-visible { outline: 3px solid var(--a-ring); outline-offset: 2px; }
+
+.gallery { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+.screen { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; min-width: 0; flex: 0 1 390px; }
+.screen h2 { margin: 0; font-size: 1rem; font-weight: 600; }
+.screen h2 code { font-size: 0.85em; font-weight: 500; color: var(--sheet-muted); }
+.notes { margin: 0; padding-left: 18px; color: var(--sheet-muted); font-size: 0.86rem; max-width: 390px; }
+.notes li + li { margin-top: 2px; }
+.frame {
+  width: 390px; max-width: 100%; height: 800px; overflow: hidden; position: relative;
+  border: 1px solid var(--sheet-line); border-radius: 28px; background: var(--a-bg);
+}
+body[data-viewport="desktop"] .gallery { flex-direction: column; }
+body[data-viewport="desktop"] .screen { width: 100%; flex: none; }
+body[data-viewport="desktop"] .frame { width: 100%; height: 760px; border-radius: 14px; }
+body[data-viewport="desktop"] .notes { max-width: 78ch; }
+
+/* ---------- App ---------- */
+.app { height: 100%; display: flex; flex-direction: column; background: var(--a-bg); color: var(--a-fg); font-family: var(--font); font-size: 16px; line-height: 1.5; position: relative; }
+.a-status-bar { height: 44px; flex: none; }
+body[data-viewport="desktop"] .a-status-bar { display: none; }
+.a-icon { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.a-icon.sm { width: 16px; height: 16px; }
+.app :is(button, a, input, textarea):focus-visible { outline: 3px solid var(--a-ring); outline-offset: 2px; }
+.a-main { flex: 1; overflow: auto; min-height: 0; }
+.a-page { max-width: 672px; margin: 0 auto; padding: 0 16px 24px; }
+.a-page.has-fab { padding-bottom: 96px; }
+
+/* Bottom navigation (approved) */
+.a-nav { flex: none; border-top: 1px solid var(--a-border); background: var(--a-card); padding-bottom: 16px; }
+body[data-viewport="desktop"] .a-nav { padding-bottom: 0; }
+.a-nav ul { list-style: none; margin: 0 auto; padding: 0; display: flex; max-width: 672px; }
+.a-nav li { flex: 1; }
+.a-nav a { min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 0.75rem; font-weight: 500; color: var(--a-muted); text-decoration: none; }
+.a-nav a[aria-current="page"] { color: var(--a-primary); }
+
+/* Page header */
+.a-page-header { padding: 16px 0 12px; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.a-page-header h1 { margin: 0; font-size: 1.25rem; font-weight: 700; }
+.a-count { color: var(--a-muted); font-size: 0.875rem; white-space: nowrap; }
+
+/* Top bar for sub-pages */
+.a-topbar { max-width: 672px; margin: 0 auto; display: flex; align-items: center; gap: 4px; padding: 6px 8px 6px 4px; min-width: 0; }
+.a-back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; min-width: 44px; padding: 0 8px; border-radius: 10px; color: var(--a-fg); text-decoration: none; font-weight: 600; font-size: 0.95rem; border: 0; background: transparent; cursor: pointer; font-family: inherit; }
+.app .a-topbar-title { flex: 1; min-width: 0; margin: 0; font-size: 1.1rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a-spacer { flex: 1; }
+
+/* Patient list */
+.a-list { list-style: none; margin: 0; padding: 0; background: var(--a-card); border: 1px solid var(--a-border); border-radius: 14px; overflow: hidden; }
+.a-list li + li { border-top: 1px solid var(--a-border); }
+.a-row { display: flex; gap: 12px; align-items: center; min-height: 64px; padding: 10px 12px 10px 14px; color: inherit; text-decoration: none; min-width: 0; }
+.a-row:hover { background: var(--a-subtle); }
+.a-avatar { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--a-subtle); color: var(--a-fg); font-weight: 600; font-size: 0.9rem; flex: none; }
+.a-avatar.lg { width: 56px; height: 56px; font-size: 1.1rem; }
+.a-row-body { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.a-row-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a-row-meta { color: var(--a-muted); font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a-row .a-icon { color: var(--a-muted); }
+
+.a-fab {
+  position: absolute; right: 16px; bottom: calc(56px + 16px + 16px); z-index: 5;
+  height: 52px; padding: 0 20px 0 16px; border-radius: 999px; border: 0; display: inline-flex; align-items: center; gap: 8px;
+  background: var(--a-primary); color: var(--a-primary-fg); font: inherit; font-weight: 600; box-shadow: var(--a-shadow); cursor: pointer; text-decoration: none;
+}
+body[data-viewport="desktop"] .a-fab { right: max(16px, calc((100% - 672px) / 2 + 16px)); bottom: calc(56px + 20px); }
+
+.a-empty { display: grid; justify-items: center; gap: 12px; text-align: center; padding: 48px 24px; background: var(--a-card); border: 1px solid var(--a-border); border-radius: 14px; }
+.a-empty-icon { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: var(--a-subtle); color: var(--a-muted); }
+.a-empty-icon.danger { background: var(--a-danger-bg); color: var(--a-danger); }
+.a-empty p { margin: 0; }
+.a-empty .t { font-weight: 600; font-size: 1.05rem; }
+.a-empty .d { color: var(--a-muted); font-size: 0.92rem; max-width: 34ch; }
+
+.a-skel { background: var(--a-subtle); border-radius: 8px; animation: a-pulse 1.4s ease-in-out infinite; }
+@keyframes a-pulse { 50% { opacity: 0.55; } }
+@media (prefers-reduced-motion: reduce) { .a-skel { animation: none; } }
+
+/* Buttons */
+.a-btn {
+  height: 48px; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 16px;
+  font: inherit; font-weight: 600; border-radius: 10px; border: 1px solid transparent; cursor: pointer;
+  background: var(--a-primary); color: var(--a-primary-fg); white-space: nowrap; text-decoration: none;
+}
+.a-btn[disabled] { opacity: 0.7; cursor: progress; }
+.a-btn[data-variant="outline"] { background: var(--a-card); color: var(--a-fg); border-color: var(--a-input); }
+.a-btn.auto { width: auto; }
+.a-btn.small { height: 44px; width: auto; font-size: 0.92rem; padding: 0 14px; }
+.a-spin { animation: a-spin 0.8s linear infinite; }
+@keyframes a-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .a-spin { animation: none; } }
+.a-text-btn { border: 0; background: transparent; font: inherit; font-weight: 600; color: inherit; min-height: 44px; padding: 0 4px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Form */
+.a-form { display: grid; gap: 18px; padding-top: 4px; }
+.a-field { display: grid; gap: 6px; min-width: 0; }
+.a-label { font-size: 0.95rem; font-weight: 600; display: flex; align-items: baseline; gap: 8px; }
+.a-label .req { color: var(--a-muted); font-weight: 500; font-size: 0.82rem; }
+.a-hint { color: var(--a-muted); font-size: 0.875rem; margin: 0; }
+.a-input, .a-textarea {
+  width: 100%; height: 48px; padding: 0 14px; font: inherit; font-size: 16px; color: var(--a-fg);
+  background: var(--a-card); border: 1px solid var(--a-input); border-radius: 10px;
+}
+.a-textarea { height: auto; min-height: 152px; padding: 12px 14px; resize: vertical; line-height: 1.5; }
+.a-input::placeholder, .a-textarea::placeholder { color: var(--a-muted); opacity: 1; }
+.a-input[aria-invalid="true"] { border-color: var(--a-danger); border-width: 2px; padding-left: 13px; }
+.a-input.focus { outline: 3px solid var(--a-ring); outline-offset: 2px; }
+.a-field-error { display: flex; gap: 6px; align-items: flex-start; color: var(--a-danger); font-size: 0.875rem; margin: 0; }
+.a-field-error .a-icon { width: 16px; height: 16px; margin-top: 2px; }
+
+/* The memorable element: how the app understood the birth input */
+.a-reading { display: flex; gap: 8px; align-items: center; margin: 0; padding: 6px 10px; border-left: 3px solid var(--a-primary); background: var(--a-subtle); border-radius: 0 8px 8px 0; color: var(--a-fg); font-size: 0.92rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.a-reading .a-icon { width: 16px; height: 16px; color: var(--a-primary); }
+
+.a-gender { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.a-gender button { height: 44px; border-radius: 10px; border: 1px solid var(--a-input); background: var(--a-card); color: var(--a-fg); font: inherit; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.a-gender button[aria-checked="true"] { background: var(--a-primary); border-color: var(--a-primary); color: var(--a-primary-fg); font-weight: 600; }
+
+.a-alert { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 10px; background: var(--a-danger-bg); color: var(--a-danger); font-size: 0.95rem; font-weight: 500; }
+.a-alert[data-tone="warn"] { background: var(--a-warn-bg); color: var(--a-warn); }
+.a-alert .a-icon { margin-top: 2px; }
+.a-alert-body { display: grid; gap: 2px; min-width: 0; }
+.a-alert .a-text-btn { justify-self: start; min-height: 36px; padding: 0; }
+
+.a-dup { border: 1px solid var(--a-border); background: var(--a-subtle); border-radius: 12px; padding: 12px; display: grid; gap: 10px; }
+.a-dup-title { margin: 0; font-weight: 700; font-size: 0.95rem; }
+.a-dup-card { display: flex; gap: 12px; align-items: center; background: var(--a-card); border: 1px solid var(--a-border); border-radius: 10px; padding: 8px 8px 8px 12px; min-width: 0; }
+.a-dup-card .a-row-body { gap: 0; }
+.a-link { color: var(--a-primary); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; display: inline-flex; align-items: center; min-height: 44px; padding: 0 6px; flex: none; }
+.a-dup-note { margin: 0; color: var(--a-muted); font-size: 0.875rem; }
+
+.a-savebar { flex: none; border-top: 1px solid var(--a-border); background: var(--a-card); padding: 10px 16px; }
+.a-savebar-inner { max-width: 640px; margin: 0 auto; }
+
+/* Detail */
+.a-head { display: flex; gap: 14px; align-items: center; padding: 8px 0 16px; min-width: 0; }
+.a-head-body { min-width: 0; display: grid; gap: 2px; }
+.a-head h1 { margin: 0; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.01em; line-height: 1.25; overflow-wrap: anywhere; }
+.a-head-meta { color: var(--a-muted); font-size: 0.95rem; }
+.a-card { background: var(--a-card); border: 1px solid var(--a-border); border-radius: 14px; }
+.a-info { list-style: none; margin: 0 0 16px; padding: 0; }
+.a-info li { display: flex; gap: 12px; align-items: center; padding: 6px 14px; min-height: 56px; }
+.a-info li + li { border-top: 1px solid var(--a-border); }
+.a-info .a-icon { color: var(--a-muted); }
+.a-info-body { flex: 1; min-width: 0; display: grid; }
+.a-info-label { color: var(--a-muted); font-size: 0.8rem; }
+.a-info-value { font-weight: 600; overflow-wrap: anywhere; }
+.a-tel { color: var(--a-primary); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; min-height: 44px; }
+.a-summary { padding: 14px 16px 16px; display: grid; gap: 8px; }
+.a-summary h2 { margin: 0; font-size: 0.95rem; font-weight: 600; color: var(--a-muted); }
+.a-summary-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
+.a-summary-text a { color: var(--a-primary); font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+.a-summary-empty { margin: 0; color: var(--a-muted); }
+
+
+/* ---------- Notes (change add-patient-notes) ----------
+   The one accent: the open composer (2 px primary border + a small status line with an icon),
+   so a glance tells whether the words are safe ("Đã lưu") or waiting ("Đang chờ mạng"). */
+.frame.tall { height: 1080px; }
+body[data-viewport="desktop"] .frame.tall { height: 940px; }
+.a-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 20px 0 10px; }
+.a-section-head h2 { margin: 0; font-size: 1.05rem; font-weight: 700; }
+.a-section-head span { color: var(--a-muted); font-size: 0.875rem; }
+.a-notes { list-style: none; margin: 0; padding: 0; background: var(--a-card); border: 1px solid var(--a-border); border-radius: 14px; }
+.a-notes > li + li { border-top: 1px solid var(--a-border); }
+.a-note { padding: 10px 8px 14px 16px; display: grid; gap: 4px; }
+.a-note-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.a-note-when { display: grid; gap: 0; min-width: 0; }
+.a-note-time { font-size: 0.875rem; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.a-note-edited { font-size: 0.8rem; color: var(--a-muted); font-variant-numeric: tabular-nums; }
+.a-note-edit { margin-left: auto; min-height: 44px; min-width: 44px; padding: 0 10px; border: 0; background: transparent; color: var(--a-primary); font: inherit; font-weight: 600; font-size: 0.9rem; border-radius: 8px; cursor: pointer; }
+.a-note-text { margin: 0; padding-right: 8px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
+.a-note-text a { color: var(--a-primary); font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+.a-pending { display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem; font-weight: 600; color: var(--a-warn); background: var(--a-warn-bg); padding: 2px 8px; border-radius: 999px; }
+.a-pending .a-icon { width: 14px; height: 14px; }
+.a-notes-empty { margin: 0; padding: 20px 16px; background: var(--a-card); border: 1px dashed var(--a-border); border-radius: 14px; color: var(--a-muted); text-align: center; }
+
+.a-composer { background: var(--a-card); border: 2px solid var(--a-primary); border-radius: 14px; padding: 10px; display: grid; gap: 8px; margin-bottom: 12px; }
+.a-notes .a-composer { margin: 8px; }
+.a-composer-label { font-size: 0.82rem; font-weight: 600; color: var(--a-muted); padding: 0 4px; font-variant-numeric: tabular-nums; }
+.a-composer textarea { width: 100%; min-height: 112px; resize: none; border: 0; padding: 6px 4px; font: inherit; font-size: 16px; line-height: 1.55; color: var(--a-fg); background: transparent; }
+.a-composer textarea:focus-visible { outline: none; }
+.a-composer textarea::placeholder { color: var(--a-muted); opacity: 1; }
+.a-composer-foot { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; border-top: 1px solid var(--a-border); padding-top: 6px; }
+.a-save-status { display: inline-flex; align-items: center; gap: 6px; font-size: 0.875rem; font-weight: 500; color: var(--a-muted); min-height: 44px; padding: 0 4px; margin-right: auto; }
+.a-save-status .a-icon { width: 16px; height: 16px; }
+.a-save-status[data-state="saved"] { color: var(--a-fg); }
+.a-save-status[data-state="saved"] .a-icon { color: var(--a-primary); }
+.a-save-status[data-state="offline"] { color: var(--a-warn); }
+.a-save-status[data-state="error"] { color: var(--a-danger); }
+.a-done { height: 44px; padding: 0 18px; border-radius: 10px; border: 1px solid var(--a-input); background: var(--a-card); color: var(--a-fg); font: inherit; font-weight: 600; cursor: pointer; }
+.a-delete { height: 44px; padding: 0 10px; border: 0; background: transparent; color: var(--a-danger); font: inherit; font-weight: 600; font-size: 0.9rem; cursor: pointer; }
+.a-restored { display: flex; gap: 8px; align-items: flex-start; margin: 0; padding: 8px 10px; border-radius: 10px; background: var(--a-warn-bg); color: var(--a-warn); font-size: 0.9rem; font-weight: 600; }
+.a-restored .a-icon { width: 16px; height: 16px; margin-top: 2px; }
+.a-error-line { margin: 0 4px; display: flex; gap: 6px; align-items: flex-start; color: var(--a-danger); font-size: 0.875rem; }
+.a-error-line .a-icon { width: 16px; height: 16px; margin-top: 2px; }
+.a-count { color: var(--a-muted); font-size: 0.8rem; font-variant-numeric: tabular-nums; padding: 0 4px; }
+.a-count[data-over="true"] { color: var(--a-danger); font-weight: 600; }
+
+/* Dialog (rendered inside the frame) */
+.a-overlay { position: absolute; inset: 0; background: rgb(17 24 39 / 0.5); display: grid; place-items: center; padding: 20px; z-index: 20; }
+.a-dialog { width: 100%; max-width: 420px; background: var(--a-card); color: var(--a-fg); border-radius: 16px; padding: 20px; display: grid; gap: 14px; font-family: var(--font); }
+.a-dialog h2 { margin: 0; font-size: 1.15rem; font-weight: 700; }
+.a-dialog p { margin: 0; color: var(--a-muted); font-size: 0.95rem; }
+.a-dialog-actions { display: grid; gap: 8px; }
+.a-btn[data-variant="danger"] { background: var(--a-danger); color: var(--a-card); }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-todo" viewBox="0 0 24 24"><rect x="3" y="5" width="6" height="6" rx="1"/><path d="m3 17 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+  <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/></symbol>
+  <symbol id="i-id-card" viewBox="0 0 24 24"><path d="M16 10h2"/><path d="M16 14h2"/><path d="M6.17 15a3 3 0 0 1 5.66 0"/><circle cx="9" cy="11" r="2"/><rect x="2" y="5" width="20" height="14" rx="2"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></symbol>
+  <symbol id="i-triangle" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-loader" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></symbol>
+  <symbol id="i-wifi-off" viewBox="0 0 24 24"><path d="M12 20h.01"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/><path d="M2 8.82a15 15 0 0 1 4.177-2.643"/><path d="M22 8.82a15 15 0 0 0-11.288-3.764"/><path d="m2 2 20 20"/></symbol>
+  <symbol id="i-search-x" viewBox="0 0 24 24"><path d="m13.5 8.5-5 5"/><path d="m8.5 8.5 5 5"/><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-corner" viewBox="0 0 24 24"><path d="m15 10 5 5-5 5"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+
+  <symbol id="i-cloud-check" viewBox="0 0 24 24"><path d="m17 15-5.5 5.5L9 18"/><path d="M5 17.743A7 7 0 1 1 15.71 10h1.79a4.5 4.5 0 0 1 1.5 8.742"/></symbol>
+  <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></symbol>
+  <symbol id="i-square-pen" viewBox="0 0 24 24"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/></symbol>
+</svg>
+
+<main class="sheet">
+  <header>
+    <h1>Ghi chú theo thời gian trên trang bệnh nhân</h1>
+    <p class="lede">Mockup cho change <code>add-patient-notes</code> (change 2/5 của module bệnh nhân), bảng màu A "Mực bút bi", không thêm màu mới. Chọn trạng thái của phần Ghi chú, chế độ sáng/tối và khung điện thoại (390 px) hay máy tính. Tên và nội dung đều là ví dụ.</p>
+    <ul class="decisions">
+      <li><strong>Tự lưu, không có nút "Lưu":</strong> ngừng gõ khoảng 1 giây là ghi chú lên server; gõ tiếp thì cập nhật đúng ghi chú đó. "Xong" chỉ để đóng ô soạn.</li>
+      <li><strong>Không mất chữ:</strong> mỗi phím gõ được ghi ngay vào máy (IndexedDB). Mất mạng thì "Đang chờ mạng" và tự gửi khi có mạng, từ bất kỳ trang nào của bác sĩ. Đóng tab, mở lại thì "Khôi phục ghi chú chưa gửi".</li>
+      <li><strong>Ngày giờ do hệ thống gán</strong> lúc ghi chú lưu lần đầu; sửa thì giữ ngày tạo, thêm "Đã sửa …". Ghi chú mới gõ nhiều đợt không bị coi là đã sửa.</li>
+      <li><strong>Xoá</strong> là thao tác duy nhất hỏi xác nhận (không hoàn tác được). Ghi chú bị xoá hết chữ thì không tự mất: giữ nội dung cũ, muốn bỏ thì "Xoá ghi chú".</li>
+      <li>Nút "Ghi chú mới" nổi ở góc dưới, cùng chỗ với "Thêm bệnh nhân". Ghi chú không bao giờ hiện ở danh sách bệnh nhân.</li>
+    </ul>
+  </header>
+
+  <div class="controls" role="group" aria-label="Tuỳ chọn xem mockup">
+    <div class="control">
+      <span class="control-label" id="lbl-state">Phần Ghi chú</span>
+      <div class="seg" data-screen="notes" aria-labelledby="lbl-state">
+        <button type="button" data-value="list" aria-pressed="true">Có ghi chú</button>
+        <button type="button" data-value="empty" aria-pressed="false">Chưa có</button>
+        <button type="button" data-value="new" aria-pressed="false">Ô soạn mới</button>
+        <button type="button" data-value="saving" aria-pressed="false">Đang lưu</button>
+        <button type="button" data-value="saved" aria-pressed="false">Đã lưu</button>
+        <button type="button" data-value="offline" aria-pressed="false">Chờ mạng</button>
+        <button type="button" data-value="closed-offline" aria-pressed="false">Đóng khi chờ mạng</button>
+        <button type="button" data-value="restored" aria-pressed="false">Khôi phục nháp</button>
+        <button type="button" data-value="toolong" aria-pressed="false">Quá dài</button>
+        <button type="button" data-value="notfound" aria-pressed="false">Không lưu được</button>
+        <button type="button" data-value="editing" aria-pressed="false">Đang sửa</button>
+        <button type="button" data-value="delete" aria-pressed="false">Hộp thoại xoá</button>
+        <button type="button" data-value="loading" aria-pressed="false">Đang tải</button>
+      </div>
+    </div>
+    <div class="control">
+      <span class="control-label" id="lbl-theme">Chế độ</span>
+      <div class="seg" data-control="theme" aria-labelledby="lbl-theme">
+        <button type="button" data-value="system" aria-pressed="true">Theo máy</button>
+        <button type="button" data-value="light" aria-pressed="false">Sáng</button>
+        <button type="button" data-value="dark" aria-pressed="false">Tối</button>
+      </div>
+    </div>
+    <div class="control">
+      <span class="control-label" id="lbl-viewport">Khung</span>
+      <div class="seg" data-control="viewport" aria-labelledby="lbl-viewport">
+        <button type="button" data-value="phone" aria-pressed="true">Điện thoại</button>
+        <button type="button" data-value="desktop" aria-pressed="false">Máy tính</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="gallery">
+    <section class="screen" aria-labelledby="s-detail" style="flex-basis:390px">
+      <h2 id="s-detail">Chi tiết bệnh nhân <code>/patients/&lt;id&gt;</code></h2>
+      <div class="frame tall"><div class="app" id="app"></div></div>
+      <ul class="notes">
+        <li>Phần Ghi chú nằm dưới thẻ Tóm tắt; mới nhất ở trên, ngày giờ in đậm để lướt nhanh theo lần khám.</li>
+        <li>Ô soạn mở ở đầu danh sách, con trỏ sẵn sàng, viền xanh để biết đang ghi vào đâu. Dòng trạng thái nhỏ ở góc trái: "Tự lưu khi bạn ngừng gõ" → "Đang lưu…" → "Đã lưu".</li>
+        <li>Đóng ô soạn khi chưa gửi được: ghi chú vẫn hiện trong danh sách với nhãn "Đang chờ mạng" cho tới khi lên server.</li>
+        <li>"Sửa" là nút chữ 44 px ở góc mỗi ghi chú; khi sửa, ô soạn mở tại chỗ và có thêm "Xoá ghi chú".</li>
+      </ul>
+    </section>
+  </div>
+</main>
+
+<script>
+(() => {
+  const root = document.documentElement;
+  const body = document.body;
+  const icon = (id, cls = "") => `<svg class="a-icon ${cls}" aria-hidden="true"><use href="#i-${id}"/></svg>`;
+
+  const nav = `<nav class="a-nav" aria-label="Điều hướng chính"><ul>
+      <li><a href="#" aria-current="page">${icon("users")}Bệnh nhân</a></li>
+      <li><a href="#">${icon("todo")}Việc cần làm</a></li>
+      <li><a href="#">${icon("settings")}Cài đặt</a></li>
+    </ul></nav>`;
+
+  const notes = [
+    { t: "15/11/2026 09:12", text: "HA 150/90, tăng liều amlodipin lên 10 mg.\nHẹn tái khám 2 tuần." },
+    { t: "02/10/2026 14:30", edited: "03/10/2026 08:05", text: "Tái khám. KQ XN: https://lab.example.vn/kq/123\nĐường huyết đói 6.8." },
+    { t: "20/08/2026 10:02", text: "Than chóng mặt buổi sáng. Hỏi lại về giờ uống thuốc." },
+  ];
+
+  const noteItem = (n, extra = "") => `<li><article class="a-note">
+      <div class="a-note-head">
+        <span class="a-note-when"><span class="a-note-time">${n.t}</span>${n.edited ? `<span class="a-note-edited">Đã sửa ${n.edited}</span>` : ""}</span>
+        ${extra}
+        <button class="a-note-edit" type="button" aria-label="Sửa ghi chú lúc ${n.t}">Sửa</button>
+      </div>
+      <p class="a-note-text">${n.text.replace(/https:\/\/\S+/g, (u) => `<a href="#">${u}</a>`)}</p>
+    </article></li>`;
+
+  const status = {
+    idle: `<span class="a-save-status" role="status">${icon("square-pen")}Tự lưu khi bạn ngừng gõ</span>`,
+    saving: `<span class="a-save-status" role="status" data-state="saving">${icon("loader", "a-spin")}Đang lưu…</span>`,
+    saved: `<span class="a-save-status" role="status" data-state="saved">${icon("cloud-check")}Đã lưu</span>`,
+    offline: `<span class="a-save-status" role="status" data-state="offline">${icon("wifi-off")}Đang chờ mạng</span>`,
+    error: `<span class="a-save-status" role="status" data-state="error">${icon("alert")}Chưa lưu</span>`,
+  };
+
+  function composer({ text = "", st = "idle", label = "Ghi chú mới", restored = false, error = "", editing = false, count = "" }) {
+    return `<div class="a-composer">
+      ${restored ? `<p class="a-restored">${icon("history")}<span>Khôi phục ghi chú chưa gửi</span></p>` : ""}
+      <label class="a-composer-label" for="note-text">${label}</label>
+      <textarea id="note-text" autocomplete="off" placeholder="Ghi điều cần nhớ về lần gặp này…" ${error ? 'aria-invalid="true"' : ""}>${text}</textarea>
+      ${error ? `<p class="a-error-line">${icon("alert")}<span>${error}</span></p>` : ""}
+      <div class="a-composer-foot">
+        ${status[st]}
+        ${count}
+        ${editing ? `<button class="a-delete" type="button">Xoá ghi chú</button>` : ""}
+        <button class="a-done" type="button">Xong</button>
+      </div>
+    </div>`;
+  }
+
+  function page(notesHtml, { fab = true, overlay = "" } = {}) {
+    return `<div class="a-status-bar"></div>
+      <div class="a-main"><div class="a-page has-fab">
+        <div class="a-topbar" style="padding-left:0;padding-right:0">
+          <a class="a-back" href="#">${icon("arrow-left")}Bệnh nhân</a>
+          <span class="a-spacer"></span>
+          <a class="a-btn small" data-variant="outline" href="#">${icon("pencil", "sm")}Sửa</a>
+        </div>
+        <div class="a-head">
+          <span class="a-avatar lg" aria-hidden="true">NA</span>
+          <div class="a-head-body"><h1>Nguyễn Văn An</h1><span class="a-head-meta">Nam · 47 tuổi (1979) · Nghệ An</span></div>
+        </div>
+        <section class="a-card a-summary" aria-labelledby="sum-title">
+          <h2 id="sum-title">Tóm tắt</h2>
+          <p class="a-summary-text">THA 5 năm. Dị ứng Penicillin.</p>
+        </section>
+        ${notesHtml}
+      </div></div>
+      ${fab ? `<a class="a-fab" href="#">${icon("plus")}Ghi chú mới</a>` : ""}
+      ${nav}${overlay}`;
+  }
+
+  const head = (count) => `<div class="a-section-head"><h2>Ghi chú</h2>${count ? `<span>${count} ghi chú</span>` : ""}</div>`;
+  const list = (items) => `<ol class="a-notes">${items.join("")}</ol>`;
+  const typed = "HA 140/90, giữ liều amlodipin 10 mg.";
+
+  function render(state) {
+    const el = document.getElementById("app");
+    const all = notes.map((n) => noteItem(n));
+    const withComposer = (opts) => head(3) + composer(opts) + list(all);
+    let html;
+    switch (state) {
+      case "list": html = page(head(3) + list(all)); break;
+      case "empty": html = page(head(0) + `<p class="a-notes-empty">Chưa có ghi chú</p>`); break;
+      case "new": html = page(withComposer({}), { fab: false }); break;
+      case "saving": html = page(withComposer({ text: typed, st: "saving" }), { fab: false }); break;
+      case "saved": html = page(withComposer({ text: typed, st: "saved", label: "18/11/2026 15:40" }), { fab: false }); break;
+      case "offline": html = page(withComposer({ text: typed, st: "offline" }), { fab: false }); break;
+      case "closed-offline":
+        html = page(head(4) + list([
+          `<li><article class="a-note"><div class="a-note-head"><span class="a-note-time">Vừa ghi</span><span class="a-pending">${icon("wifi-off")}Đang chờ mạng</span><button class="a-note-edit" type="button">Sửa</button></div><p class="a-note-text">${typed}</p></article></li>`,
+          ...all,
+        ]));
+        break;
+      case "restored": html = page(withComposer({ text: typed, st: "saving", restored: true }), { fab: false }); break;
+      case "toolong":
+        html = page(withComposer({ text: "KQ siêu âm bụng (dán từ máy): Gan kích thước bình thường, nhu mô đều…", st: "error", error: "Ghi chú tối đa 5000 ký tự.", count: `<span class="a-count" data-over="true">5.214/5.000</span>` }), { fab: false });
+        break;
+      case "notfound":
+        html = page(withComposer({ text: typed, st: "error", error: "Không lưu được: bệnh nhân hoặc ghi chú không còn trong sổ. Chữ vẫn còn trên máy." }), { fab: false });
+        break;
+      case "editing":
+      case "delete": {
+        const editingItem = `<li>${composer({ text: notes[0].text, st: "saved", label: notes[0].t, editing: true })}</li>`;
+        const overlay = state === "delete" ? `<div class="a-overlay"><div class="a-dialog" role="alertdialog" aria-labelledby="dlg-t" aria-describedby="dlg-d">
+            <h2 id="dlg-t">Xoá ghi chú này?</h2>
+            <p id="dlg-d">Ghi chú lúc 15/11/2026 09:12 sẽ bị xoá vĩnh viễn, không khôi phục được.</p>
+            <div class="a-dialog-actions">
+              <button class="a-btn" data-variant="danger" type="button">Xoá ghi chú</button>
+              <button class="a-btn" data-variant="outline" type="button">Không xoá</button>
+            </div></div></div>` : "";
+        html = page(head(3) + list([editingItem, ...all.slice(1)]), { overlay });
+        break;
+      }
+      case "loading":
+        html = page(`<div class="a-section-head"><div class="a-skel" style="height:20px;width:90px"></div></div>
+          <div class="a-notes" aria-busy="true">${[0, 1, 2].map(() => `<div class="a-note" style="gap:8px"><span class="a-skel" style="height:14px;width:40%"></span><span class="a-skel" style="height:14px;width:90%"></span><span class="a-skel" style="height:14px;width:70%"></span></div>`).join('<div style="border-top:1px solid var(--a-border)"></div>')}</div>`);
+        break;
+    }
+    el.innerHTML = html;
+  }
+
+  const globals = {
+    theme: (v) => (v === "system" ? root.removeAttribute("data-theme") : root.setAttribute("data-theme", v)),
+    viewport: (v) => (body.dataset.viewport = v),
+  };
+  document.querySelectorAll(".seg").forEach((group) => {
+    group.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-value]");
+      if (!button) return;
+      group.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
+      if (group.dataset.control) globals[group.dataset.control](button.dataset.value);
+      else render(button.dataset.value);
+    });
+  });
+  document.addEventListener("click", (e) => { if (e.target.closest(".frame a, .frame button")) e.preventDefault(); });
+  body.dataset.viewport = "phone";
+  render("list");
+})();
+</script>
+</body>
+</html>
