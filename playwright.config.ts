@@ -1,6 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
 
-import { E2E_ACCESS_CODE_PEPPER, E2E_CLIENT_IP } from "./tests/e2e/fixtures/constants";
+import {
+  E2E_ACCESS_CODE_PEPPER,
+  E2E_CLIENT_IP,
+  E2E_CRON_SECRET,
+} from "./tests/e2e/fixtures/constants";
 
 /**
  * End-to-end tests run against mobile viewports first: doctors use the app on their phones.
@@ -29,6 +33,7 @@ const serverEnv: Record<string, string> = {
         SUPABASE_URL: "http://127.0.0.1:54321",
         SUPABASE_SERVICE_ROLE_KEY: "e2e-placeholder-not-used",
         ACCESS_CODE_PEPPER: E2E_ACCESS_CODE_PEPPER,
+        CRON_SECRET: E2E_CRON_SECRET,
       }
     : {}),
 };

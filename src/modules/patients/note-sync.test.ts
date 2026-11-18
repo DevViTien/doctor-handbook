@@ -253,6 +253,27 @@ describe("sendAllNoteDrafts", () => {
   });
 });
 
+describe("sendAllNoteDrafts, orphans", () => {
+  it("drops a refused draft older than the trash retention, keeps a recent one", async () => {
+    await draft("Bệnh nhân đã bị xoá hẳn");
+    await draft("Bệnh nhân vừa vào thùng rác", { noteId: OTHER_NOTE });
+    const key = `${LAN}/${NOTE}`;
+    memory.set(key, {
+      ...(memory.get(key) as object),
+      savedAt: Date.now() - 32 * 24 * 3600 * 1000,
+    });
+    vi.mocked(saveNoteAction).mockResolvedValue({
+      ok: false,
+      error: { code: "NOT_FOUND", message: NOTE_MESSAGES.notFound },
+    });
+
+    await sendAllNoteDrafts(LAN);
+
+    expect(await readNoteDraft(LAN, NOTE)).toBeNull();
+    expect(await readNoteDraft(LAN, OTHER_NOTE)).not.toBeNull();
+  });
+});
+
 describe("discard and delete", () => {
   it("discards a draft without sending it", async () => {
     await draft("");

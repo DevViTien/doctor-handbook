@@ -7,3 +7,9 @@ export const siteConfig = {
   timeZone: "Asia/Ho_Chi_Minh",
   themeColor: { light: "#f6f7fa", dark: "#0d121c" },
 } as const;
+
+/**
+ * The doctor area's own notice area (bottom, above the navigation; spec patient-trash). Toasts
+ * meant for it pass `toasterId: DOCTOR_TOASTER_ID`; the app-wide Toaster keeps the others.
+ */
+export const DOCTOR_TOASTER_ID = "doctor";

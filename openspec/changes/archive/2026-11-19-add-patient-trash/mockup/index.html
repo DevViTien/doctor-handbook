@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Local mockup for review: open this file directly in a browser. Never upload it to an external service. -->
+<title>Mockup thùng rác</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
+<style>
+/* Review sheet over a gallery of device frames; frames render the approved app tokens (palette A "Mực bút bi").
+   The one bold element is the birth-field interpretation line ("45t" → "Năm sinh 1981 · 45 tuổi"). Everything else stays quiet. */
+:root {
+  --font: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --sheet-bg: #EEF1F6; --sheet-fg: #111827; --sheet-muted: #525C70; --sheet-line: #CDD4E0;
+  --sheet-control: #FFFFFF; --sheet-selected: #111827; --sheet-selected-fg: #FFFFFF;
+
+  --a-bg: #F6F7FA; --a-card: #FFFFFF; --a-fg: #111827; --a-muted: #525C70; --a-subtle: #EDF0F5;
+  --a-border: #DCE1EA; --a-input: #7D879A; --a-primary: #1E40AF; --a-primary-fg: #FFFFFF; --a-ring: #1E40AF;
+  --a-danger: #B42318; --a-danger-bg: #FDECEA; --a-warn: #8A4B00; --a-warn-bg: #FFF4E0;
+  --a-shadow: 0 6px 16px rgb(17 24 39 / 0.18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --sheet-bg: #090D15; --sheet-fg: #E9EDF5; --sheet-muted: #9BA5B8; --sheet-line: #283244;
+    --sheet-control: #151C2A; --sheet-selected: #E9EDF5; --sheet-selected-fg: #0D121C;
+    --a-bg: #0D121C; --a-card: #151C2A; --a-fg: #E9EDF5; --a-muted: #9BA5B8; --a-subtle: #1C2536;
+    --a-border: #283244; --a-input: #68748B; --a-primary: #8EA8FF; --a-primary-fg: #0D121C; --a-ring: #8EA8FF;
+    --a-danger: #FF8A80; --a-danger-bg: #3A1614; --a-warn: #FFC56B; --a-warn-bg: #33240A;
+    --a-shadow: 0 6px 16px rgb(0 0 0 / 0.5);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --sheet-bg: #090D15; --sheet-fg: #E9EDF5; --sheet-muted: #9BA5B8; --sheet-line: #283244;
+  --sheet-control: #151C2A; --sheet-selected: #E9EDF5; --sheet-selected-fg: #0D121C;
+  --a-bg: #0D121C; --a-card: #151C2A; --a-fg: #E9EDF5; --a-muted: #9BA5B8; --a-subtle: #1C2536;
+  --a-border: #283244; --a-input: #68748B; --a-primary: #8EA8FF; --a-primary-fg: #0D121C; --a-ring: #8EA8FF;
+  --a-danger: #FF8A80; --a-danger-bg: #3A1614; --a-warn: #FFC56B; --a-warn-bg: #33240A;
+  --a-shadow: 0 6px 16px rgb(0 0 0 / 0.5);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; background: var(--sheet-bg); color: var(--sheet-fg); font: 15px/1.55 var(--font);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.sheet { max-width: 1680px; margin: 0 auto; padding-block: 28px 56px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+.sheet > * { min-width: 0; }
+.sheet h1 { margin: 0; font-size: 1.6rem; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+.lede { margin: 6px 0 0; color: var(--sheet-muted); max-width: 78ch; }
+.lede code { font-size: 0.9em; }
+.decisions { margin: 10px 0 0; padding-left: 18px; color: var(--sheet-muted); max-width: 78ch; font-size: 0.92rem; }
+.decisions li + li { margin-top: 3px; }
+.decisions strong { color: var(--sheet-fg); }
+
+.controls { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-end; }
+.control { display: grid; gap: 6px; min-width: 0; }
+.control-label { font-size: 0.82rem; font-weight: 600; color: var(--sheet-muted); }
+.seg { display: flex; flex-wrap: wrap; border: 1px solid var(--sheet-line); border-radius: 10px; overflow: hidden; background: var(--sheet-control); }
+.seg button { font: inherit; font-size: 0.84rem; border: 0; background: transparent; color: var(--sheet-fg); padding: 6px 10px; cursor: pointer; border-right: 1px solid var(--sheet-line); }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--sheet-selected); color: var(--sheet-selected-fg); font-weight: 600; }
+.seg button:focus-visible { outline: 3px solid var(--a-ring); outline-offset: 2px; }
+
+.gallery { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+.screen { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; min-width: 0; flex: 0 1 390px; }
+.screen h2 { margin: 0; font-size: 1rem; font-weight: 600; }
+.screen h2 code { font-size: 0.85em; font-weight: 500; color: var(--sheet-muted); }
+.notes { margin: 0; padding-left: 18px; color: var(--sheet-muted); font-size: 0.86rem; max-width: 390px; }
+.notes li + li { margin-top: 2px; }
+.frame {
+  width: 390px; max-width: 100%; height: 800px; overflow: hidden; position: relative;
+  border: 1px solid var(--sheet-line); border-radius: 28px; background: var(--a-bg);
+}
+body[data-viewport="desktop"] .gallery { flex-direction: column; }
+body[data-viewport="desktop"] .screen { width: 100%; flex: none; }
+body[data-viewport="desktop"] .frame { width: 100%; height: 760px; border-radius: 14px; }
+body[data-viewport="desktop"] .notes { max-width: 78ch; }
+
+/* ---------- App ---------- */
+.app { height: 100%; display: flex; flex-direction: column; background: var(--a-bg); color: var(--a-fg); font-family: var(--font); font-size: 16px; line-height: 1.5; position: relative; }
+.a-status-bar { height: 44px; flex: none; }
+body[data-viewport="desktop"] .a-status-bar { display: none; }
+.a-icon { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.a-icon.sm { width: 16px; height: 16px; }
+.app :is(button, a, input, textarea):focus-visible { outline: 3px solid var(--a-ring); outline-offset: 2px; }
+.a-main { flex: 1; overflow: auto; min-height: 0; }
+.a-page { max-width: 672px; margin: 0 auto; padding: 0 16px 24px; }
+.a-page.has-fab { padding-bottom: 96px; }
+
+/* Bottom navigation (approved) */
+.a-nav { flex: none; border-top: 1px solid var(--a-border); background: var(--a-card); padding-bottom: 16px; }
+body[data-viewport="desktop"] .a-nav { padding-bottom: 0; }
+.a-nav ul { list-style: none; margin: 0 auto; padding: 0; display: flex; max-width: 672px; }
+.a-nav li { flex: 1; }
+.a-nav a { min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 0.75rem; font-weight: 500; color: var(--a-muted); text-decoration: none; }
+.a-nav a[aria-current="page"] { color: var(--a-primary); }
+
+/* Page header */
+.a-page-header { padding: 16px 0 12px; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.a-page-header h1 { margin: 0; font-size: 1.25rem; font-weight: 700; }
+.a-count { color: var(--a-muted); font-size: 0.875rem; white-space: nowrap; }
+
+/* Top bar for sub-pages */
+.a-topbar { max-width: 672px; margin: 0 auto; display: flex; align-items: center; gap: 4px; padding: 6px 8px 6px 4px; min-width: 0; }
+.a-back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; min-width: 44px; padding: 0 8px; border-radius: 10px; color: var(--a-fg); text-decoration: none; font-weight: 600; font-size: 0.95rem; border: 0; background: transparent; cursor: pointer; font-family: inherit; }
+.app .a-topbar-title { flex: 1; min-width: 0; margin: 0; font-size: 1.1rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a-spacer { flex: 1; }
+
+/* Patient list */
+.a-list { list-style: none; margin: 0; padding: 0; background: var(--a-card); border: 1px solid var(--a-border); border-radius: 14px; overflow: hidden; }
+.a-list li + li { border-top: 1px solid var(--a-border); }
+.a-row { display: flex; gap: 12px; align-items: center; min-height: 64px; padding: 10px 12px 10px 14px; color: inherit; text-decoration: none; min-width: 0; }
+.a-row:hover { background: var(--a-subtle); }
+.a-avatar { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--a-subtle); color: var(--a-fg); font-weight: 600; font-size: 0.9rem; flex: none; }
+.a-avatar.lg { width: 56px; height: 56px; font-size: 1.1rem; }
+.a-row-body { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.a-row-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a-row-meta { color: var(--a-muted); font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a-row .a-icon { color: var(--a-muted); }
+
+.a-fab {
+  position: absolute; right: 16px; bottom: calc(56px + 16px + 16px); z-index: 5;
+  height: 52px; padding: 0 20px 0 16px; border-radius: 999px; border: 0; display: inline-flex; align-items: center; gap: 8px;
+  background: var(--a-primary); color: var(--a-primary-fg); font: inherit; font-weight: 600; box-shadow: var(--a-shadow); cursor: pointer; text-decoration: none;
+}
+body[data-viewport="desktop"] .a-fab { right: max(16px, calc((100% - 672px) / 2 + 16px)); bottom: calc(56px + 20px); }
+
+.a-empty { display: grid; justify-items: center; gap: 12px; text-align: center; padding: 48px 24px; background: var(--a-card); border: 1px solid var(--a-border); border-radius: 14px; }
+.a-empty-icon { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: var(--a-subtle); color: var(--a-muted); }
+.a-empty-icon.danger { background: var(--a-danger-bg); color: var(--a-danger); }
+.a-empty p { margin: 0; }
+.a-empty .t { font-weight: 600; font-size: 1.05rem; }
+.a-empty .d { color: var(--a-muted); font-size: 0.92rem; max-width: 34ch; }
+
+.a-skel { background: var(--a-subtle); border-radius: 8px; animation: a-pulse 1.4s ease-in-out infinite; }
+@keyframes a-pulse { 50% { opacity: 0.55; } }
+@media (prefers-reduced-motion: reduce) { .a-skel { animation: none; } }
+
+/* Buttons */
+.a-btn {
+  height: 48px; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 16px;
+  font: inherit; font-weight: 600; border-radius: 10px; border: 1px solid transparent; cursor: pointer;
+  background: var(--a-primary); color: var(--a-primary-fg); white-space: nowrap; text-decoration: none;
+}
+.a-btn[disabled] { opacity: 0.7; cursor: progress; }
+.a-btn[data-variant="outline"] { background: var(--a-card); color: var(--a-fg); border-color: var(--a-input); }
+.a-btn.auto { width: auto; }
+.a-btn.small { height: 44px; width: auto; font-size: 0.92rem; padding: 0 14px; }
+.a-spin { animation: a-spin 0.8s linear infinite; }
+@keyframes a-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .a-spin { animation: none; } }
+.a-text-btn { border: 0; background: transparent; font: inherit; font-weight: 600; color: inherit; min-height: 44px; padding: 0 4px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Form */
+.a-form { display: grid; gap: 18px; padding-top: 4px; }
+.a-field { display: grid; gap: 6px; min-width: 0; }
+.a-label { font-size: 0.95rem; font-weight: 600; display: flex; align-items: baseline; gap: 8px; }
+.a-label .req { color: var(--a-muted); font-weight: 500; font-size: 0.82rem; }
+.a-hint { color: var(--a-muted); font-size: 0.875rem; margin: 0; }
+.a-input, .a-textarea {
+  width: 100%; height: 48px; padding: 0 14px; font: inherit; font-size: 16px; color: var(--a-fg);
+  background: var(--a-card); border: 1px solid var(--a-input); border-radius: 10px;
+}
+.a-textarea { height: auto; min-height: 152px; padding: 12px 14px; resize: vertical; line-height: 1.5; }
+.a-input::placeholder, .a-textarea::placeholder { color: var(--a-muted); opacity: 1; }
+.a-input[aria-invalid="true"] { border-color: var(--a-danger); border-width: 2px; padding-left: 13px; }
+.a-input.focus { outline: 3px solid var(--a-ring); outline-offset: 2px; }
+.a-field-error { display: flex; gap: 6px; align-items: flex-start; color: var(--a-danger); font-size: 0.875rem; margin: 0; }
+.a-field-error .a-icon { width: 16px; height: 16px; margin-top: 2px; }
+
+/* The memorable element: how the app understood the birth input */
+.a-reading { display: flex; gap: 8px; align-items: center; margin: 0; padding: 6px 10px; border-left: 3px solid var(--a-primary); background: var(--a-subtle); border-radius: 0 8px 8px 0; color: var(--a-fg); font-size: 0.92rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.a-reading .a-icon { width: 16px; height: 16px; color: var(--a-primary); }
+
+.a-gender { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.a-gender button { height: 44px; border-radius: 10px; border: 1px solid var(--a-input); background: var(--a-card); color: var(--a-fg); font: inherit; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.a-gender button[aria-checked="true"] { background: var(--a-primary); border-color: var(--a-primary); color: var(--a-primary-fg); font-weight: 600; }
+
+.a-alert { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 10px; background: var(--a-danger-bg); color: var(--a-danger); font-size: 0.95rem; font-weight: 500; }
+.a-alert[data-tone="warn"] { background: var(--a-warn-bg); color: var(--a-warn); }
+.a-alert .a-icon { margin-top: 2px; }
+.a-alert-body { display: grid; gap: 2px; min-width: 0; }
+.a-alert .a-text-btn { justify-self: start; min-height: 36px; padding: 0; }
+
+.a-dup { border: 1px solid var(--a-border); background: var(--a-subtle); border-radius: 12px; padding: 12px; display: grid; gap: 10px; }
+.a-dup-title { margin: 0; font-weight: 700; font-size: 0.95rem; }
+.a-dup-card { display: flex; gap: 12px; align-items: center; background: var(--a-card); border: 1px solid var(--a-border); border-radius: 10px; padding: 8px 8px 8px 12px; min-width: 0; }
+.a-dup-card .a-row-body { gap: 0; }
+.a-link { color: var(--a-primary); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; display: inline-flex; align-items: center; min-height: 44px; padding: 0 6px; flex: none; }
+.a-dup-note { margin: 0; color: var(--a-muted); font-size: 0.875rem; }
+
+.a-savebar { flex: none; border-top: 1px solid var(--a-border); background: var(--a-card); padding: 10px 16px; }
+.a-savebar-inner { max-width: 640px; margin: 0 auto; }
+
+/* Detail */
+.a-head { display: flex; gap: 14px; align-items: center; padding: 8px 0 16px; min-width: 0; }
+.a-head-body { min-width: 0; display: grid; gap: 2px; }
+.a-head h1 { margin: 0; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.01em; line-height: 1.25; overflow-wrap: anywhere; }
+.a-head-meta { color: var(--a-muted); font-size: 0.95rem; }
+.a-card { background: var(--a-card); border: 1px solid var(--a-border); border-radius: 14px; }
+.a-info { list-style: none; margin: 0 0 16px; padding: 0; }
+.a-info li { display: flex; gap: 12px; align-items: center; padding: 6px 14px; min-height: 56px; }
+.a-info li + li { border-top: 1px solid var(--a-border); }
+.a-info .a-icon { color: var(--a-muted); }
+.a-info-body { flex: 1; min-width: 0; display: grid; }
+.a-info-label { color: var(--a-muted); font-size: 0.8rem; }
+.a-info-value { font-weight: 600; overflow-wrap: anywhere; }
+.a-tel { color: var(--a-primary); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; min-height: 44px; }
+.a-summary { padding: 14px 16px 16px; display: grid; gap: 8px; }
+.a-summary h2 { margin: 0; font-size: 0.95rem; font-weight: 600; color: var(--a-muted); }
+.a-summary-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
+.a-summary-text a { color: var(--a-primary); font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+.a-summary-empty { margin: 0; color: var(--a-muted); }
+
+
+/* ---------- Trash (change add-patient-trash) ----------
+   The one accent: the inverted "Hoàn tác" toast above the bottom bar. Red is only ever text. */
+.a-icon-only { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid var(--a-input); border-radius: 10px; background: var(--a-card); color: var(--a-fg); cursor: pointer; }
+.a-menu { position: absolute; right: 16px; top: 100px; z-index: 12; min-width: 240px; background: var(--a-card); border: 1px solid var(--a-border); border-radius: 12px; box-shadow: var(--a-shadow); padding: 6px; }
+body[data-viewport="desktop"] .a-menu { right: max(16px, calc((100% - 672px) / 2 + 16px)); }
+.a-menu button { width: 100%; min-height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; font: inherit; color: var(--a-danger); font-weight: 600; cursor: pointer; text-align: left; }
+.a-menu button:hover { background: var(--a-subtle); }
+.a-toast { position: absolute; left: 16px; right: 16px; bottom: calc(56px + 16px + 12px); z-index: 14; display: flex; align-items: center; gap: 10px; padding: 10px 8px 10px 16px; border-radius: 12px; background: var(--a-fg); color: var(--a-bg); box-shadow: var(--a-shadow); font-size: 0.95rem; }
+body[data-viewport="desktop"] .a-toast { left: auto; right: max(16px, calc((100% - 672px) / 2 + 16px)); width: 420px; bottom: calc(56px + 20px); }
+.a-toast span { flex: 1; min-width: 0; }
+.a-toast button { min-height: 40px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: var(--a-bg); font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.a-dim { opacity: .35; }
+.a-settings-link { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 12px 8px 16px; background: var(--a-card); border: 1px solid var(--a-border); border-radius: 14px; color: inherit; text-decoration: none; }
+.a-settings-link .t { flex: 1; font-weight: 600; }
+.a-settings-link .n { color: var(--a-muted); font-size: 0.9rem; }
+.a-trash-row { padding: 12px 12px 12px 14px; display: grid; gap: 10px; }
+.a-trash-row + .a-trash-row { border-top: 1px solid var(--a-border); }
+.a-trash-head { display: flex; gap: 12px; align-items: center; min-width: 0; }
+.a-expiry { font-size: 0.8125rem; color: var(--a-muted); font-variant-numeric: tabular-nums; }
+.a-expiry[data-soon="true"] { color: var(--a-warn); font-weight: 600; }
+.a-trash-actions { display: flex; gap: 8px; flex-wrap: wrap; padding-left: 52px; }
+.a-text-danger { min-height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: var(--a-danger); font: inherit; font-weight: 600; font-size: 0.92rem; cursor: pointer; }
+.a-trash-intro { margin: -6px 0 14px; color: var(--a-muted); font-size: 0.9rem; }
+.a-overlay { position: absolute; inset: 0; background: rgb(17 24 39 / 0.5); display: grid; place-items: center; padding: 20px; z-index: 20; }
+.a-dialog { width: 100%; max-width: 420px; background: var(--a-card); color: var(--a-fg); border-radius: 16px; padding: 20px; display: grid; gap: 14px; }
+.a-dialog h2 { margin: 0; font-size: 1.15rem; font-weight: 700; }
+.a-dialog p { margin: 0; color: var(--a-muted); font-size: 0.95rem; overflow-wrap: anywhere; }
+.a-dialog-actions { display: grid; gap: 8px; }
+.a-btn[data-variant="danger"] { background: var(--a-danger); color: var(--a-card); }
+.a-section { background: var(--a-card); border: 1px solid var(--a-border); border-radius: 14px; padding: 16px; display: grid; gap: 16px; }
+.a-section-title { margin: 0; font-size: 0.95rem; font-weight: 600; color: var(--a-muted); }
+.a-person { display: flex; gap: 12px; align-items: center; min-width: 0; }
+.a-person .a-avatar { width: 48px; height: 48px; }
+.a-person-name { font-weight: 600; }
+.a-person-meta { color: var(--a-muted); font-size: 0.9rem; }
+.a-gap { margin-top: 16px; }
+.a-placeholder { margin-top: 16px; border: 1px dashed var(--a-border); border-radius: 14px; padding: 20px 16px; text-align: center; color: var(--a-muted); font-size: 0.875rem; }
+.frame.mid { height: 760px; }
+body[data-viewport="desktop"] .frame.mid { height: 700px; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-todo" viewBox="0 0 24 24"><rect x="3" y="5" width="6" height="6" rx="1"/><path d="m3 17 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+  <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/></symbol>
+  <symbol id="i-id-card" viewBox="0 0 24 24"><path d="M16 10h2"/><path d="M16 14h2"/><path d="M6.17 15a3 3 0 0 1 5.66 0"/><circle cx="9" cy="11" r="2"/><rect x="2" y="5" width="20" height="14" rx="2"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></symbol>
+  <symbol id="i-triangle" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-loader" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></symbol>
+  <symbol id="i-wifi-off" viewBox="0 0 24 24"><path d="M12 20h.01"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/><path d="M2 8.82a15 15 0 0 1 4.177-2.643"/><path d="M22 8.82a15 15 0 0 0-11.288-3.764"/><path d="m2 2 20 20"/></symbol>
+  <symbol id="i-search-x" viewBox="0 0 24 24"><path d="m13.5 8.5-5 5"/><path d="m8.5 8.5 5 5"/><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-corner" viewBox="0 0 24 24"><path d="m15 10 5 5-5 5"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+
+  <symbol id="i-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></symbol>
+  <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"/></symbol>
+</svg>
+
+<main class="sheet">
+  <header>
+    <h1>Thùng rác: xoá, hoàn tác, khôi phục, xoá vĩnh viễn</h1>
+    <p class="lede">Mockup cho change <code>add-patient-trash</code> (change 4/5 của module bệnh nhân), bảng màu A, không thêm màu mới. Mỗi màn hình có bộ chọn trạng thái; chọn chế độ sáng/tối và khung điện thoại hay máy tính ở dưới. Tên là ví dụ.</p>
+    <ul class="decisions">
+      <li><strong>Chuyển vào thùng rác không hỏi xác nhận</strong> (hoàn tác được): menu ⋮ trên trang chi tiết → về danh sách, thông báo "Hoàn tác" 8 giây. Thông báo không có tên bệnh nhân.</li>
+      <li><strong>Thùng rác ở Cài đặt</strong> (/settings/trash): xoá gần nhất ở trên, "Xoá ngày … · còn N ngày", nút Khôi phục và Xoá vĩnh viễn.</li>
+      <li><strong>Khôi phục</strong> đưa bệnh nhân lên đầu danh sách, đủ ghi chú. <strong>Xoá vĩnh viễn</strong> là thao tác duy nhất hỏi xác nhận.</li>
+      <li><strong>Quá 30 ngày</strong> thì hệ thống tự xoá hẳn (bảo trì hằng ngày); từ lúc quá hạn đã không còn hiện, không khôi phục được.</li>
+    </ul>
+  </header>
+
+  <div class="controls" role="group" aria-label="Tuỳ chọn xem mockup">
+    <div class="control">
+      <span class="control-label" id="lbl-theme">Chế độ</span>
+      <div class="seg" data-control="theme" aria-labelledby="lbl-theme">
+        <button type="button" data-value="system" aria-pressed="true">Theo máy</button>
+        <button type="button" data-value="light" aria-pressed="false">Sáng</button>
+        <button type="button" data-value="dark" aria-pressed="false">Tối</button>
+      </div>
+    </div>
+    <div class="control">
+      <span class="control-label" id="lbl-viewport">Khung</span>
+      <div class="seg" data-control="viewport" aria-labelledby="lbl-viewport">
+        <button type="button" data-value="phone" aria-pressed="true">Điện thoại</button>
+        <button type="button" data-value="desktop" aria-pressed="false">Máy tính</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="gallery">
+    <section class="screen" aria-labelledby="s1">
+      <h2 id="s1">Xoá từ trang chi tiết</h2>
+      <div class="seg" data-screen="del" aria-label="Bước">
+        <button type="button" data-value="menu" aria-pressed="true">Menu ⋮ mở</button>
+        <button type="button" data-value="toast" aria-pressed="false">Danh sách + Hoàn tác</button>
+        <button type="button" data-value="offline" aria-pressed="false">Mất mạng</button>
+      </div>
+      <div class="frame mid"><div class="app" id="app-del"></div></div>
+      <ul class="notes">
+        <li>Nút ⋮ cạnh "Sửa", 44 px. Mục "Chuyển vào thùng rác" chữ đỏ, không hỏi xác nhận.</li>
+        <li>Về danh sách, toast đảo màu ngay trên thanh điều hướng với nút "Hoàn tác" (8 giây).</li>
+      </ul>
+    </section>
+
+    <section class="screen" aria-labelledby="s2">
+      <h2 id="s2">Cài đặt <code>/settings</code></h2>
+      <div class="frame mid"><div class="app" id="app-settings"></div></div>
+      <ul class="notes">
+        <li>Dòng "Thùng rác" có số bệnh nhân đang trong thùng rác; dòng "đang được xây dựng" còn lại sao lưu/nhập.</li>
+      </ul>
+    </section>
+
+    <section class="screen" aria-labelledby="s3">
+      <h2 id="s3">Thùng rác <code>/settings/trash</code></h2>
+      <div class="seg" data-screen="trash" aria-label="Trạng thái thùng rác">
+        <button type="button" data-value="list" aria-pressed="true">Có bệnh nhân</button>
+        <button type="button" data-value="restored" aria-pressed="false">Vừa khôi phục</button>
+        <button type="button" data-value="dialog" aria-pressed="false">Xoá vĩnh viễn</button>
+        <button type="button" data-value="dialog-error" aria-pressed="false">Lỗi trong hộp thoại</button>
+        <button type="button" data-value="empty" aria-pressed="false">Trống</button>
+      </div>
+      <div class="frame mid"><div class="app" id="app-trash"></div></div>
+      <ul class="notes">
+        <li>Không bấm vào dòng để xem: muốn xem thì khôi phục trước.</li>
+        <li>"còn 1 ngày" chuyển màu cam đậm kèm chữ, không chỉ dựa vào màu.</li>
+        <li>Hộp thoại xoá vĩnh viễn nêu họ tên để chắc đúng người; toast sau đó không có tên.</li>
+      </ul>
+    </section>
+  </div>
+</main>
+
+<script>
+(() => {
+  const root = document.documentElement;
+  const body = document.body;
+  const icon = (id, cls = "") => `<svg class="a-icon ${cls}" aria-hidden="true"><use href="#i-${id}"/></svg>`;
+  const nav = (cur) => `<nav class="a-nav" aria-label="Điều hướng chính"><ul>
+      <li><a href="#" ${cur === "p" ? 'aria-current="page"' : ""}>${icon("users")}Bệnh nhân</a></li>
+      <li><a href="#">${icon("todo")}Việc cần làm</a></li>
+      <li><a href="#" ${cur === "s" ? 'aria-current="page"' : ""}>${icon("settings")}Cài đặt</a></li>
+    </ul></nav>`;
+  const people = [
+    { i: "TB", n: "Trần Thị Bình", m: "Nữ · 62 tuổi · Hà Tĩnh" },
+    { i: "PH", n: "Phạm Gia Huy", m: "Nam · Dưới 1 tuổi · Hà Nội" },
+    { i: "NA", n: "Nguyễn Văn An", m: "Nam · 31 tuổi · Thanh Hoá" },
+    { i: "LM", n: "Lê Minh", m: "" },
+  ];
+  const row = (p) => `<li><a class="a-row" href="#"><span class="a-avatar" aria-hidden="true">${p.i}</span><span class="a-row-body"><span class="a-row-name">${p.n}</span>${p.m ? `<span class="a-row-meta">${p.m}</span>` : ""}</span>${icon("chevron-right")}</a></li>`;
+
+  function renderDel(state) {
+    const el = document.getElementById("app-del");
+    if (state === "toast") {
+      el.innerHTML = `<div class="a-status-bar"></div><div class="a-main"><div class="a-page has-fab">
+          <div class="a-page-header"><h1>Bệnh nhân</h1><span class="a-count">4 bệnh nhân</span></div>
+          <div class="a-search" style="display:flex;align-items:center;height:52px;border:1px solid var(--a-input);border-radius:12px;background:var(--a-card);padding:0 12px;gap:8px;margin-bottom:10px;color:var(--a-muted)">${icon("search")}<span>Tìm tên, quê, SĐT, mã BN, ghi chú…</span></div>
+          <ul class="a-list">${people.map(row).join("")}</ul></div></div>
+        <div class="a-toast" role="status"><span>Đã chuyển bệnh nhân vào thùng rác.</span><button type="button">Hoàn tác</button></div>
+        ${nav("p")}`;
+      return;
+    }
+    el.innerHTML = `<div class="a-status-bar"></div><div class="a-main"><div class="a-page">
+        <div class="a-topbar" style="padding-left:0;padding-right:0">
+          <a class="a-back" href="#">${icon("arrow-left")}Bệnh nhân</a><span class="a-spacer"></span>
+          <a class="a-btn small" data-variant="outline" href="#">${icon("pencil", "sm")}Sửa</a>
+          <button class="a-icon-only" type="button" aria-label="Thêm thao tác" aria-expanded="${state === "menu"}">${icon("dots")}</button>
+        </div>
+        <div class="a-head"><span class="a-avatar lg" aria-hidden="true">NA</span><div class="a-head-body"><h1>Nguyễn Văn An</h1><span class="a-head-meta">Nam · 47 tuổi (1979) · Nghệ An</span></div></div>
+        <section class="a-card a-summary"><h2>Tóm tắt</h2><p class="a-summary-text">THA 5 năm. Dị ứng Penicillin.</p></section>
+      </div></div>
+      ${state === "menu" ? `<div class="a-menu" role="menu"><button role="menuitem" type="button">${icon("trash")}Chuyển vào thùng rác</button></div>` : ""}
+      ${state === "offline" ? `<div class="a-toast" role="status"><span>Chưa chuyển được vì mất mạng. Thử lại khi có mạng.</span></div>` : ""}
+      ${nav("p")}`;
+  }
+
+  function renderSettings() {
+    document.getElementById("app-settings").innerHTML = `<div class="a-status-bar"></div><div class="a-main"><div class="a-page">
+      <div class="a-page-header"><h1>Cài đặt</h1></div>
+      <section class="a-section"><h2 class="a-section-title">Tài khoản</h2>
+        <div class="a-person"><div class="a-avatar" aria-hidden="true">NL</div><div><div class="a-person-name">Nguyễn Thị Lan</div><div class="a-person-meta">Tên đăng nhập: bs.lan</div></div></div>
+        <button class="a-btn" data-variant="outline" type="button">${icon("logout")}Đăng xuất</button></section>
+      <div class="a-section a-gap" style="min-height:64px;color:var(--a-muted)">Đổi mật khẩu (thẻ như cũ)</div>
+      <a class="a-settings-link a-gap" href="#">${icon("trash")}<span class="t">Thùng rác</span><span class="n">3 bệnh nhân</span>${icon("chevron-right")}</a>
+      <div class="a-placeholder">Sao lưu dữ liệu, nhập dữ liệu: đang được xây dựng</div>
+    </div></div>${nav("s")}`;
+  }
+
+  const trashed = [
+    { i: "NA", n: "Nguyễn Văn An", m: "Nam · 47 tuổi · Nghệ An", e: "Xoá ngày 18/11/2026 · còn 30 ngày" },
+    { i: "VL", n: "Võ Thị Lan", m: "Nữ · 54 tuổi · Quảng Nam", e: "Xoá ngày 10/11/2026 · còn 22 ngày" },
+    { i: "HĐ", n: "Hoàng Văn Đức", m: "Nam · 75 tuổi", e: "Xoá ngày 20/10/2026 · còn 1 ngày", soon: true },
+  ];
+  const trashRow = (p) => `<li class="a-trash-row"><div class="a-trash-head"><span class="a-avatar" aria-hidden="true">${p.i}</span><span class="a-row-body"><span class="a-row-name">${p.n}</span>${p.m ? `<span class="a-row-meta">${p.m}</span>` : ""}<span class="a-expiry" ${p.soon ? 'data-soon="true"' : ""}>${p.e}</span></span></div>
+      <div class="a-trash-actions"><button class="a-btn small" data-variant="outline" type="button">${icon("undo", "sm")}Khôi phục</button><button class="a-text-danger" type="button">Xoá vĩnh viễn</button></div></li>`;
+
+  function renderTrash(state) {
+    const el = document.getElementById("app-trash");
+    const list = state === "restored" ? trashed.slice(1) : trashed;
+    const content = state === "empty"
+      ? `<div class="a-empty"><div class="a-empty-icon">${icon("trash")}</div><p class="t">Thùng rác trống</p><p class="d">Bệnh nhân bị xoá sẽ nằm ở đây 30 ngày trước khi bị xoá hẳn.</p></div>`
+      : `<ul class="a-list" style="list-style:none">${list.map(trashRow).join("")}</ul>`;
+    const dialog = state.startsWith("dialog") ? `<div class="a-overlay"><div class="a-dialog" role="alertdialog" aria-labelledby="dt"><h2 id="dt">Xoá vĩnh viễn bệnh nhân này?</h2>
+        <p>Hồ sơ của Nguyễn Văn An cùng mọi ghi chú sẽ bị xoá hẳn, không khôi phục được.</p>
+        ${state === "dialog-error" ? `<div class="a-alert" role="alert">${icon("alert")}<span>Không xoá được vì mất mạng. Thử lại khi có mạng.</span></div>` : ""}
+        <div class="a-dialog-actions">${state === "dialog-error" ? `<button class="a-btn" data-variant="outline" type="button">Đóng</button>` : `<button class="a-btn" data-variant="danger" type="button">Xoá vĩnh viễn</button><button class="a-btn" data-variant="outline" type="button">Không xoá</button>`}</div></div></div>` : "";
+    el.innerHTML = `<div class="a-status-bar"></div><div class="a-main"><div class="a-page">
+      <div class="a-topbar" style="padding-left:0"><a class="a-back" href="#">${icon("arrow-left")}Cài đặt</a></div>
+      <div class="a-page-header" style="padding-top:4px"><h1>Thùng rác</h1>${state === "empty" ? "" : `<span class="a-count">${list.length} bệnh nhân</span>`}</div>
+      <p class="a-trash-intro">Bệnh nhân ở đây được xoá hẳn sau 30 ngày.</p>
+      ${content}</div></div>
+      ${state === "restored" ? `<div class="a-toast" role="status"><span>Đã khôi phục bệnh nhân.</span></div>` : ""}
+      ${nav("s")}${dialog}`;
+  }
+
+  const screens = { del: renderDel, trash: renderTrash };
+  const globals = {
+    theme: (v) => (v === "system" ? root.removeAttribute("data-theme") : root.setAttribute("data-theme", v)),
+    viewport: (v) => (body.dataset.viewport = v),
+  };
+  document.querySelectorAll(".seg").forEach((group) => {
+    group.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-value]");
+      if (!button) return;
+      group.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
+      if (group.dataset.control) globals[group.dataset.control](button.dataset.value);
+      else screens[group.dataset.screen](button.dataset.value);
+    });
+  });
+  document.addEventListener("click", (e) => { if (e.target.closest(".frame a, .frame button")) e.preventDefault(); });
+  body.dataset.viewport = "phone";
+  renderDel("menu"); renderSettings(); renderTrash("list");
+})();
+</script>
+</body>
+</html>

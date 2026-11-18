@@ -1,5 +1,10 @@
 import type { ActionError } from "@/lib/errors";
-import { NOTE_LIMITS, NOTE_MESSAGES, NOTE_SLOW_SEND_MS } from "@/modules/patients/constants";
+import {
+  NOTE_LIMITS,
+  NOTE_MESSAGES,
+  NOTE_SLOW_SEND_MS,
+  TRASH_RETENTION_DAYS,
+} from "@/modules/patients/constants";
 import {
   listNoteDrafts,
   type NoteDraft,
@@ -119,12 +124,24 @@ function announceSaved(detail: NoteSavedDetail) {
   window.dispatchEvent(new CustomEvent<NoteSavedDetail>(NOTE_SAVED_EVENT, { detail }));
 }
 
+/** A refused draft older than the trash retention can never be saved: its patient is gone. */
+const ORPHAN_DRAFT_MS = (TRASH_RETENTION_DAYS + 1) * 24 * 60 * 60 * 1000;
+
 /** Sends every pending draft of an account (background sync, design §4). */
 export async function sendAllNoteDrafts(accountId: string): Promise<void> {
   for (const draft of await listNoteDrafts(accountId)) {
     const result = await sendNoteDraft(accountId, draft.noteId);
     // Still offline: the others would fail the same way; the next `online` event retries.
     if (result.status === "offline") return;
+    // Refused for longer than a patient can stay in the trash: deleted for good (cron, another
+    // device). Dropping it stops endless re-sends; nothing could ever store it again.
+    if (
+      result.status === "error" &&
+      result.error.code === "NOT_FOUND" &&
+      Date.now() - draft.savedAt > ORPHAN_DRAFT_MS
+    ) {
+      await discardNoteDraft(accountId, draft.noteId);
+    }
   }
 }
 

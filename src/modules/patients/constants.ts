@@ -51,6 +51,21 @@ export const NOTE_MESSAGES = {
   deleteFailedOffline: "Không xoá được vì mất mạng. Thử lại khi có mạng.",
 } as const;
 
+/** Trash (spec patient-trash, idea.md BR3). */
+export const TRASH_RETENTION_DAYS = 30;
+/** How long the "Hoàn tác" notice stays up. */
+export const TRASH_UNDO_MS = 8000;
+
+export const TRASH_MESSAGES = {
+  moved: "Đã chuyển bệnh nhân vào thùng rác.",
+  undo: "Hoàn tác",
+  restored: "Đã khôi phục bệnh nhân.",
+  deleted: "Đã xoá vĩnh viễn.",
+  moveOffline: "Chưa chuyển được vì mất mạng. Thử lại khi có mạng.",
+  restoreOffline: "Chưa khôi phục được vì mất mạng. Thử lại khi có mạng.",
+  deleteOffline: "Không xoá được vì mất mạng. Thử lại khi có mạng.",
+} as const;
+
 /** User-facing messages of the patients module. Never put patient data in them. */
 export const PATIENT_MESSAGES = {
   fullNameRequired: "Nhập họ tên bệnh nhân.",

@@ -26,6 +26,12 @@ export type PatientDetail = PatientListItem & {
   version: string;
 };
 
+/** A patient in the trash, as the trash page shows it (spec patient-trash). */
+export type TrashedPatient = PatientListItem & {
+  /** When it was moved to the trash, ISO string. */
+  deletedAt: string;
+};
+
 /** One note of a patient (spec patient-notes). Dates as ISO strings: they cross to the client. */
 export type PatientNote = {
   id: string;

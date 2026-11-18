@@ -141,5 +141,8 @@ export const deleteNoteSchema = z.object({
   noteId: z.uuid(),
 });
 
+/** Trash actions (spec patient-trash): only the patient id; the account is the session's. */
+export const patientIdInputSchema = z.object({ patientId: z.uuid() });
+
 /** Patient id taken from a URL: anything that is not a UUID is simply "not found". */
 export const patientIdSchema = z.uuid();

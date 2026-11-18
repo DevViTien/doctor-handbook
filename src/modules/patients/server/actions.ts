@@ -8,13 +8,17 @@ import { NOTE_MESSAGES, PATIENT_MESSAGES } from "@/modules/patients/constants";
 import {
   deleteNoteSchema,
   patientFormSchema,
+  patientIdInputSchema,
   saveNoteSchema,
   toPatientInput,
   updatePatientFormSchema,
 } from "@/modules/patients/schemas";
 import {
   deleteNote,
+  deletePermanently,
   insertPatient,
+  moveToTrash,
+  restoreFromTrash,
   saveNote,
   updatePatient,
 } from "@/modules/patients/server/mutations";
@@ -73,6 +77,54 @@ export const deleteNoteAction = createAction(
     if (!(await deleteNote(auth, input))) {
       throw new AppError("NOT_FOUND", NOTE_MESSAGES.notFound);
     }
+    return { deleted: true };
+  },
+);
+
+/** Pages showing a patient, its absence, or the trash count. */
+function revalidateTrashViews(patientId: string) {
+  revalidatePath(routes.doctor.patients);
+  revalidatePath(routes.doctor.patient(patientId));
+  revalidatePath(routes.doctor.settings);
+  revalidatePath(routes.doctor.trash);
+}
+
+/**
+ * "Chuyển vào thùng rác" (spec patient-trash): no confirmation, it can be undone. No
+ * `revalidatePath`: it would make Next re-render the current page, the patient's own page, into
+ * the response, flashing "Không tìm thấy bệnh nhân" before the client moves to the list. Every
+ * page that shows it is dynamic and refetched on navigation anyway.
+ */
+export const moveToTrashAction = createAction(
+  { name: "patients.trash.move", schema: patientIdInputSchema, access: "doctor" },
+  async ({ patientId }, { auth }): Promise<{ moved: true }> => {
+    if (!(await moveToTrash(auth, patientId))) {
+      throw new AppError("NOT_FOUND", PATIENT_MESSAGES.notFound);
+    }
+    return { moved: true };
+  },
+);
+
+/** "Hoàn tác" and "Khôi phục": back on top of the list, within the 30 days. */
+export const restoreFromTrashAction = createAction(
+  { name: "patients.trash.restore", schema: patientIdInputSchema, access: "doctor" },
+  async ({ patientId }, { auth }): Promise<{ restored: true }> => {
+    if (!(await restoreFromTrash(auth, patientId))) {
+      throw new AppError("NOT_FOUND", PATIENT_MESSAGES.notFound);
+    }
+    revalidateTrashViews(patientId);
+    return { restored: true };
+  },
+);
+
+/** "Xoá vĩnh viễn", after the confirmation dialog: only a patient already in the trash. */
+export const deletePermanentlyAction = createAction(
+  { name: "patients.trash.delete", schema: patientIdInputSchema, access: "doctor" },
+  async ({ patientId }, { auth }): Promise<{ deleted: true }> => {
+    if (!(await deletePermanently(auth, patientId))) {
+      throw new AppError("NOT_FOUND", PATIENT_MESSAGES.notFound);
+    }
+    revalidateTrashViews(patientId);
     return { deleted: true };
   },
 );

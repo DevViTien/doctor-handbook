@@ -402,6 +402,24 @@ export async function listNoteRows(patientId: string): Promise<NoteDbRow[]> {
   `;
 }
 
+// --- Trash (change add-patient-trash) -------------------------------------------------
+
+/** Puts a patient in the trash as if it was moved there `daysAgo` days ago. */
+export async function trashPatient(id: string, daysAgo: number): Promise<void> {
+  await sql()`
+    UPDATE patients SET deleted_at = now() - make_interval(secs => ${daysAgo * 86_400})
+    WHERE id = ${id}
+  `;
+}
+
+/** A patient row (in the trash or not), or `undefined` when it no longer exists. */
+export async function findPatient(id: string): Promise<{ deleted_at: Date | null } | undefined> {
+  const [row] = await sql()<{ deleted_at: Date | null }[]>`
+    SELECT deleted_at FROM patients WHERE id = ${id}
+  `;
+  return row;
+}
+
 export async function closeDatabase(): Promise<void> {
   await client?.end();
   client = undefined;

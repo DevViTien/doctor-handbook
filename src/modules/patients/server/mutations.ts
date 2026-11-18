@@ -1,9 +1,10 @@
 import "server-only";
 
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
 
 import { buildSearchText } from "@/lib/text/normalize-vi";
 import type { PatientInput } from "@/modules/patients/schemas";
+import { trashIsExpired, trashIsLive } from "@/modules/patients/server/trash-sql";
 import type { PatientNote } from "@/modules/patients/types";
 import type { AuthContext } from "@/server/auth/session";
 import { type DbExecutor, getDb } from "@/server/db/client";
@@ -142,4 +143,79 @@ export async function deleteNote(
     )
     .returning({ id: notes.id });
   return deleted.length > 0;
+}
+
+/**
+ * Moves a patient of the session's account to the trash (spec patient-trash). `updated_at` is
+ * left alone: the list order is about edits, and a restore sets it anyway. `false` when there
+ * was no such patient (another doctor's, unknown, or already in the trash).
+ */
+export async function moveToTrash(
+  auth: AuthContext,
+  patientId: string,
+  db: DbExecutor = getDb(),
+): Promise<boolean> {
+  const moved = await db
+    .update(patients)
+    .set({ deletedAt: sql`now()`, updatedAt: sql`${patients.updatedAt}` })
+    .where(
+      and(
+        eq(patients.id, patientId),
+        eq(patients.accountId, auth.account.id),
+        isNull(patients.deletedAt),
+      ),
+    )
+    .returning({ id: patients.id });
+  return moved.length > 0;
+}
+
+/**
+ * Brings a patient back from the trash, on top of the list (`updated_at = now()`), if it is
+ * still within the 30 days. Notes were never touched, so they come back as they were.
+ */
+export async function restoreFromTrash(
+  auth: AuthContext,
+  patientId: string,
+  db: DbExecutor = getDb(),
+): Promise<boolean> {
+  const restored = await db
+    .update(patients)
+    .set({ deletedAt: null, updatedAt: sql`now()` })
+    .where(and(eq(patients.id, patientId), eq(patients.accountId, auth.account.id), trashIsLive()))
+    .returning({ id: patients.id });
+  return restored.length > 0;
+}
+
+/**
+ * Deletes a patient for good, with its notes (`ON DELETE CASCADE`). Only a patient already in
+ * the trash: a live patient can never be deleted in one step.
+ */
+export async function deletePermanently(
+  auth: AuthContext,
+  patientId: string,
+  db: DbExecutor = getDb(),
+): Promise<boolean> {
+  const deleted = await db
+    .delete(patients)
+    .where(
+      and(
+        eq(patients.id, patientId),
+        eq(patients.accountId, auth.account.id),
+        isNotNull(patients.deletedAt),
+      ),
+    )
+    .returning({ id: patients.id });
+  return deleted.length > 0;
+}
+
+/**
+ * Daily maintenance (cron, not Admin code): deletes every patient that has been in the trash for
+ * 30 days or more, with its notes, for all accounts. Reads no content; returns only a count.
+ */
+export async function purgeExpiredTrash(db: DbExecutor = getDb()): Promise<number> {
+  const purged = await db
+    .delete(patients)
+    .where(and(isNotNull(patients.deletedAt), trashIsExpired()))
+    .returning({ id: patients.id });
+  return purged.length;
 }

@@ -19,6 +19,16 @@ The doctor's "contact book" of patients. Behaviour: `openspec/specs/patient-reco
 - **Notes** on the detail page (`patient-notes.tsx`): newest first, autosave one second after the
   last keystroke, no "Lưu" button; edit keeps the creation time ("Đã sửa …"); delete asks first.
 
+## Trash
+
+- "Chuyển vào thùng rác" (⋮ on the patient page) sets `deleted_at`, no confirmation; a toast
+  offers "Hoàn tác" for 8 s (`patient-actions-menu.tsx`, the doctor Toaster `DOCTOR_TOASTER_ID`).
+  Every read already skips `deleted_at IS NOT NULL`, so the patient disappears everywhere.
+- `/settings/trash` (`trash-list.tsx`): restore (back on top, notes intact) or "Xoá vĩnh viễn"
+  (confirmation dialog; notes cascade; this device's note drafts of that patient are dropped).
+- 30 days: `trashIsLive()` (`server/trash-sql.ts`) is the single definition used to list, count
+  and restore, so expiry is exact; the daily cron deletes expired rows (`purgeExpiredTrash`).
+
 ## Notes: drafts and sync
 
 - Every keystroke is written to IndexedDB first (`note-drafts.ts`, `idb-keyval`), key

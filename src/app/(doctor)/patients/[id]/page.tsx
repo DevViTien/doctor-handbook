@@ -7,6 +7,7 @@ import { PageContainer } from "@/components/layout/page-container";
 import { Button } from "@/components/ui/button";
 import { routes } from "@/config/routes";
 import { todayInVietnam } from "@/modules/patients/birth";
+import { PatientActionsMenu } from "@/modules/patients/components/patient-actions-menu";
 import { PatientHeader } from "@/modules/patients/components/patient-header";
 import { PatientNotes } from "@/modules/patients/components/patient-notes";
 import { PatientPageBar } from "@/modules/patients/components/patient-page-bar";
@@ -37,12 +38,15 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
         backHref={routes.doctor.patients}
         backLabel="Bệnh nhân"
         actions={
-          <Button asChild variant="outline" className="h-11 px-3.5">
-            <Link href={editHref}>
-              <PencilIcon className="size-4" aria-hidden />
-              Sửa
-            </Link>
-          </Button>
+          <>
+            <Button asChild variant="outline" className="h-11 px-3.5">
+              <Link href={editHref}>
+                <PencilIcon className="size-4" aria-hidden />
+                Sửa
+              </Link>
+            </Button>
+            <PatientActionsMenu patientId={patient.id} />
+          </>
         }
       />
       <PatientHeader patient={patient} today={todayInVietnam()} />

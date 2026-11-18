@@ -5,12 +5,18 @@ import { PATIENT_FIELD_NAMES as F } from "@/modules/patients/schemas";
 import {
   createPatientFormAction,
   deleteNoteAction,
+  deletePermanentlyAction,
+  moveToTrashAction,
+  restoreFromTrashAction,
   saveNoteAction,
   updatePatientFormAction,
 } from "@/modules/patients/server/actions";
 import {
   deleteNote,
+  deletePermanently,
   insertPatient,
+  moveToTrash,
+  restoreFromTrash,
   saveNote,
   updatePatient,
 } from "@/modules/patients/server/mutations";
@@ -25,6 +31,9 @@ vi.mock("@/modules/patients/server/mutations", () => ({
   updatePatient: vi.fn(),
   saveNote: vi.fn(),
   deleteNote: vi.fn(),
+  moveToTrash: vi.fn(),
+  restoreFromTrash: vi.fn(),
+  deletePermanently: vi.fn(),
 }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/headers", () => ({ headers: vi.fn(async () => new Headers()) }));
@@ -271,5 +280,65 @@ describe("deleteNoteAction", () => {
       error: { code: "FORBIDDEN" },
     });
     expect(deleteNote).not.toHaveBeenCalled();
+  });
+});
+
+describe("trash actions", () => {
+  const actions = [
+    ["moveToTrashAction", moveToTrashAction, moveToTrash],
+    ["restoreFromTrashAction", restoreFromTrashAction, restoreFromTrash],
+    ["deletePermanentlyAction", deletePermanentlyAction, deletePermanently],
+  ] as const;
+
+  beforeEach(() => {
+    for (const [, , mutation] of actions) vi.mocked(mutation).mockResolvedValue(true);
+  });
+
+  it.each(actions)(
+    "%s acts on the session's own account, ignoring any account id sent",
+    async (_name, action, mutation) => {
+      signedInAs(minh);
+
+      await expect(
+        action({ patientId: PATIENT_ID, accountId: "account-lan" } as { patientId: string }),
+      ).resolves.toMatchObject({ ok: true });
+      expect(mutation).toHaveBeenCalledWith(minh, PATIENT_ID);
+    },
+  );
+
+  it.each(actions)(
+    "Xoá bệnh nhân của bác sĩ khác: %s reports NOT_FOUND",
+    async (_name, action, mutation) => {
+      signedInAs(minh);
+      vi.mocked(mutation).mockResolvedValue(false);
+
+      await expect(action({ patientId: PATIENT_ID })).resolves.toMatchObject({
+        ok: false,
+        error: { code: "NOT_FOUND", message: PATIENT_MESSAGES.notFound },
+      });
+    },
+  );
+
+  it("Chưa đăng nhập hoặc Admin gửi lệnh xoá", async () => {
+    signedInAs(null);
+    await expect(moveToTrashAction({ patientId: PATIENT_ID })).resolves.toMatchObject({
+      ok: false,
+      error: { code: "UNAUTHENTICATED" },
+    });
+    signedInAs(admin);
+    await expect(moveToTrashAction({ patientId: PATIENT_ID })).resolves.toMatchObject({
+      ok: false,
+      error: { code: "FORBIDDEN" },
+    });
+    expect(moveToTrash).not.toHaveBeenCalled();
+  });
+
+  it("refuses an id that is not a UUID", async () => {
+    signedInAs(minh);
+    await expect(moveToTrashAction({ patientId: "1 OR 1=1" })).resolves.toMatchObject({
+      ok: false,
+      error: { code: "VALIDATION_FAILED" },
+    });
+    expect(moveToTrash).not.toHaveBeenCalled();
   });
 });

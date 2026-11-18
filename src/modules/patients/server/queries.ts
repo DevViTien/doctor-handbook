@@ -1,8 +1,14 @@
 import "server-only";
 
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, count, desc, eq, isNull } from "drizzle-orm";
 
-import type { PatientDetail, PatientListItem, PatientNote } from "@/modules/patients/types";
+import { trashIsLive } from "@/modules/patients/server/trash-sql";
+import type {
+  PatientDetail,
+  PatientListItem,
+  PatientNote,
+  TrashedPatient,
+} from "@/modules/patients/types";
 import type { AuthContext } from "@/server/auth/session";
 import { type DbExecutor, getDb } from "@/server/db/client";
 import { notes, patients } from "@/server/db/schema";
@@ -95,4 +101,39 @@ export async function listNotes(
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   }));
+}
+
+/**
+ * The session's trash, most recently deleted first (spec patient-trash "Trang thùng rác").
+ * Patients past the 30 days are never listed, even before the daily purge removed them.
+ */
+export async function listTrash(
+  auth: AuthContext,
+  db: DbExecutor = getDb(),
+): Promise<TrashedPatient[]> {
+  const rows = await db
+    .select({
+      id: patients.id,
+      fullName: patients.fullName,
+      birthYear: patients.birthYear,
+      birthDate: patients.birthDate,
+      gender: patients.gender,
+      hometown: patients.hometown,
+      deletedAt: patients.deletedAt,
+    })
+    .from(patients)
+    .where(and(eq(patients.accountId, auth.account.id), trashIsLive()))
+    .orderBy(desc(patients.deletedAt), desc(patients.id));
+  return rows.flatMap(({ deletedAt, ...patient }) =>
+    deletedAt ? [{ ...patient, deletedAt: deletedAt.toISOString() }] : [],
+  );
+}
+
+/** How many patients the session's trash holds (the Settings row). */
+export async function countTrash(auth: AuthContext, db: DbExecutor = getDb()): Promise<number> {
+  const [row] = await db
+    .select({ value: count() })
+    .from(patients)
+    .where(and(eq(patients.accountId, auth.account.id), trashIsLive()));
+  return row?.value ?? 0;
 }

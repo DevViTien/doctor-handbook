@@ -20,6 +20,7 @@ export const routes = {
     editPatient: (id: string) => `/patients/${id}/edit` as Route,
     todos: "/todos",
     settings: "/settings",
+    trash: "/settings/trash",
   },
   admin: {
     root: "/admin",
