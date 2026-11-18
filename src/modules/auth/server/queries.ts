@@ -97,3 +97,16 @@ export function usablePasswordResetCode(codeHash: string) {
     accessCodeIsUsable(),
   );
 }
+
+/** The password hash of an account, for re-checking the current password. Never leaves auth. */
+export async function findPasswordHash(
+  accountId: string,
+  db: DbExecutor = getDb(),
+): Promise<string | null> {
+  const [row] = await db
+    .select({ passwordHash: accounts.passwordHash })
+    .from(accounts)
+    .where(eq(accounts.id, accountId))
+    .limit(1);
+  return row?.passwordHash ?? null;
+}

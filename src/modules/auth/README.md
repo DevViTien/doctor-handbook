@@ -3,7 +3,8 @@
 Doctor- and admin-facing authentication. Low-level primitives (sessions, hashing, guards) live in
 `src/server/auth`; this module owns the **flows and screens**. Behaviour is specified in
 `openspec/specs/account-session/spec.md`, `openspec/specs/account-activation/spec.md`,
-`openspec/specs/password-reset/spec.md` (and `access-gate` for redirects).
+`openspec/specs/password-reset/spec.md`, `openspec/specs/password-change/spec.md` (and
+`access-gate` for redirects).
 
 ## Implemented
 
@@ -20,6 +21,7 @@ Doctor- and admin-facing authentication. Low-level primitives (sessions, hashing
 | Password reset (2 steps) | `components/password-reset-form.tsx` → `checkPasswordResetCodeFormAction`, `resetPasswordFormAction` → `server/password-reset.ts` |
 | Password reset DAL       | `server/queries.ts` `findUsablePasswordResetCode`; `server/mutations.ts` `resetPasswordWithCode` (one transaction)                |
 | Shared code entry        | `server/code-entry.ts` `withCodeEntry`: activation and reset share the per-IP limit                                               |
+| Password change          | `components/change-password-form.tsx` (Settings) → `changePasswordFormAction` → `server/password-change.ts`                       |
 
 Security properties to preserve:
 
@@ -39,10 +41,13 @@ Security properties to preserve:
   account rolls everything back and keeps the code usable), deletes every session, then opens
   one for this device — one transaction.
 - `createSession` only creates sessions for active accounts (`INSERT … SELECT … FOR SHARE`).
+- Password change: the account and the session to keep come from the session; wrong current
+  passwords count toward the per-username login limit; other devices are signed out in the
+  same transaction as the new hash.
 
 ## Still to build (separate OpenSpec changes)
 
-- Password change while signed in — ends sessions on other devices.
+Nothing left from idea.md for accounts and sessions.
 
 ## Building blocks
 

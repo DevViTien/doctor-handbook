@@ -7,6 +7,7 @@ import {
   ACTIVATION_MESSAGES,
   DISPLAY_NAME_MAX_LENGTH,
   LOGIN_MESSAGES,
+  PASSWORD_CHANGE_MESSAGES,
   RESET_MESSAGES,
 } from "./constants";
 
@@ -80,4 +81,13 @@ export const passwordResetCodeSchema = z.object({ code: resetCodeInput });
 export const resetPasswordSchema = z.object({
   code: resetCodeInput,
   password: passwordSchema,
+});
+
+/** Password change while signed in. Neither password is ever trimmed. */
+export const changePasswordSchema = z.object({
+  currentPassword: z
+    .string(PASSWORD_CHANGE_MESSAGES.currentPasswordRequired)
+    .min(1, PASSWORD_CHANGE_MESSAGES.currentPasswordRequired)
+    .max(128, PASSWORD_CHANGE_MESSAGES.wrongCurrentPassword),
+  newPassword: passwordSchema,
 });

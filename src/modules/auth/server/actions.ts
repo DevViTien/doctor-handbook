@@ -11,12 +11,14 @@ import { LOGIN_MESSAGES } from "@/modules/auth/constants";
 import {
   activateAccountSchema,
   activationCodeSchema,
+  changePasswordSchema,
   loginSchema,
   passwordResetCodeSchema,
   resetPasswordSchema,
 } from "@/modules/auth/schemas";
 import { activateAccount, checkActivationCode } from "@/modules/auth/server/activation";
 import { authenticate } from "@/modules/auth/server/login";
+import { changePassword } from "@/modules/auth/server/password-change";
 import { checkPasswordResetCode, resetPassword } from "@/modules/auth/server/password-reset";
 import { createFormAction } from "@/server/actions/create-action";
 import { deleteSessionCookie, setSessionCookie } from "@/server/auth/cookies";
@@ -167,5 +169,24 @@ export const resetPasswordFormAction = createFormAction(
     if (previous) await invalidateSession(previous.sessionId);
     await setSessionCookie(sessionToken);
     redirect(routes.doctor.patients);
+  },
+);
+
+/**
+ * Password change while signed in (spec password-change). Doctors only; the account and the
+ * session to keep come from the session cookie. On success the other devices are signed out
+ * and this one stays signed in. Passwords are never logged.
+ */
+export const changePasswordFormAction = createFormAction(
+  { name: "auth.changePassword", schema: changePasswordSchema, access: "doctor" },
+  async (input, { auth }): Promise<{ changed: true }> => {
+    await changePassword({
+      accountId: auth.account.id,
+      username: auth.account.username,
+      sessionId: auth.sessionId,
+      currentPassword: input.currentPassword,
+      newPassword: input.newPassword,
+    });
+    return { changed: true };
   },
 );

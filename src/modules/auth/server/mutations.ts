@@ -6,7 +6,7 @@ import { usableActivationCode, usablePasswordResetCode } from "@/modules/auth/se
 import { createSession, invalidateAccountSessions } from "@/server/auth/session";
 import { type DbExecutor, getDb } from "@/server/db/client";
 import { isUniqueViolation } from "@/server/db/errors";
-import { accessCodes, accounts } from "@/server/db/schema";
+import { accessCodes, accounts, sessions } from "@/server/db/schema";
 
 /** Records a successful login (`accounts.last_login_at`, shown to the admin). */
 export async function recordLoginSuccess(
@@ -141,5 +141,45 @@ export async function resetPasswordWithCode(
     const session = await createSession(accountId, { userAgent: input.userAgent }, tx);
     if (!session) throw new Error("active account without a session");
     return { status: "reset", accountId, sessionToken: session.token };
+  });
+}
+
+export type PasswordChangeResult = "changed" | "locked" | "session-ended" | "stale";
+
+/**
+ * Sets a new password hash and ends every session of the account except `keepSessionId` (this
+ * device), in one transaction (idea.md §8.3). The account row is locked first (`FOR UPDATE`,
+ * same order as reset and lock), then the write only happens if, at that moment:
+ * - the account is still active ("locked" otherwise),
+ * - this device's session still exists ("session-ended" otherwise: it was signed out),
+ * - the stored hash is still the one the current password was verified against ("stale"
+ *   otherwise: a reset or another change happened meanwhile and must not be overwritten).
+ */
+export async function changePasswordHash(
+  input: { accountId: string; verifiedHash: string; newHash: string; keepSessionId: string },
+  db: DbExecutor = getDb(),
+): Promise<PasswordChangeResult> {
+  return db.transaction(async (tx): Promise<PasswordChangeResult> => {
+    const [account] = await tx
+      .select({ status: accounts.status, passwordHash: accounts.passwordHash })
+      .from(accounts)
+      .where(eq(accounts.id, input.accountId))
+      .for("update");
+    if (!account || account.status !== "active") return "locked";
+
+    const [session] = await tx
+      .select({ id: sessions.id })
+      .from(sessions)
+      .where(and(eq(sessions.id, input.keepSessionId), eq(sessions.accountId, input.accountId)))
+      .limit(1);
+    if (!session) return "session-ended";
+    if (account.passwordHash !== input.verifiedHash) return "stale";
+
+    await tx
+      .update(accounts)
+      .set({ passwordHash: input.newHash })
+      .where(eq(accounts.id, input.accountId));
+    await invalidateAccountSessions(input.accountId, { exceptSessionId: input.keepSessionId }, tx);
+    return "changed";
   });
 }

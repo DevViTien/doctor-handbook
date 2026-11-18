@@ -289,6 +289,11 @@ export async function insertCodeFailures(count: number, minutesAgo: number): Pro
   }
 }
 
+/** Forgets every recorded login and code-entry attempt (ends any rate-limit window). */
+export async function clearAuthAttempts(): Promise<void> {
+  await sql()`DELETE FROM auth_attempts`;
+}
+
 export async function countAuthAttempts(): Promise<number> {
   const [row] = await sql()<{ count: number }[]>`SELECT count(*)::int AS count FROM auth_attempts`;
   return row?.count ?? 0;

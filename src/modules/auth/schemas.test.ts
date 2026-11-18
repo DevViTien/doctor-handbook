@@ -4,6 +4,7 @@ import { ACTIVATION_MESSAGES, LOGIN_MESSAGES, RESET_MESSAGES } from "@/modules/a
 import {
   activateAccountSchema,
   activationCodeSchema,
+  changePasswordSchema,
   loginSchema,
   passwordResetCodeSchema,
   resetPasswordSchema,
@@ -160,5 +161,28 @@ describe("passwordResetCodeSchema / resetPasswordSchema", () => {
     expect(resetPasswordSchema.parse({ code: "R4FT-EJTD", password: " matkhau " }).password).toBe(
       " matkhau ",
     );
+  });
+});
+
+describe("changePasswordSchema", () => {
+  it("Mật khẩu mới quá ngắn: at least 8 characters", () => {
+    const result = changePasswordSchema.safeParse({
+      currentPassword: "LanPass-123",
+      newPassword: "1234567",
+    });
+    expect(result.error?.issues[0]).toMatchObject({
+      path: ["newPassword"],
+      message: "Mật khẩu cần tối thiểu 8 ký tự.",
+    });
+  });
+
+  it("never trims either password and requires the current one", () => {
+    expect(
+      changePasswordSchema.parse({ currentPassword: " cũ ", newPassword: " mới-123 " }),
+    ).toEqual({ currentPassword: " cũ ", newPassword: " mới-123 " });
+    expect(
+      changePasswordSchema.safeParse({ currentPassword: "", newPassword: "matkhau-moi" }).error
+        ?.issues[0],
+    ).toMatchObject({ path: ["currentPassword"], message: "Nhập mật khẩu hiện tại." });
   });
 });

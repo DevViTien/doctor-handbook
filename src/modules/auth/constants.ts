@@ -32,6 +32,15 @@ export const RESET_MESSAGES = {
     "Mã đặt lại mật khẩu không đúng hoặc đã hết hạn. Liên hệ quản trị viên để nhận mã mới.",
 } as const;
 
+/** User-facing password change messages (spec password-change). */
+export const PASSWORD_CHANGE_MESSAGES = {
+  currentPasswordRequired: "Nhập mật khẩu hiện tại.",
+  wrongCurrentPassword: "Mật khẩu hiện tại không đúng.",
+  samePassword: "Mật khẩu mới phải khác mật khẩu hiện tại.",
+  changed: "Đã đổi mật khẩu. Các thiết bị khác đã bị đăng xuất.",
+  changedElsewhere: "Mật khẩu vừa được đổi ở nơi khác. Vui lòng nhập lại mật khẩu hiện tại.",
+} as const;
+
 export const DISPLAY_NAME_MAX_LENGTH = 80;
 /** Generous: people type dashes and spaces ("k7hm - 3qxr"); the server normalizes. */
 export const ACCESS_CODE_INPUT_MAX_LENGTH = 32;

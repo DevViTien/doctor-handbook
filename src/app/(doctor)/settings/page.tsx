@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { InitialsAvatar } from "@/components/common/initials-avatar";
 import { PageContainer } from "@/components/layout/page-container";
 import { PageHeader } from "@/components/layout/page-header";
+import { ChangePasswordForm } from "@/modules/auth/components/change-password-form";
 import { LogoutButton } from "@/modules/auth/components/logout-button";
 import { requirePageAccess } from "@/server/auth/guards";
 
@@ -34,9 +35,13 @@ export default async function SettingsPage() {
         <LogoutButton />
       </section>
 
-      {/* TEMPORARY: the rest of Settings belongs to later changes (backup, trash, password). */}
+      <div className="mt-4">
+        <ChangePasswordForm username={account.username} />
+      </div>
+
+      {/* TEMPORARY: the rest of Settings belongs to later changes (backup, import, trash). */}
       <p className="mt-4 rounded-2xl border border-dashed px-4 py-5 text-center text-sm text-muted-foreground">
-        Sao lưu dữ liệu, nhập dữ liệu, thùng rác, đổi mật khẩu: đang được xây dựng
+        Sao lưu dữ liệu, nhập dữ liệu, thùng rác: đang được xây dựng
       </p>
     </PageContainer>
   );
