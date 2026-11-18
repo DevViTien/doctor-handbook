@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Local mockup for review: open this file directly in a browser. Never upload it to an external service. -->
+<title>Mockup sao lưu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
+<style>
+/* Review sheet over a gallery of device frames; frames render the approved app tokens (palette A "Mực bút bi").
+   Shared base of the earlier approved mockups. */
+:root {
+  --font: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --sheet-bg: #EEF1F6; --sheet-fg: #111827; --sheet-muted: #525C70; --sheet-line: #CDD4E0;
+  --sheet-control: #FFFFFF; --sheet-selected: #111827; --sheet-selected-fg: #FFFFFF;
+
+  --a-bg: #F6F7FA; --a-card: #FFFFFF; --a-fg: #111827; --a-muted: #525C70; --a-subtle: #EDF0F5;
+  --a-border: #DCE1EA; --a-input: #7D879A; --a-primary: #1E40AF; --a-primary-fg: #FFFFFF; --a-ring: #1E40AF;
+  --a-danger: #B42318; --a-danger-bg: #FDECEA; --a-warn: #8A4B00; --a-warn-bg: #FFF4E0;
+  --a-shadow: 0 6px 16px rgb(17 24 39 / 0.18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --sheet-bg: #090D15; --sheet-fg: #E9EDF5; --sheet-muted: #9BA5B8; --sheet-line: #283244;
+    --sheet-control: #151C2A; --sheet-selected: #E9EDF5; --sheet-selected-fg: #0D121C;
+    --a-bg: #0D121C; --a-card: #151C2A; --a-fg: #E9EDF5; --a-muted: #9BA5B8; --a-subtle: #1C2536;
+    --a-border: #283244; --a-input: #68748B; --a-primary: #8EA8FF; --a-primary-fg: #0D121C; --a-ring: #8EA8FF;
+    --a-danger: #FF8A80; --a-danger-bg: #3A1614; --a-warn: #FFC56B; --a-warn-bg: #33240A;
+    --a-shadow: 0 6px 16px rgb(0 0 0 / 0.5);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --sheet-bg: #090D15; --sheet-fg: #E9EDF5; --sheet-muted: #9BA5B8; --sheet-line: #283244;
+  --sheet-control: #151C2A; --sheet-selected: #E9EDF5; --sheet-selected-fg: #0D121C;
+  --a-bg: #0D121C; --a-card: #151C2A; --a-fg: #E9EDF5; --a-muted: #9BA5B8; --a-subtle: #1C2536;
+  --a-border: #283244; --a-input: #68748B; --a-primary: #8EA8FF; --a-primary-fg: #0D121C; --a-ring: #8EA8FF;
+  --a-danger: #FF8A80; --a-danger-bg: #3A1614; --a-warn: #FFC56B; --a-warn-bg: #33240A;
+  --a-shadow: 0 6px 16px rgb(0 0 0 / 0.5);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; background: var(--sheet-bg); color: var(--sheet-fg); font: 15px/1.55 var(--font);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.sheet { max-width: 1680px; margin: 0 auto; padding-block: 28px 56px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+.sheet > * { min-width: 0; }
+.sheet h1 { margin: 0; font-size: 1.6rem; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+.lede { margin: 6px 0 0; color: var(--sheet-muted); max-width: 78ch; }
+.lede code { font-size: 0.9em; }
+.decisions { margin: 10px 0 0; padding-left: 18px; color: var(--sheet-muted); max-width: 78ch; font-size: 0.92rem; }
+.decisions li + li { margin-top: 3px; }
+.decisions strong { color: var(--sheet-fg); }
+
+.controls { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-end; }
+.control { display: grid; gap: 6px; min-width: 0; }
+.control-label { font-size: 0.82rem; font-weight: 600; color: var(--sheet-muted); }
+.seg { display: flex; flex-wrap: wrap; border: 1px solid var(--sheet-line); border-radius: 10px; overflow: hidden; background: var(--sheet-control); }
+.seg button { font: inherit; font-size: 0.84rem; border: 0; background: transparent; color: var(--sheet-fg); padding: 6px 10px; cursor: pointer; border-right: 1px solid var(--sheet-line); }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--sheet-selected); color: var(--sheet-selected-fg); font-weight: 600; }
+.seg button:focus-visible { outline: 3px solid var(--a-ring); outline-offset: 2px; }
+
+.gallery { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+.screen { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; min-width: 0; flex: 0 1 390px; }
+.screen h2 { margin: 0; font-size: 1rem; font-weight: 600; }
+.screen h2 code { font-size: 0.85em; font-weight: 500; color: var(--sheet-muted); }
+.notes { margin: 0; padding-left: 18px; color: var(--sheet-muted); font-size: 0.86rem; max-width: 390px; }
+.notes li + li { margin-top: 2px; }
+.frame {
+  width: 390px; max-width: 100%; height: 800px; overflow: hidden; position: relative;
+  border: 1px solid var(--sheet-line); border-radius: 28px; background: var(--a-bg);
+}
+body[data-viewport="desktop"] .gallery { flex-direction: column; }
+body[data-viewport="desktop"] .screen { width: 100%; flex: none; }
+body[data-viewport="desktop"] .frame { width: 100%; height: 760px; border-radius: 14px; }
+body[data-viewport="desktop"] .notes { max-width: 78ch; }
+
+/* ---------- App ---------- */
+.app { height: 100%; display: flex; flex-direction: column; background: var(--a-bg); color: var(--a-fg); font-family: var(--font); font-size: 16px; line-height: 1.5; position: relative; }
+.a-status-bar { height: 44px; flex: none; }
+body[data-viewport="desktop"] .a-status-bar { display: none; }
+.a-icon { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.a-icon.sm { width: 16px; height: 16px; }
+.app :is(button, a, input, textarea):focus-visible { outline: 3px solid var(--a-ring); outline-offset: 2px; }
+.a-main { flex: 1; overflow: auto; min-height: 0; }
+.a-page { max-width: 672px; margin: 0 auto; padding: 0 16px 24px; }
+.a-page.has-fab { padding-bottom: 96px; }
+
+/* Bottom navigation (approved) */
+.a-nav { flex: none; border-top: 1px solid var(--a-border); background: var(--a-card); padding-bottom: 16px; }
+body[data-viewport="desktop"] .a-nav { padding-bottom: 0; }
+.a-nav ul { list-style: none; margin: 0 auto; padding: 0; display: flex; max-width: 672px; }
+.a-nav li { flex: 1; }
+.a-nav a { min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 0.75rem; font-weight: 500; color: var(--a-muted); text-decoration: none; }
+.a-nav a[aria-current="page"] { color: var(--a-primary); }
+
+/* Page header */
+.a-page-header { padding: 16px 0 12px; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.a-page-header h1 { margin: 0; font-size: 1.25rem; font-weight: 700; }
+.a-count { color: var(--a-muted); font-size: 0.875rem; white-space: nowrap; }
+
+/* Top bar for sub-pages */
+.a-topbar { max-width: 672px; margin: 0 auto; display: flex; align-items: center; gap: 4px; padding: 6px 8px 6px 4px; min-width: 0; }
+.a-back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; min-width: 44px; padding: 0 8px; border-radius: 10px; color: var(--a-fg); text-decoration: none; font-weight: 600; font-size: 0.95rem; border: 0; background: transparent; cursor: pointer; font-family: inherit; }
+.app .a-topbar-title { flex: 1; min-width: 0; margin: 0; font-size: 1.1rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a-spacer { flex: 1; }
+
+/* Patient list */
+.a-list { list-style: none; margin: 0; padding: 0; background: var(--a-card); border: 1px solid var(--a-border); border-radius: 14px; overflow: hidden; }
+.a-list li + li { border-top: 1px solid var(--a-border); }
+.a-row { display: flex; gap: 12px; align-items: center; min-height: 64px; padding: 10px 12px 10px 14px; color: inherit; text-decoration: none; min-width: 0; }
+.a-row:hover { background: var(--a-subtle); }
+.a-avatar { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--a-subtle); color: var(--a-fg); font-weight: 600; font-size: 0.9rem; flex: none; }
+.a-avatar.lg { width: 56px; height: 56px; font-size: 1.1rem; }
+.a-row-body { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.a-row-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a-row-meta { color: var(--a-muted); font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a-row .a-icon { color: var(--a-muted); }
+
+.a-fab {
+  position: absolute; right: 16px; bottom: calc(56px + 16px + 16px); z-index: 5;
+  height: 52px; padding: 0 20px 0 16px; border-radius: 999px; border: 0; display: inline-flex; align-items: center; gap: 8px;
+  background: var(--a-primary); color: var(--a-primary-fg); font: inherit; font-weight: 600; box-shadow: var(--a-shadow); cursor: pointer; text-decoration: none;
+}
+body[data-viewport="desktop"] .a-fab { right: max(16px, calc((100% - 672px) / 2 + 16px)); bottom: calc(56px + 20px); }
+
+.a-empty { display: grid; justify-items: center; gap: 12px; text-align: center; padding: 48px 24px; background: var(--a-card); border: 1px solid var(--a-border); border-radius: 14px; }
+.a-empty-icon { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: var(--a-subtle); color: var(--a-muted); }
+.a-empty-icon.danger { background: var(--a-danger-bg); color: var(--a-danger); }
+.a-empty p { margin: 0; }
+.a-empty .t { font-weight: 600; font-size: 1.05rem; }
+.a-empty .d { color: var(--a-muted); font-size: 0.92rem; max-width: 34ch; }
+
+.a-skel { background: var(--a-subtle); border-radius: 8px; animation: a-pulse 1.4s ease-in-out infinite; }
+@keyframes a-pulse { 50% { opacity: 0.55; } }
+@media (prefers-reduced-motion: reduce) { .a-skel { animation: none; } }
+
+/* Buttons */
+.a-btn {
+  height: 48px; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 16px;
+  font: inherit; font-weight: 600; border-radius: 10px; border: 1px solid transparent; cursor: pointer;
+  background: var(--a-primary); color: var(--a-primary-fg); white-space: nowrap; text-decoration: none;
+}
+.a-btn[disabled] { opacity: 0.7; cursor: progress; }
+.a-btn[data-variant="outline"] { background: var(--a-card); color: var(--a-fg); border-color: var(--a-input); }
+.a-btn.auto { width: auto; }
+.a-btn.small { height: 44px; width: auto; font-size: 0.92rem; padding: 0 14px; }
+.a-spin { animation: a-spin 0.8s linear infinite; }
+@keyframes a-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .a-spin { animation: none; } }
+.a-text-btn { border: 0; background: transparent; font: inherit; font-weight: 600; color: inherit; min-height: 44px; padding: 0 4px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Form */
+.a-form { display: grid; gap: 18px; padding-top: 4px; }
+.a-field { display: grid; gap: 6px; min-width: 0; }
+.a-label { font-size: 0.95rem; font-weight: 600; display: flex; align-items: baseline; gap: 8px; }
+.a-label .req { color: var(--a-muted); font-weight: 500; font-size: 0.82rem; }
+.a-hint { color: var(--a-muted); font-size: 0.875rem; margin: 0; }
+.a-input, .a-textarea {
+  width: 100%; height: 48px; padding: 0 14px; font: inherit; font-size: 16px; color: var(--a-fg);
+  background: var(--a-card); border: 1px solid var(--a-input); border-radius: 10px;
+}
+.a-textarea { height: auto; min-height: 152px; padding: 12px 14px; resize: vertical; line-height: 1.5; }
+.a-input::placeholder, .a-textarea::placeholder { color: var(--a-muted); opacity: 1; }
+.a-input[aria-invalid="true"] { border-color: var(--a-danger); border-width: 2px; padding-left: 13px; }
+.a-input.focus { outline: 3px solid var(--a-ring); outline-offset: 2px; }
+.a-field-error { display: flex; gap: 6px; align-items: flex-start; color: var(--a-danger); font-size: 0.875rem; margin: 0; }
+.a-field-error .a-icon { width: 16px; height: 16px; margin-top: 2px; }
+
+/* The memorable element: how the app understood the birth input */
+.a-reading { display: flex; gap: 8px; align-items: center; margin: 0; padding: 6px 10px; border-left: 3px solid var(--a-primary); background: var(--a-subtle); border-radius: 0 8px 8px 0; color: var(--a-fg); font-size: 0.92rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.a-reading .a-icon { width: 16px; height: 16px; color: var(--a-primary); }
+
+.a-gender { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.a-gender button { height: 44px; border-radius: 10px; border: 1px solid var(--a-input); background: var(--a-card); color: var(--a-fg); font: inherit; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.a-gender button[aria-checked="true"] { background: var(--a-primary); border-color: var(--a-primary); color: var(--a-primary-fg); font-weight: 600; }
+
+.a-alert { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 10px; background: var(--a-danger-bg); color: var(--a-danger); font-size: 0.95rem; font-weight: 500; }
+.a-alert[data-tone="warn"] { background: var(--a-warn-bg); color: var(--a-warn); }
+.a-alert .a-icon { margin-top: 2px; }
+.a-alert-body { display: grid; gap: 2px; min-width: 0; }
+.a-alert .a-text-btn { justify-self: start; min-height: 36px; padding: 0; }
+
+.a-dup { border: 1px solid var(--a-border); background: var(--a-subtle); border-radius: 12px; padding: 12px; display: grid; gap: 10px; }
+.a-dup-title { margin: 0; font-weight: 700; font-size: 0.95rem; }
+.a-dup-card { display: flex; gap: 12px; align-items: center; background: var(--a-card); border: 1px solid var(--a-border); border-radius: 10px; padding: 8px 8px 8px 12px; min-width: 0; }
+.a-dup-card .a-row-body { gap: 0; }
+.a-link { color: var(--a-primary); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; display: inline-flex; align-items: center; min-height: 44px; padding: 0 6px; flex: none; }
+.a-dup-note { margin: 0; color: var(--a-muted); font-size: 0.875rem; }
+
+.a-savebar { flex: none; border-top: 1px solid var(--a-border); background: var(--a-card); padding: 10px 16px; }
+.a-savebar-inner { max-width: 640px; margin: 0 auto; }
+
+/* ---------- Trash (change add-patient-trash) ----------
+   The one accent: the inverted "Hoàn tác" toast above the bottom bar. Red is only ever text. */
+.a-icon-only { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid var(--a-input); border-radius: 10px; background: var(--a-card); color: var(--a-fg); cursor: pointer; }
+.a-menu { position: absolute; right: 16px; top: 100px; z-index: 12; min-width: 240px; background: var(--a-card); border: 1px solid var(--a-border); border-radius: 12px; box-shadow: var(--a-shadow); padding: 6px; }
+body[data-viewport="desktop"] .a-menu { right: max(16px, calc((100% - 672px) / 2 + 16px)); }
+.a-menu button { width: 100%; min-height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; font: inherit; color: var(--a-danger); font-weight: 600; cursor: pointer; text-align: left; }
+.a-menu button:hover { background: var(--a-subtle); }
+.a-toast { position: absolute; left: 16px; right: 16px; bottom: calc(56px + 16px + 12px); z-index: 14; display: flex; align-items: center; gap: 10px; padding: 10px 8px 10px 16px; border-radius: 12px; background: var(--a-fg); color: var(--a-bg); box-shadow: var(--a-shadow); font-size: 0.95rem; }
+body[data-viewport="desktop"] .a-toast { left: auto; right: max(16px, calc((100% - 672px) / 2 + 16px)); width: 420px; bottom: calc(56px + 20px); }
+.a-toast span { flex: 1; min-width: 0; }
+.a-toast button { min-height: 40px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: var(--a-bg); font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.a-dim { opacity: .35; }
+.a-settings-link { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 12px 8px 16px; background: var(--a-card); border: 1px solid var(--a-border); border-radius: 14px; color: inherit; text-decoration: none; }
+.a-settings-link .t { flex: 1; font-weight: 600; }
+.a-settings-link .n { color: var(--a-muted); font-size: 0.9rem; }
+.a-trash-row { padding: 12px 12px 12px 14px; display: grid; gap: 10px; }
+.a-trash-row + .a-trash-row { border-top: 1px solid var(--a-border); }
+.a-trash-head { display: flex; gap: 12px; align-items: center; min-width: 0; }
+.a-expiry { font-size: 0.8125rem; color: var(--a-muted); font-variant-numeric: tabular-nums; }
+.a-expiry[data-soon="true"] { color: var(--a-warn); font-weight: 600; }
+.a-trash-actions { display: flex; gap: 8px; flex-wrap: wrap; padding-left: 52px; }
+.a-text-danger { min-height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: var(--a-danger); font: inherit; font-weight: 600; font-size: 0.92rem; cursor: pointer; }
+.a-trash-intro { margin: -6px 0 14px; color: var(--a-muted); font-size: 0.9rem; }
+.a-overlay { position: absolute; inset: 0; background: rgb(17 24 39 / 0.5); display: grid; place-items: center; padding: 20px; z-index: 20; }
+.a-dialog { width: 100%; max-width: 420px; background: var(--a-card); color: var(--a-fg); border-radius: 16px; padding: 20px; display: grid; gap: 14px; }
+.a-dialog h2 { margin: 0; font-size: 1.15rem; font-weight: 700; }
+.a-dialog p { margin: 0; color: var(--a-muted); font-size: 0.95rem; overflow-wrap: anywhere; }
+.a-dialog-actions { display: grid; gap: 8px; }
+.a-btn[data-variant="danger"] { background: var(--a-danger); color: var(--a-card); }
+.a-section { background: var(--a-card); border: 1px solid var(--a-border); border-radius: 14px; padding: 16px; display: grid; gap: 16px; }
+.a-section-title { margin: 0; font-size: 0.95rem; font-weight: 600; color: var(--a-muted); }
+.a-person { display: flex; gap: 12px; align-items: center; min-width: 0; }
+.a-person .a-avatar { width: 48px; height: 48px; }
+.a-person-name { font-weight: 600; }
+.a-person-meta { color: var(--a-muted); font-size: 0.9rem; }
+.a-gap { margin-top: 16px; }
+.a-placeholder { margin-top: 16px; border: 1px dashed var(--a-border); border-radius: 14px; padding: 20px 16px; text-align: center; color: var(--a-muted); font-size: 0.875rem; }
+.frame.mid { height: 760px; }
+body[data-viewport="desktop"] .frame.mid { height: 700px; }
+/* ---------- Backup & import (change add-data-backup) ----------
+   The one accent: the file summary card when importing (date set large, counts in tabular figures).
+   The reminder uses the existing warning tokens with icon + words; red only when data will be replaced. */
+.a-intro { margin: -4px 0 14px; color: var(--a-muted); font-size: 0.92rem; }
+.a-section + .a-section { margin-top: 14px; }
+.a-section h2.a-section-title { color: var(--a-fg); font-size: 1.02rem; font-weight: 700; }
+.a-lines { display: grid; gap: 4px; margin: 0; }
+.a-lines p { margin: 0; }
+.a-lines .main { font-weight: 600; }
+.a-lines .sub { color: var(--a-muted); font-size: 0.92rem; font-variant-numeric: tabular-nums; }
+.a-keep { display: flex; gap: 10px; align-items: flex-start; margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--a-subtle); color: var(--a-fg); font-size: 0.9rem; }
+.a-keep .a-icon { width: 18px; height: 18px; margin-top: 2px; color: var(--a-muted); }
+.a-status { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--a-border); background: var(--a-card); font-size: 0.95rem; }
+.a-status .a-icon { margin-top: 2px; color: var(--a-primary); }
+.a-status b { font-weight: 700; overflow-wrap: anywhere; }
+.a-status .a-alert-body span { color: var(--a-muted); font-size: 0.9rem; overflow-wrap: anywhere; }
+.a-settings-link .t2 { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.a-settings-link .t2 .t { flex: none; }
+.a-settings-link .t2 .s { color: var(--a-muted); font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a-settings-link .s[data-tone="warn"] { color: var(--a-warn); font-weight: 600; }
+.a-file-label { position: relative; }
+.a-file-label input { position: absolute; inset: 0; opacity: 0; width: 100%; cursor: pointer; }
+
+.a-filecard { border: 1px solid var(--a-border); border-left: 4px solid var(--a-primary); border-radius: 12px; background: var(--a-subtle); padding: 14px 14px 12px; display: grid; gap: 12px; }
+.a-filecard-head { display: flex; gap: 10px; align-items: center; color: var(--a-muted); font-size: 0.875rem; font-weight: 600; }
+.a-filecard-head .a-icon { color: var(--a-primary); }
+.a-filecard-date { margin: -6px 0 0; font-size: 1.6rem; font-weight: 700; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.a-filecard-date small { font-size: 0.95rem; font-weight: 500; color: var(--a-muted); letter-spacing: 0; }
+.a-counts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.a-counts div { background: var(--a-card); border: 1px solid var(--a-border); border-radius: 10px; padding: 8px 10px; display: grid; }
+.a-counts dt { order: 2; color: var(--a-muted); font-size: 0.8125rem; }
+.a-counts dd { order: 1; margin: 0; font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.a-filecard-meta { margin: 0; color: var(--a-muted); font-size: 0.8125rem; overflow-wrap: anywhere; }
+.a-actions { display: grid; gap: 8px; }
+.a-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.a-steps li { display: flex; gap: 10px; align-items: center; font-weight: 500; }
+.a-steps li[data-state="todo"] { color: var(--a-muted); }
+.a-step-mark { width: 28px; height: 28px; flex: none; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--a-border); background: var(--a-card); font-size: 0.85rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.a-steps li[data-state="done"] .a-step-mark { background: var(--a-primary); border-color: var(--a-primary); color: var(--a-primary-fg); }
+.a-steps li[data-state="doing"] .a-step-mark { color: var(--a-primary); border-color: var(--a-primary); }
+.a-steps .a-icon { width: 16px; height: 16px; }
+
+.a-banner { display: grid; gap: 10px; padding: 12px 12px 10px 14px; margin-bottom: 12px; border-radius: 14px; background: var(--a-warn-bg); border: 1px solid color-mix(in srgb, var(--a-warn) 35%, transparent); }
+.a-banner-head { display: flex; gap: 10px; align-items: flex-start; }
+.a-banner-head .a-icon { color: var(--a-warn); margin-top: 2px; }
+.a-banner-head p { margin: 0; }
+.a-banner .t { font-weight: 700; color: var(--a-fg); }
+.a-banner .d { color: var(--a-fg); font-size: 0.9rem; }
+.a-banner-actions { display: flex; gap: 6px; align-items: center; padding-left: 30px; flex-wrap: wrap; }
+.a-search-mock { display: flex; align-items: center; height: 52px; border: 1px solid var(--a-input); border-radius: 12px; background: var(--a-card); padding: 0 12px; gap: 8px; margin-bottom: 10px; color: var(--a-muted); }
+.frame.tall { height: 860px; }
+body[data-viewport="desktop"] .frame.tall { height: 760px; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-todo" viewBox="0 0 24 24"><rect x="3" y="5" width="6" height="6" rx="1"/><path d="m3 17 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.730l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+  <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></symbol>
+  <symbol id="i-triangle" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-loader" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></symbol>
+  <symbol id="i-wifi-off" viewBox="0 0 24 24"><path d="M12 20h.01"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/><path d="M2 8.82a15 15 0 0 1 4.177-2.643"/><path d="M22 8.82a15 15 0 0 0-11.288-3.764"/><path d="m2 2 20 20"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m17 8-5-5-5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></symbol>
+  <symbol id="i-archive" viewBox="0 0 24 24"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+</svg>
+
+<main class="sheet">
+  <header>
+    <h1>Sao lưu và nhập dữ liệu</h1>
+    <p class="lede">Mockup cho change <code>add-data-backup</code> (module <code>backup</code>), bảng màu A, không thêm màu mới. Mỗi màn hình có bộ chọn trạng thái; chọn chế độ sáng/tối và khung điện thoại hay máy tính ở dưới. Tên, số liệu là ví dụ.</p>
+    <ul class="decisions">
+      <li><strong>Một trang <code>/settings/backup</code></strong> có hai thẻ: Sao lưu và Nhập dữ liệu. Cài đặt có dòng "Sao lưu và nhập dữ liệu" luôn kèm "Lần sao lưu gần nhất", đặt trên dòng Thùng rác.</li>
+      <li><strong>Tải file sao lưu</strong> tạo một file <code>doctor-handbook_bs.lan_2026-11-19.zip</code>; lời nhắc giữ file luôn hiện cạnh nút và sau mỗi lần tải.</li>
+      <li><strong>Nhập = thay thế toàn bộ</strong>: chọn file → thẻ tóm tắt file → hộp thoại (chỉ khi đang có dữ liệu) → tự tải bản sao lưu hiện tại → nhập tất cả hoặc không.</li>
+      <li><strong>Thanh nhắc</strong> trên màn hình chính khi quá 7 ngày chưa sao lưu và dữ liệu có thay đổi: "Sao lưu ngay" tải tại chỗ, "Để mai" ẩn 1 ngày trên máy đó.</li>
+    </ul>
+  </header>
+
+  <div class="controls" role="group" aria-label="Tuỳ chọn xem mockup">
+    <div class="control">
+      <span class="control-label" id="lbl-theme">Chế độ</span>
+      <div class="seg" data-control="theme" aria-labelledby="lbl-theme">
+        <button type="button" data-value="system" aria-pressed="true">Theo máy</button>
+        <button type="button" data-value="light" aria-pressed="false">Sáng</button>
+        <button type="button" data-value="dark" aria-pressed="false">Tối</button>
+      </div>
+    </div>
+    <div class="control">
+      <span class="control-label" id="lbl-viewport">Khung</span>
+      <div class="seg" data-control="viewport" aria-labelledby="lbl-viewport">
+        <button type="button" data-value="phone" aria-pressed="true">Điện thoại</button>
+        <button type="button" data-value="desktop" aria-pressed="false">Máy tính</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="gallery">
+    <section class="screen" aria-labelledby="s1">
+      <h2 id="s1">Cài đặt <code>/settings</code></h2>
+      <div class="seg" data-screen="settings" aria-label="Trạng thái">
+        <button type="button" data-value="recent" aria-pressed="true">Đã sao lưu</button>
+        <button type="button" data-value="never" aria-pressed="false">Chưa lần nào</button>
+      </div>
+      <div class="frame mid"><div class="app" id="app-settings"></div></div>
+      <ul class="notes">
+        <li>Dòng mới đứng trên Thùng rác; dòng "đang được xây dựng" bị bỏ.</li>
+        <li>"Chưa sao lưu lần nào" in màu cảnh báo kèm chữ, không chỉ dựa vào màu.</li>
+      </ul>
+    </section>
+
+    <section class="screen" aria-labelledby="s2">
+      <h2 id="s2">Sao lưu <code>/settings/backup</code></h2>
+      <div class="seg" data-screen="backup" aria-label="Trạng thái sao lưu">
+        <button type="button" data-value="normal" aria-pressed="true">Bình thường</button>
+        <button type="button" data-value="never" aria-pressed="false">Chưa lần nào</button>
+        <button type="button" data-value="busy" aria-pressed="false">Đang tạo file</button>
+        <button type="button" data-value="done" aria-pressed="false">Vừa tải xong</button>
+        <button type="button" data-value="offline" aria-pressed="false">Mất mạng</button>
+      </div>
+      <div class="frame tall"><div class="app" id="app-backup"></div></div>
+      <ul class="notes">
+        <li>Lời nhắc giữ file (icon khiên) luôn nằm ngay dưới nút tải.</li>
+        <li>Số bệnh nhân ghi rõ bao nhiêu đang trong thùng rác: file có cả thùng rác.</li>
+      </ul>
+    </section>
+
+    <section class="screen" aria-labelledby="s3">
+      <h2 id="s3">Nhập dữ liệu <code>/settings/backup</code></h2>
+      <div class="seg" data-screen="import" aria-label="Trạng thái nhập">
+        <button type="button" data-value="reading" aria-pressed="false">Đang đọc file</button>
+        <button type="button" data-value="empty" aria-pressed="false">Tóm tắt, tài khoản trống</button>
+        <button type="button" data-value="replace" aria-pressed="true">Tóm tắt, sẽ thay thế</button>
+        <button type="button" data-value="dialog" aria-pressed="false">Hộp thoại</button>
+        <button type="button" data-value="progress" aria-pressed="false">Đang nhập</button>
+        <button type="button" data-value="done" aria-pressed="false">Xong</button>
+        <button type="button" data-value="broken" aria-pressed="false">File hỏng</button>
+        <button type="button" data-value="newer" aria-pressed="false">Bản mới hơn</button>
+        <button type="button" data-value="large" aria-pressed="false">Quá lớn</button>
+        <button type="button" data-value="offline" aria-pressed="false">Mất mạng</button>
+      </div>
+      <div class="frame tall"><div class="app" id="app-import"></div></div>
+      <ul class="notes">
+        <li>Thẻ tóm tắt file là điểm nhấn: ngày của file in lớn, số đếm dạng chữ số đều; bác sĩ phải chắc đúng file.</li>
+        <li>Nút "Nhập dữ liệu" đỏ chỉ khi sẽ thay dữ liệu đang có. Tài khoản trống thì nút chính xanh, không hỏi, không tự sao lưu.</li>
+        <li>Đang nhập hiện hai bước theo thứ tự thật; mất mạng thì "Thử lại" chỉ gửi lại, không tải thêm bản sao lưu.</li>
+      </ul>
+    </section>
+
+    <section class="screen" aria-labelledby="s4">
+      <h2 id="s4">Thanh nhắc trên <code>/patients</code></h2>
+      <div class="seg" data-screen="home" aria-label="Trạng thái thanh nhắc">
+        <button type="button" data-value="days" aria-pressed="true">Quá 12 ngày</button>
+        <button type="button" data-value="never" aria-pressed="false">Chưa lần nào</button>
+        <button type="button" data-value="busy" aria-pressed="false">Đang tạo file</button>
+        <button type="button" data-value="done" aria-pressed="false">Đã tải</button>
+      </div>
+      <div class="frame mid"><div class="app" id="app-home"></div></div>
+      <ul class="notes">
+        <li>Nằm trên ô tìm, tông cảnh báo, icon và chữ; không có dữ liệu bệnh nhân.</li>
+        <li>Sau khi tải: thanh biến mất, thông báo nổi đảo màu ngay trên thanh điều hướng.</li>
+      </ul>
+    </section>
+  </div>
+</main>
+
+<script>
+(() => {
+  const root = document.documentElement;
+  const body = document.body;
+  const icon = (id, cls = "") => `<svg class="a-icon ${cls}" aria-hidden="true"><use href="#i-${id}"/></svg>`;
+  const nav = (cur) => `<nav class="a-nav" aria-label="Điều hướng chính"><ul>
+      <li><a href="#" ${cur === "p" ? 'aria-current="page"' : ""}>${icon("users")}Bệnh nhân</a></li>
+      <li><a href="#">${icon("todo")}Việc cần làm</a></li>
+      <li><a href="#" ${cur === "s" ? 'aria-current="page"' : ""}>${icon("settings")}Cài đặt</a></li>
+    </ul></nav>`;
+  const shell = (inner, cur, extra = "") => `<div class="a-status-bar"></div><div class="a-main"><div class="a-page">${inner}</div></div>${extra}${nav(cur)}`;
+  const topbar = `<div class="a-topbar" style="padding-left:0"><a class="a-back" href="#">${icon("arrow-left")}Cài đặt</a></div>`;
+  const keep = `<p class="a-keep">${icon("shield")}<span>File chứa thông tin bệnh nhân. Giữ file cẩn thận, không gửi cho người khác.</span></p>`;
+  const intro = `<div class="a-page-header" style="padding-top:4px"><h1>Sao lưu dữ liệu</h1></div>
+      <p class="a-intro">Dữ liệu trên server có thể bị mất. Hãy giữ một file sao lưu trên máy.</p>`;
+
+  function renderSettings(state) {
+    const sub = state === "never"
+      ? `<span class="s" data-tone="warn">Chưa sao lưu lần nào</span>`
+      : `<span class="s">Lần sao lưu gần nhất: 3 ngày trước</span>`;
+    document.getElementById("app-settings").innerHTML = shell(`
+      <div class="a-page-header"><h1>Cài đặt</h1></div>
+      <section class="a-section"><h2 class="a-section-title" style="color:var(--a-muted);font-size:.95rem;font-weight:600">Tài khoản</h2>
+        <div class="a-person"><div class="a-avatar" aria-hidden="true">NL</div><div><div class="a-person-name">Nguyễn Thị Lan</div><div class="a-person-meta">Tên đăng nhập: bs.lan</div></div></div>
+        <button class="a-btn" data-variant="outline" type="button">${icon("logout")}Đăng xuất</button></section>
+      <div class="a-section a-gap" style="min-height:64px;color:var(--a-muted)">Đổi mật khẩu (thẻ như cũ)</div>
+      <a class="a-settings-link a-gap" href="#">${icon("archive")}<span class="t2"><span class="t">Sao lưu và nhập dữ liệu</span>${sub}</span>${icon("chevron-right")}</a>
+      <a class="a-settings-link a-gap" href="#">${icon("trash")}<span class="t">Thùng rác</span><span class="n">3 bệnh nhân</span>${icon("chevron-right")}</a>`, "s");
+  }
+
+  const backupCard = (state) => {
+    const last = state === "never"
+      ? `<p class="main" style="color:var(--a-warn)">Chưa sao lưu lần nào</p>`
+      : state === "done" || state === "today"
+        ? `<p class="main">Lần sao lưu gần nhất: hôm nay (19/11/2026)</p>`
+        : `<p class="main">Lần sao lưu gần nhất: 3 ngày trước (16/11/2026)</p>`;
+    const button = state === "busy"
+      ? `<button class="a-btn" type="button" disabled aria-busy="true">${icon("loader", "a-spin")}Đang tạo file…</button>`
+      : `<button class="a-btn" type="button">${icon("download")}Tải file sao lưu</button>`;
+    const result = state === "done"
+      ? `<div class="a-status" role="status">${icon("check-circle")}<div class="a-alert-body"><b>Đã tải file doctor-handbook_bs.lan_2026-11-19.zip.</b><span>Giữ file cẩn thận, không gửi cho người khác.</span></div></div>`
+      : state === "offline"
+        ? `<div class="a-alert" role="alert">${icon("wifi-off")}<span>Không tạo được file vì mất mạng. Thử lại khi có mạng.</span></div>`
+        : "";
+    return `<section class="a-section" aria-labelledby="h-backup"><h2 class="a-section-title" id="h-backup">Sao lưu</h2>
+      <div class="a-lines">${last}<p class="sub">Đang có 132 bệnh nhân (3 trong thùng rác), 845 ghi chú, 0 việc</p></div>
+      ${result}${button}${keep}</section>`;
+  };
+  const importIntro = `<p style="margin:0;color:var(--a-muted);font-size:.95rem">Thay toàn bộ dữ liệu trong sổ bằng dữ liệu của một file sao lưu.</p>`;
+  const pick = (label = "Chọn file sao lưu") => `<label class="a-btn a-file-label" data-variant="outline">${icon("upload")}${label}<input type="file" accept=".zip,application/zip"></label>`;
+
+  function renderBackup(state) {
+    document.getElementById("app-backup").innerHTML = shell(`${topbar}${intro}${backupCard(state)}
+      <section class="a-section" aria-labelledby="h-import"><h2 class="a-section-title" id="h-import">Nhập dữ liệu</h2>${importIntro}${pick()}</section>`, "s");
+  }
+
+  const fileCard = (other) => `<div class="a-filecard">
+      <div class="a-filecard-head">${icon("archive")}File sao lưu ngày</div>
+      <p class="a-filecard-date">10/11/2026 <small>lúc 08:30</small></p>
+      <dl class="a-counts"><div><dt>bệnh nhân</dt><dd>132</dd></div><div><dt>ghi chú</dt><dd>845</dd></div><div><dt>việc</dt><dd>20</dd></div></dl>
+      <p class="a-filecard-meta">doctor-handbook_${other ? "bs.minh" : "bs.lan"}_2026-11-10.zip, 412 KB</p></div>`;
+
+  function importCard(state) {
+    const head = `<h2 class="a-section-title" id="h-import">Nhập dữ liệu</h2>`;
+    const err = (ic, text) => `${head}<div class="a-alert" role="alert">${icon(ic)}<span>${text}</span></div>${pick("Chọn file khác")}`;
+    const replaceWarnings = `<div class="a-alert" data-tone="warn">${icon("triangle")}<div class="a-alert-body"><span>File này của tài khoản bs.minh.</span></div></div>
+          <div class="a-alert">${icon("alert")}<div class="a-alert-body"><span>Toàn bộ dữ liệu hiện tại (40 bệnh nhân, 210 ghi chú, 0 việc) sẽ bị thay thế. App sẽ tải về một file sao lưu dữ liệu hiện tại trước.</span></div></div>`;
+    switch (state) {
+      case "reading":
+        return `${head}${importIntro}<button class="a-btn" data-variant="outline" type="button" disabled aria-busy="true">${icon("loader", "a-spin")}Đang đọc file…</button>`;
+      case "empty":
+        return `${head}${fileCard(false)}<div class="a-actions"><button class="a-btn" type="button">${icon("upload")}Nhập dữ liệu</button><button class="a-btn" data-variant="outline" type="button">Chọn file khác</button></div>`;
+      case "replace":
+      case "dialog":
+        return `${head}${fileCard(true)}${replaceWarnings}
+          <div class="a-actions"><button class="a-btn" data-variant="danger" type="button">Nhập dữ liệu</button><button class="a-btn" data-variant="outline" type="button">Chọn file khác</button></div>`;
+      case "progress":
+        return `${head}${fileCard(true)}<ol class="a-steps" aria-live="polite">
+            <li data-state="done"><span class="a-step-mark">${icon("check")}</span>Sao lưu dữ liệu hiện tại</li>
+            <li data-state="doing"><span class="a-step-mark">${icon("loader", "a-spin")}</span>Đang nhập dữ liệu từ file…</li></ol>
+          <p class="a-hint">Đừng đóng trang. Lỗi giữa chừng thì dữ liệu hiện tại còn nguyên.</p>`;
+      case "done":
+        return `${head}<div class="a-status" role="status">${icon("check-circle")}<div class="a-alert-body"><b>Đã nhập 132 bệnh nhân, 845 ghi chú, 20 việc.</b><span>File sao lưu dữ liệu cũ: doctor-handbook_bs.lan_2026-11-19_truoc-khi-nhap.zip</span></div></div>
+          <a class="a-btn" href="#">${icon("users")}Xem danh sách bệnh nhân</a>${pick("Chọn file sao lưu khác")}`;
+      case "broken":
+        return err("alert", "File này không phải file sao lưu của Doctor Handbook, hoặc đã bị hỏng.");
+      case "newer":
+        return err("refresh", "File được tạo từ phiên bản app mới hơn. Vui lòng cập nhật app (tải lại trang) rồi thử lại.");
+      case "large":
+        return err("alert", "File quá lớn. Dung lượng tối đa 4 MB.");
+      case "offline":
+        return `${head}${fileCard(true)}<ol class="a-steps">
+            <li data-state="done"><span class="a-step-mark">${icon("check")}</span>Sao lưu dữ liệu hiện tại</li>
+            <li data-state="todo"><span class="a-step-mark">2</span>Nhập dữ liệu từ file</li></ol>
+          <div class="a-alert" role="alert">${icon("wifi-off")}<span>Không nhập được vì mất mạng. Dữ liệu chưa thay đổi.</span></div>
+          <div class="a-actions"><button class="a-btn" data-variant="danger" type="button">${icon("refresh")}Thử lại</button><button class="a-btn" data-variant="outline" type="button">Huỷ</button></div>`;
+      default:
+        return "";
+    }
+  }
+
+  function renderImport(state) {
+    const el = document.getElementById("app-import");
+    const dialog = state === "dialog" ? `<div class="a-overlay"><div class="a-dialog" role="alertdialog" aria-labelledby="dr"><h2 id="dr">Thay thế toàn bộ dữ liệu?</h2>
+        <p>40 bệnh nhân, 210 ghi chú và 0 việc đang có sẽ bị thay bằng dữ liệu trong file. App sẽ tải về một file sao lưu dữ liệu hiện tại trước khi thay.</p>
+        <div class="a-dialog-actions"><button class="a-btn" data-variant="danger" type="button">Thay thế dữ liệu</button><button class="a-btn" data-variant="outline" type="button">Không nhập</button></div></div></div>` : "";
+    const backupState = ["progress", "done", "offline"].includes(state) ? "today" : "normal";
+    el.innerHTML = shell(`${topbar}${intro}${backupCard(backupState)}
+      <section class="a-section" aria-labelledby="h-import" id="import-card">${importCard(state)}</section>`, "s", dialog);
+    const main = el.querySelector(".a-main");
+    const card = el.querySelector("#import-card");
+    main.scrollTop = card.offsetTop - 70;
+  }
+
+  const people = [
+    { i: "TB", n: "Trần Thị Bình", m: "Nữ · 62 tuổi · Hà Tĩnh" },
+    { i: "PH", n: "Phạm Gia Huy", m: "Nam · Dưới 1 tuổi · Hà Nội" },
+    { i: "NA", n: "Nguyễn Văn An", m: "Nam · 31 tuổi · Thanh Hoá" },
+    { i: "LM", n: "Lê Minh", m: "" },
+    { i: "VL", n: "Võ Thị Lan", m: "Nữ · 54 tuổi · Quảng Nam" },
+  ];
+  const row = (p) => `<li><a class="a-row" href="#"><span class="a-avatar" aria-hidden="true">${p.i}</span><span class="a-row-body"><span class="a-row-name">${p.n}</span>${p.m ? `<span class="a-row-meta">${p.m}</span>` : ""}</span>${icon("chevron-right")}</a></li>`;
+
+  function renderHome(state) {
+    const title = state === "never" ? "Bạn chưa sao lưu dữ liệu lần nào." : "Đã 12 ngày chưa sao lưu dữ liệu.";
+    const primary = state === "busy"
+      ? `<button class="a-btn small" type="button" disabled aria-busy="true">${icon("loader", "a-spin sm")}Đang tạo file…</button>`
+      : `<button class="a-btn small" type="button">${icon("download", "sm")}Sao lưu ngay</button>`;
+    const banner = state === "done" ? "" : `<section class="a-banner" aria-label="Nhắc sao lưu"><div class="a-banner-head">${icon("clock")}<div><p class="t">${title}</p><p class="d">Dữ liệu trên server có thể bị mất. Hãy giữ một file trên máy.</p></div></div>
+        <div class="a-banner-actions">${primary}<button class="a-text-btn" type="button" aria-label="Ẩn nhắc sao lưu trong 1 ngày" ${state === "busy" ? "disabled" : ""}>Để mai</button></div></section>`;
+    const toast = state === "done" ? `<div class="a-toast" role="status"><span>Đã tải file sao lưu. Giữ file cẩn thận, không gửi cho người khác.</span></div>` : "";
+    document.getElementById("app-home").innerHTML = `<div class="a-status-bar"></div><div class="a-main"><div class="a-page has-fab">
+        <div class="a-page-header"><h1>Bệnh nhân</h1><span class="a-count">132 bệnh nhân</span></div>
+        ${banner}
+        <div class="a-search-mock">${icon("search")}<span>Tìm tên, quê, SĐT, mã BN, ghi chú…</span></div>
+        <ul class="a-list">${people.map(row).join("")}</ul></div></div>
+      <a class="a-fab" href="#">${icon("plus")}Thêm bệnh nhân</a>
+      ${toast}${nav("p")}`;
+  }
+
+  const screens = { settings: renderSettings, backup: renderBackup, import: renderImport, home: renderHome };
+  const current = { settings: "recent", backup: "normal", import: "replace", home: "days" };
+  const rerender = () => Object.entries(current).forEach(([k, v]) => screens[k](v));
+  const globals = {
+    theme: (v) => (v === "system" ? root.removeAttribute("data-theme") : root.setAttribute("data-theme", v)),
+    viewport: (v) => { body.dataset.viewport = v; rerender(); },
+  };
+  document.querySelectorAll(".seg").forEach((group) => {
+    group.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-value]");
+      if (!button) return;
+      group.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
+      if (group.dataset.control) globals[group.dataset.control](button.dataset.value);
+      else { current[group.dataset.screen] = button.dataset.value; screens[group.dataset.screen](button.dataset.value); }
+    });
+  });
+  document.addEventListener("click", (e) => { if (e.target.closest(".frame a, .frame button, .frame label")) e.preventDefault(); });
+  body.dataset.viewport = "phone";
+  rerender();
+})();
+</script>
+</body>
+</html>

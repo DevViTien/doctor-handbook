@@ -293,7 +293,7 @@ backup.zip
 
 ```mermaid
 flowchart LR
-    A[Bấm Sao lưu] --> B["GET /api/backup<br/>→ data.json + signed URL các ảnh"]
+    A[Bấm Sao lưu] --> B["GET /api/backup<br/>→ data.json nén gzip (+ signed URL các ảnh khi có ảnh)"]
     B --> C[Trình duyệt tải từng ảnh]
     C --> D["fflate đóng gói .zip"]
     D --> E[Lưu file về máy]
@@ -309,14 +309,14 @@ flowchart LR
     C --> D[Hiện tóm tắt, xác nhận]
     D --> E[Tự xuất bản sao lưu dữ liệu hiện tại]
     E --> F[Tải ảnh lên vùng tạm của Storage]
-    F --> G["Server Action: 1 transaction<br/>xóa dữ liệu cũ → ghi dữ liệu mới → gắn ảnh"]
+    F --> G["PUT /api/backup (data.json nén gzip):<br/>1 transaction xóa dữ liệu cũ → ghi dữ liệu mới → gắn ảnh"]
     G -->|Lỗi| H[Rollback + xóa ảnh tạm]
     G -->|Thành công| I[Xóa ảnh cũ, báo kết quả]
 ```
 
 | Chi tiết | Ghi chú |
 |---|---|
-| `data.json` có kích thước bao nhiêu? | Ước tính 300 bệnh nhân + 3.000 ghi chú: khoảng 1–2 MB. Nằm trong giới hạn của một Server Action. Nếu vượt, chia nhiều lần gửi nhưng vẫn ghi vào một bảng tạm rồi mới chốt |
+| `data.json` có kích thước bao nhiêu? | Ước tính 300 bệnh nhân + 3.000 ghi chú: khoảng 1–2 MB chữ. Đi qua Route Handler `/api/backup` (không phải Server Action, vốn giới hạn 1 MB), **nén gzip cả hai chiều**, tối đa 4 MB nén (khoảng 25 MB chữ), dưới giới hạn 4,5 MB của Vercel Function. Không cần bảng tạm hay gửi nhiều lần (change `add-data-backup`) |
 | Tương thích phiên bản | `manifest.formatVersion`. Có hàm nâng cấp từng phiên bản cũ lên mới |
 | Lưu file trên iPhone | Safari lưu vào ứng dụng **Tệp (Files)**. Cần **thử ở chế độ PWA** vì tải file trong chế độ standalone có thể khác trình duyệt thường |
 

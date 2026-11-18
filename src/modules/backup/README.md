@@ -1,31 +1,82 @@
 # Module: backup
 
-The doctor's safety net: the free database may lose data (idea.md D8).
+The doctor's safety net: the free database may lose data (idea.md D8). Specs: `data-backup`,
+`data-import` (change `add-data-backup`).
 
 ## Scope
 
-- **Export** everything (patients, notes, avatars, todos) into one `.zip` built in the browser:
-  `manifest.json` (format version, counts, export date) + `data.json` + `images/`.
-- **Import** = replace all (D20): validate with Zod, show a summary, auto-export the current data
-  first, upload images to the `imports` bucket, then swap data in a single DB transaction.
-- **Reminder** when the last backup is older than 7 days and data changed since.
-- No password on the file (D18); show a short "keep this file safe" notice on every export.
+- **Export** everything into one `.zip` built in the browser (`archive.ts`, `fflate`):
+  `manifest.json` + `data.json`. Saved as `doctor-handbook_<username>_<yyyy-mm-dd>.zip`.
+- **Import** = replace all (D20): the browser unpacks and checks the file, shows a summary,
+  saves a backup of the current data first (`…_truoc-khi-nhap.zip`) when there is any, then the
+  server checks it again and swaps everything in one transaction.
+- **Reminder** on `/patients` when the last backup (or the account's creation) is more than 7
+  days old and data changed since; "Để mai" snoozes it for a day on that device (localStorage).
+- No password on the file (D18); the keep-safe notice is shown next to every download button
+  and after every download.
 
-## Data to include
+## Layout
 
-Every column a doctor can write must round-trip through export and import:
+| File                          | Role                                                                    |
+| ----------------------------- | ----------------------------------------------------------------------- |
+| `schemas.ts`                  | `backupFileSchema`: the format, shared by browser and server            |
+| `format.ts`                   | `readBackup` (version check + upgraders), `backupFileName`              |
+| `archive.ts`                  | `.zip` pack/unpack (64 MB unpacked limit), gzip JSON for the wire       |
+| `reminder.ts`                 | `shouldRemind`, `describeLastBackup` (Vietnam calendar days)            |
+| `backup-client.ts`            | `downloadBackup`, `sendImport` (browser only)                           |
+| `server/queries.ts`           | `getBackupStatus`, `getBackupSnapshot` (REPEATABLE READ)                |
+| `server/mutations.ts`         | `recordBackup`, `replaceAllData`                                        |
+| `server/actions.ts`           | `recordBackupAction`                                                    |
+| `src/app/api/backup/route.ts` | `GET` export data, `PUT` replace-all import; gzip JSON, ≤ 4 MB each way |
 
-- `patients` (since change `add-patient-records`): `full_name`, `birth_year`, `birth_date`,
-  `gender`, `hometown`, `phone`, `patient_code`, `summary`, `created_at`, `updated_at`,
-  `deleted_at`. `search_text` is derived: recompute it on import with `buildSearchText`, do not
-  trust the file.
-- `notes` (since change `add-patient-notes`): `id`, `patient_id`, `content`, `created_at`,
-  `updated_at`. `search_text` is derived: recompute it on import. Keep `updated_at` as is: it is
-  what shows "Đã sửa".
-- Note drafts in the browser's IndexedDB are NOT part of a backup: they live on one device only
-  until the server confirms them.
+The `.zip` never reaches the server; only its JSON does, gzip-compressed, so it stays far below
+the ~4.5 MB a Vercel Function accepts (about 25 MB of text fits in 4 MB compressed).
 
-## Constraints
+## Format (version 1)
 
-- Vercel functions limit request/response bodies (~4.5 MB): images never go through a function.
-- Keep `formatVersion` and an upgrade path for every older version.
+```jsonc
+// manifest.json
+{ "app": "doctor-handbook", "formatVersion": 1, "appVersion": "0.1.0",
+  "exportedAt": "2026-11-19T08:30:00.000Z", "account": { "username": "bs.lan" },
+  "counts": { "patients": 132, "notes": 845, "todos": 20 } }
+// data.json: camelCase, instants in ISO 8601 UTC, calendar days as "yyyy-mm-dd"
+{ "patients": [{ "id", "fullName", "birthYear", "birthDate", "gender", "hometown", "phone",
+                 "patientCode", "summary", "createdAt", "updatedAt", "deletedAt" }],
+  "notes":    [{ "id", "patientId", "content", "createdAt", "updatedAt" }],
+  "todos":    [{ "id", "content", "dueDate", "completedAt", "createdAt", "updatedAt" }] }
+```
+
+- Patients include those still restorable from the trash (P3-1), with `deletedAt`.
+- Never in the file: `accountId`, `searchText`, `avatarPath`, passwords, sessions.
+- Timestamps keep milliseconds (the database has microseconds).
+
+## Rules for changing the format
+
+- **Every column a doctor can write must round-trip.** A new column → add it to the schema,
+  the snapshot query and `replaceAllData` in the same change.
+- **Bump `BACKUP_FORMAT_VERSION`** for any change an older app could not read, and add
+  `UPGRADERS[old]` in `format.ts` turning the old shape into the new one. Never delete an
+  upgrader: the app MUST read every older version.
+- **Tightening a rule** (a shorter limit, a required field) also needs an upgrader or a looser
+  rule for old files, or older backups stop importing.
+- The server only accepts the current version; the browser upgrades first.
+
+## Import details
+
+- One import at a time per account: the transaction first locks the `accounts` row.
+- Without the `x-replace-existing: 1` header (sent only after the confirmation and the automatic
+  backup) the server refuses with `CONFLICT` when the account has data: a stale page never
+  deletes data the doctor was not warned about.
+- Patients past the 30 days of the trash (and their notes) are not imported.
+
+- Rows get **new ids** (old ids may still exist in another account on the same server; keeping
+  them would fail and reveal that). Note drafts of old notes on a device are then refused like
+  drafts of deleted patients.
+- `search_text` is recomputed with `buildSearchText`, never read from the file.
+- `last_backup_at` becomes `GREATEST(last_backup_at, LEAST(file's exportedAt, now()))`.
+- Note drafts in IndexedDB are NOT part of a backup: they live on one device until sent.
+
+## Known limits
+
+- A change made only of permanent deletions (no add/edit) does not trigger the reminder.
+- On iPhone in standalone (PWA) mode, check that the download lands in the Files app.

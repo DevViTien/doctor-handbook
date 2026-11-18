@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+import packageJson from "./package.json" with { type: "json" };
+
 const isDev = process.env.NODE_ENV !== "production";
 
 /**
@@ -40,6 +42,8 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   typedRoutes: true,
   poweredByHeader: false,
+  // Written into every backup's manifest.json (spec data-backup).
+  env: { NEXT_PUBLIC_APP_VERSION: packageJson.version },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

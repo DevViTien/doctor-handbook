@@ -21,6 +21,7 @@ export const routes = {
     todos: "/todos",
     settings: "/settings",
     trash: "/settings/trash",
+    backup: "/settings/backup",
   },
   admin: {
     root: "/admin",
@@ -31,6 +32,8 @@ export const routes = {
     health: "/api/health",
     /** Deep patient search (POST, JSON body): the query never goes in the URL. */
     patientSearch: "/api/patients/search",
+    /** Backup data (GET) and replace-all import (PUT), gzip JSON both ways. */
+    backup: "/api/backup",
     /** Drops a dead session cookie, then sends the user to login (see guards.ts). */
     clearSession: "/api/auth/clear-session",
     cron: "/api/cron",

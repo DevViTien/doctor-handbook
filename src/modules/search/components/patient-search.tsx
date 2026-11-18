@@ -13,7 +13,7 @@ import {
   WifiOffIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 
 import { EmptyState } from "@/components/common/empty-state";
 import { PersonRow } from "@/components/common/person-row";
@@ -97,7 +97,14 @@ function StatusLine({
  * - voice input that simply types into the box.
  * The query lives in this component only: never in the URL, the title or storage.
  */
-export function PatientSearch({ patients }: { patients: SearchablePatient[] }) {
+export function PatientSearch({
+  patients,
+  notice,
+}: {
+  patients: SearchablePatient[];
+  /** Shown between the title and the search box while not searching (the backup reminder). */
+  notice?: ReactNode;
+}) {
   const [query, setQueryState] = useState("");
   const [deep, setDeep] = useState<DeepState | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -252,6 +259,8 @@ export function PatientSearch({ patients }: { patients: SearchablePatient[] }) {
                 : `${results.length} kết quả`}
           </p>
         </header>
+        {/* Hidden, not unmounted: a backup in progress keeps its state while searching. */}
+        {notice ? <div hidden={searching}>{notice}</div> : null}
         <SearchBox
           value={query}
           onChange={(text) => {

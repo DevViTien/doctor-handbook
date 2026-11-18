@@ -420,6 +420,65 @@ export async function findPatient(id: string): Promise<{ deleted_at: Date | null
   return row;
 }
 
+// --- Backup (change add-data-backup) ---------------------------------------------------
+
+/** Sets "lần sao lưu gần nhất" of an account to `daysAgo` days ago, or to never (`null`). */
+export async function setLastBackup(key: AccountKey, daysAgo: number | null): Promise<void> {
+  const username = ACCOUNTS[key].username;
+  if (daysAgo === null) {
+    await sql()`UPDATE accounts SET last_backup_at = NULL WHERE username = ${username}`;
+    return;
+  }
+  await sql()`
+    UPDATE accounts SET last_backup_at = now() - make_interval(secs => ${daysAgo * 86_400})
+    WHERE username = ${username}
+  `;
+}
+
+/** Makes an account look `daysAgo` days old. */
+export async function setAccountCreated(key: AccountKey, daysAgo: number): Promise<void> {
+  await sql()`
+    UPDATE accounts SET created_at = now() - make_interval(secs => ${daysAgo * 86_400})
+    WHERE username = ${ACCOUNTS[key].username}
+  `;
+}
+
+export async function lastBackupAt(key: AccountKey): Promise<Date | null> {
+  const [row] = await sql()<{ last_backup_at: Date | null }[]>`
+    SELECT last_backup_at FROM accounts WHERE username = ${ACCOUNTS[key].username}
+  `;
+  return row?.last_backup_at ?? null;
+}
+
+/** Every note of an account, oldest first (content and timestamps only). */
+export async function listAccountNotes(
+  key: AccountKey,
+): Promise<{ content: string; created_at: Date; updated_at: Date; search_text: string }[]> {
+  return sql()`
+    SELECT n.content, n.search_text,
+      -- A backup keeps milliseconds (JSON dates); the database keeps microseconds.
+      date_trunc('milliseconds', n.created_at) AS created_at,
+      date_trunc('milliseconds', n.updated_at) AS updated_at
+    FROM notes n JOIN accounts a ON a.id = n.account_id
+    WHERE a.username = ${ACCOUNTS[key].username}
+    ORDER BY n.created_at, n.content
+  `;
+}
+
+/** Every patient of an account with the columns a backup must round-trip. */
+export async function listPatientSnapshot(key: AccountKey): Promise<Record<string, unknown>[]> {
+  return sql()`
+    SELECT p.full_name, p.birth_year, p.birth_date::text AS birth_date, p.gender::text, p.hometown,
+      p.phone, p.patient_code, p.summary, p.search_text,
+      date_trunc('milliseconds', p.created_at) AS created_at,
+      date_trunc('milliseconds', p.updated_at) AS updated_at,
+      date_trunc('milliseconds', p.deleted_at) AS deleted_at
+    FROM patients p JOIN accounts a ON a.id = p.account_id
+    WHERE a.username = ${ACCOUNTS[key].username}
+    ORDER BY p.created_at, p.full_name
+  `;
+}
+
 export async function closeDatabase(): Promise<void> {
   await client?.end();
   client = undefined;

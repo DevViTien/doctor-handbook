@@ -52,7 +52,7 @@ export const NOTE_MESSAGES = {
 } as const;
 
 /** Trash (spec patient-trash, idea.md BR3). */
-export const TRASH_RETENTION_DAYS = 30;
+export { TRASH_RETENTION_DAYS } from "@/config/retention";
 /** How long the "Hoàn tác" notice stays up. */
 export const TRASH_UNDO_MS = 8000;
 

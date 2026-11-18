@@ -2,7 +2,6 @@ import "server-only";
 
 import { and, count, desc, eq, isNull } from "drizzle-orm";
 
-import { trashIsLive } from "@/modules/patients/server/trash-sql";
 import type {
   PatientDetail,
   PatientListItem,
@@ -12,6 +11,7 @@ import type {
 import type { AuthContext } from "@/server/auth/session";
 import { type DbExecutor, getDb } from "@/server/db/client";
 import { notes, patients } from "@/server/db/schema";
+import { trashIsLive } from "@/server/db/trash-sql";
 
 /**
  * Reads of the patients module. Every query is scoped to the SESSION's account and skips

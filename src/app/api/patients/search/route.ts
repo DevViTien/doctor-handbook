@@ -3,6 +3,7 @@ import { searchPatientsSchema } from "@/modules/search/schemas";
 import { searchPatients } from "@/modules/search/server/queries";
 import { requireAccess } from "@/server/auth/guards";
 import { toErrorResponse } from "@/server/http/responses";
+import { assertSameOrigin } from "@/server/http/same-origin";
 
 /**
  * Deep patient search (spec patient-search, design §3). A Route Handler rather than a Server
@@ -30,10 +31,4 @@ export async function POST(request: Request): Promise<Response> {
   } catch (error) {
     return toErrorResponse(error, { route: "api.patients.search" });
   }
-}
-
-function assertSameOrigin(request: Request) {
-  const origin = request.headers.get("origin");
-  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
-  if (!origin || !host || new URL(origin).host !== host) throw new AppError("FORBIDDEN");
 }

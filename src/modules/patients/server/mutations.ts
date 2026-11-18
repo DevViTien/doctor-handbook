@@ -4,11 +4,11 @@ import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
 
 import { buildSearchText } from "@/lib/text/normalize-vi";
 import type { PatientInput } from "@/modules/patients/schemas";
-import { trashIsExpired, trashIsLive } from "@/modules/patients/server/trash-sql";
 import type { PatientNote } from "@/modules/patients/types";
 import type { AuthContext } from "@/server/auth/session";
 import { type DbExecutor, getDb } from "@/server/db/client";
 import { notes, patients } from "@/server/db/schema";
+import { trashIsExpired, trashIsLive } from "@/server/db/trash-sql";
 
 /**
  * Writes of the patients module, always scoped to the SESSION's account (idea.md S3).

@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 
 import { PageContainer } from "@/components/layout/page-container";
 import { routes } from "@/config/routes";
+import { BackupReminder } from "@/modules/backup/components/backup-reminder";
+import { reminderTitle, shouldRemind } from "@/modules/backup/reminder";
+import { getBackupStatus } from "@/modules/backup/server/queries";
 import { todayInVietnam } from "@/modules/patients/birth";
 import { AddPatientButton } from "@/modules/patients/components/add-patient-button";
 import { PatientList } from "@/modules/patients/components/patient-list";
@@ -16,7 +19,12 @@ export const metadata: Metadata = { title: "Bệnh nhân" };
 
 export default async function PatientsPage() {
   const auth = await requirePageAccess("doctor");
-  const patients = await listPatients(auth);
+  const [patients, backup] = await Promise.all([listPatients(auth), getBackupStatus(auth)]);
+  const now = new Date();
+  // Never patient data in it (spec data-backup "Khi nào hiện thanh nhắc sao lưu").
+  const reminder = shouldRemind(backup, now) ? (
+    <BackupReminder accountId={auth.account.id} title={reminderTitle(backup, now)} />
+  ) : null;
 
   if (patients.length === 0) {
     return (
@@ -24,6 +32,7 @@ export default async function PatientsPage() {
         <header className="pt-4 pb-3">
           <h1 className="text-xl font-semibold tracking-tight">Bệnh nhân</h1>
         </header>
+        {reminder}
         <PatientList patients={patients} today={todayInVietnam()} />
       </PageContainer>
     );
@@ -41,7 +50,7 @@ export default async function PatientsPage() {
 
   return (
     <PageContainer className="pb-24">
-      <PatientSearch patients={searchable} />
+      <PatientSearch patients={searchable} notice={reminder} />
       <AddPatientButton />
     </PageContainer>
   );
