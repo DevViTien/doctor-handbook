@@ -44,13 +44,44 @@ pnpm dev                          # http://localhost:3000
 5. Optional hardening: disable the Data API. Migrations already enable RLS (without policies) on
    every table and revoke the `anon` / `authenticated` privileges, so it cannot read anything.
 
+The Supabase free plan runs two projects at a time. Production is `doctor-handbook-prod`
+(Singapore); until a second project is free, Preview deployments have no database (they build
+but cannot serve pages) and local development uses a local PostgreSQL.
+
 ### Vercel setup
 
-- Function region `sin1` is set in `vercel.json`.
-- Set the environment variables of `.env.example` separately for **Production** and **Preview**.
+Production: <https://doctor-handbook.vercel.app> (project `doctor-handbook`, Git-connected to
+this repository, production branch `main`).
+
+- Every push to `main` deploys to production; other branches and pull requests get Preview
+  deployments.
+- Function region `sin1` is set in `vercel.json` (same region as the Supabase project).
+- Project settings: framework Next.js, **Build Command left empty** (Vercel then runs the
+  `vercel-build` script), Node.js **24.x** (also pinned by `engines` in `package.json`).
+- Set `ENABLE_EXPERIMENTAL_COREPACK=1` (Production and Preview) so Vercel installs the pnpm
+  version pinned in `packageManager`; older pnpm versions ignore `pnpm-workspace.yaml` settings
+  such as `allowBuilds`.
+- Set the environment variables of `.env.example` separately for **Production** and **Preview**
+  (never `ADMIN_*` or `NODE_ENV`). Mark secrets as _Sensitive_. `DIRECT_DATABASE_URL` must be the
+  **session pooler** (port 5432): the direct `db.<ref>.supabase.co` host is IPv6-only and
+  unreachable from Vercel builds. Changing a variable takes effect on the next deployment.
 - `vercel-build` (`scripts/vercel-build.mjs`) builds first, then runs migrations **only for
   production** deployments. Migrate the development database used by Preview manually:
-  `pnpm db:migrate` with the dev credentials in `.env.local`.
+  `pnpm db:migrate` with the dev credentials in `.env.local`. Instant Rollback in Vercel does not
+  undo migrations; they are backward compatible, so the previous deployment keeps working.
+- After the first production deploy, create the admin once from your machine, with the production
+  session-pooler URL set in the shell (it takes precedence over `.env.local`) and nothing written
+  to disk:
+
+  ```powershell
+  $env:DIRECT_DATABASE_URL = "<production session pooler URL, port 5432>"
+  $env:ADMIN_PASSWORD = "<at least 12 characters>"
+  pnpm db:seed-admin            # add --reset-password to reset it later
+  Remove-Item Env:DIRECT_DATABASE_URL, Env:ADMIN_PASSWORD
+  ```
+
+- Choose the final domain before doctors install the app: the installed app, its drafts in
+  IndexedDB and the session are tied to the origin, so a new domain means installing again.
 - `ACCESS_CODE_PEPPER` keys the HMAC of activation codes. Changing it invalidates every code
   still outstanding (they live 72 hours at most): only rotate it if you suspect it leaked.
 - `CRON_SECRET` protects `/api/cron/daily-maintenance` (daily: keeps the free Supabase project
