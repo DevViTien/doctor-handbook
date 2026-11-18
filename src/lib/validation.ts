@@ -25,11 +25,19 @@ export function optionalText(maxLength: number) {
 /** Login names: lowercase latin letters, digits, dot and underscore. */
 export const USERNAME_PATTERN = /^[a-z0-9._]{3,32}$/;
 
+const USERNAME_RULE = "Tên đăng nhập gồm 3–32 ký tự: chữ không dấu, số, dấu chấm, gạch dưới.";
+
 export const usernameSchema = z
-  .string()
+  .string(USERNAME_RULE)
   .trim()
   .toLowerCase()
-  .regex(USERNAME_PATTERN, "Tên đăng nhập gồm 3–32 ký tự: chữ không dấu, số, dấu chấm, gạch dưới.");
+  .regex(USERNAME_PATTERN, USERNAME_RULE);
 
-/** Length-only rule on purpose: complex composition rules hurt typing on phones. */
-export const passwordSchema = z.string().min(8, "Mật khẩu cần tối thiểu 8 ký tự.").max(128);
+/**
+ * Length-only rule on purpose: complex composition rules hurt typing on phones.
+ * Never trimmed: spaces are part of a password.
+ */
+export const passwordSchema = z
+  .string("Mật khẩu cần tối thiểu 8 ký tự.")
+  .min(8, "Mật khẩu cần tối thiểu 8 ký tự.")
+  .max(128, "Mật khẩu tối đa 128 ký tự.");

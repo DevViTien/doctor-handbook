@@ -1,5 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
+import { E2E_ACCESS_CODE_PEPPER, E2E_CLIENT_IP } from "./tests/e2e/fixtures/constants";
+
 /**
  * End-to-end tests run against mobile viewports first: doctors use the app on their phones.
  * Install browsers once with `pnpm exec playwright install`.
@@ -26,7 +28,7 @@ const serverEnv: Record<string, string> = {
         DATABASE_URL: databaseUrl,
         SUPABASE_URL: "http://127.0.0.1:54321",
         SUPABASE_SERVICE_ROLE_KEY: "e2e-placeholder-not-used",
-        ACCESS_CODE_PEPPER: "e2e-access-code-pepper-0123456789abcdef",
+        ACCESS_CODE_PEPPER: E2E_ACCESS_CODE_PEPPER,
       }
     : {}),
 };
@@ -42,7 +44,7 @@ export default defineConfig({
     baseURL,
     // Stands in for the client IP Vercel sets in production; without it the app sees an unknown
     // address and (by design) applies no per-IP login limit.
-    extraHTTPHeaders: { "x-real-ip": "203.0.113.10" },
+    extraHTTPHeaders: { "x-real-ip": E2E_CLIENT_IP },
     locale: "vi-VN",
     timezoneId: "Asia/Ho_Chi_Minh",
     trace: "on-first-retry",

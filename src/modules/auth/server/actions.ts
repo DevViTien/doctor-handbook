@@ -6,10 +6,12 @@ import { z } from "zod";
 
 import { routes } from "@/config/routes";
 import { getSafeRedirectPath } from "@/lib/url";
-import { loginSchema } from "@/modules/auth/schemas";
+import { activateAccountSchema, activationCodeSchema, loginSchema } from "@/modules/auth/schemas";
+import { activateAccount, checkActivationCode } from "@/modules/auth/server/activation";
 import { authenticate } from "@/modules/auth/server/login";
 import { createFormAction } from "@/server/actions/create-action";
 import { deleteSessionCookie, setSessionCookie } from "@/server/auth/cookies";
+import { normalizeAccessCode } from "@/server/auth/crypto";
 import { getHomeRouteForRole } from "@/server/auth/guards";
 import { createSession, invalidateSession } from "@/server/auth/session";
 import { getClientIp } from "@/server/http/client-ip";
@@ -54,5 +56,56 @@ export const logoutAction = createFormAction(
     if (auth) await invalidateSession(auth.sessionId);
     await deleteSessionCookie();
     redirect(routes.auth.login);
+  },
+);
+
+/** Step 1 result: who the code was issued for. The code comes back normalized for step 2. */
+export type CheckedActivationCode = {
+  code: string;
+  recipientName: string;
+  /** ISO timestamp. */
+  expiresAt: string;
+};
+
+/**
+ * Activation step 1 (spec account-activation): checks the code, rate limited per IP. The code
+ * only travels in POST bodies, never in a URL. Codes, usernames and passwords are never logged.
+ */
+export const checkActivationCodeFormAction = createFormAction(
+  { name: "auth.checkActivationCode", schema: activationCodeSchema, access: "public" },
+  async (input): Promise<CheckedActivationCode> => {
+    const info = await checkActivationCode({
+      code: input.code,
+      ip: getClientIp(await headers()),
+    });
+    return {
+      code: normalizeAccessCode(input.code),
+      recipientName: info.recipientName,
+      expiresAt: info.expiresAt.toISOString(),
+    };
+  },
+);
+
+/**
+ * Activation step 2: re-checks the code, creates the doctor account and its first session in
+ * one transaction, then signs the doctor in on this device and opens the patient list.
+ */
+export const activateAccountFormAction = createFormAction(
+  { name: "auth.activateAccount", schema: activateAccountSchema, access: "public" },
+  async (input, { auth: previous }): Promise<never> => {
+    const requestHeaders = await headers();
+    const { sessionToken } = await activateAccount({
+      code: input.code,
+      displayName: input.displayName,
+      username: input.username,
+      password: input.password,
+      ip: getClientIp(requestHeaders),
+      userAgent: requestHeaders.get("user-agent"),
+    });
+
+    // Same as login: a session this browser still had would otherwise be orphaned forever.
+    if (previous) await invalidateSession(previous.sessionId);
+    await setSessionCookie(sessionToken);
+    redirect(routes.doctor.patients);
   },
 );

@@ -34,6 +34,13 @@ export const LOGIN_MAX_FAILURES_PER_USERNAME = 5;
 export const LOGIN_MAX_FAILURES_PER_IP = 20;
 
 /**
+ * Activation-code entry rate limiting (spec account-activation). Only a per-IP key exists (there
+ * is no username yet), so unknown IPs share one bucket instead of having no limit at all.
+ */
+export const CODE_ENTRY_FAILURE_WINDOW_MS = 15 * 60 * 1000;
+export const CODE_ENTRY_MAX_FAILURES_PER_IP = 10;
+
+/**
  * Request header set by `src/proxy.ts` with the requested path + query, so server code
  * (which has no pathname API in layouts) can send users back there after login.
  */

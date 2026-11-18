@@ -1,9 +1,10 @@
 import "server-only";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
+import { accessCodeIsUsable } from "@/server/auth/access-codes";
 import { type DbExecutor, getDb } from "@/server/db/client";
-import { accounts } from "@/server/db/schema";
+import { accessCodes, accounts } from "@/server/db/schema";
 
 export type LoginAccount = {
   id: string;
@@ -32,4 +33,39 @@ export async function findAccountForLogin(
     .limit(1);
 
   return account ?? null;
+}
+
+/**
+ * A usable activation code by its hash: activation type, unused, unrevoked, unexpired. One
+ * combined condition, so the caller cannot tell (nor reveal) why a code is unusable.
+ */
+export async function findUsableActivationCode(
+  codeHash: string,
+  db: DbExecutor = getDb(),
+): Promise<{ recipientName: string; expiresAt: Date } | null> {
+  const [code] = await db
+    .select({ recipientName: accessCodes.recipientName, expiresAt: accessCodes.expiresAt })
+    .from(accessCodes)
+    .where(usableActivationCode(codeHash))
+    .limit(1);
+  return code ?? null;
+}
+
+/** Shared by the check (step 1) and the consuming UPDATE (step 2). */
+export function usableActivationCode(codeHash: string) {
+  return and(
+    eq(accessCodes.codeHash, codeHash),
+    eq(accessCodes.type, "activation"),
+    accessCodeIsUsable(),
+  );
+}
+
+/** Whether a username is already taken (by a doctor or the admin). */
+export async function usernameExists(username: string, db: DbExecutor = getDb()): Promise<boolean> {
+  const [row] = await db
+    .select({ id: accounts.id })
+    .from(accounts)
+    .where(eq(accounts.username, username))
+    .limit(1);
+  return Boolean(row);
 }

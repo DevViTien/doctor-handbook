@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { LOGIN_MESSAGES } from "@/modules/auth/constants";
-import { loginSchema } from "@/modules/auth/schemas";
+import { ACTIVATION_MESSAGES, LOGIN_MESSAGES } from "@/modules/auth/constants";
+import { activateAccountSchema, activationCodeSchema, loginSchema } from "@/modules/auth/schemas";
 
 describe("loginSchema", () => {
   it("Tên đăng nhập viết hoa và có khoảng trắng: normalizes to the stored form", () => {
@@ -54,5 +54,84 @@ describe("loginSchema", () => {
   it("accepts an optional next target", () => {
     expect(loginSchema.parse({ username: "a", password: "b", next: "/todos" }).next).toBe("/todos");
     expect(loginSchema.parse({ username: "a", password: "b" }).next).toBeUndefined();
+  });
+});
+
+describe("activationCodeSchema", () => {
+  it("Bỏ trống mã: reports the code field", () => {
+    for (const code of ["", "   ", undefined]) {
+      const result = activationCodeSchema.safeParse({ code });
+      expect(result.error?.issues[0]).toMatchObject({
+        path: ["code"],
+        message: ACTIVATION_MESSAGES.codeRequired,
+      });
+    }
+  });
+
+  it("Nhập mã chữ thường không dấu gạch: accepts what people type (normalized on the server)", () => {
+    expect(activationCodeSchema.parse({ code: " k7hm3qxr " }).code).toBe("k7hm3qxr");
+  });
+});
+
+describe("activateAccountSchema", () => {
+  const valid = {
+    code: "K7HM-3QXR",
+    displayName: "BS. Trần Thị B",
+    username: "bs.tran",
+    password: "matkhau123",
+    acceptTerms: "on",
+  };
+
+  const errorsFor = (input: Record<string, unknown>) =>
+    activateAccountSchema.safeParse(input).error?.issues.map(({ path, message }) => ({
+      path: path.join("."),
+      message,
+    }));
+
+  it("accepts a valid form, with the checkbox posted as 'on'", () => {
+    expect(activateAccountSchema.parse(valid)).toMatchObject({
+      username: "bs.tran",
+      acceptTerms: true,
+    });
+  });
+
+  it("Tên đăng nhập viết hoa: trims and lowercases the username", () => {
+    expect(activateAccountSchema.parse({ ...valid, username: " BS.Tran " }).username).toBe(
+      "bs.tran",
+    );
+  });
+
+  it("Tên đăng nhập có dấu: rejected with the username rule", () => {
+    expect(errorsFor({ ...valid, username: "bs.lân" })).toEqual([
+      {
+        path: "username",
+        message: "Tên đăng nhập gồm 3–32 ký tự: chữ không dấu, số, dấu chấm, gạch dưới.",
+      },
+    ]);
+  });
+
+  it("Mật khẩu quá ngắn: at least 8 characters, never trimmed", () => {
+    expect(errorsFor({ ...valid, password: "1234567" })).toEqual([
+      { path: "password", message: "Mật khẩu cần tối thiểu 8 ký tự." },
+    ]);
+    expect(activateAccountSchema.parse({ ...valid, password: " 1234567 " }).password).toBe(
+      " 1234567 ",
+    );
+  });
+
+  it("Chưa tick đồng ý: an unchecked box posts nothing", () => {
+    const { acceptTerms: _omitted, ...withoutTerms } = valid;
+    expect(errorsFor(withoutTerms)).toEqual([
+      { path: "acceptTerms", message: ACTIVATION_MESSAGES.termsRequired },
+    ]);
+  });
+
+  it("requires a display name of at most 80 characters", () => {
+    expect(errorsFor({ ...valid, displayName: "  " })).toEqual([
+      { path: "displayName", message: ACTIVATION_MESSAGES.displayNameRequired },
+    ]);
+    expect(errorsFor({ ...valid, displayName: "a".repeat(81) })).toEqual([
+      { path: "displayName", message: ACTIVATION_MESSAGES.displayNameTooLong },
+    ]);
   });
 });

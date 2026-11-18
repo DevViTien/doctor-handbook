@@ -5,10 +5,12 @@
  * `server-only`). Runs ONLY against `E2E_DATABASE_URL`, a database dedicated to tests: every
  * reset wipes the accounts table.
  */
-import { createHash } from "node:crypto";
+import { createHash, createHmac, randomInt } from "node:crypto";
 
 import { hash } from "@node-rs/argon2";
 import postgres from "postgres";
+
+import { E2E_ACCESS_CODE_PEPPER, E2E_CLIENT_IP } from "./constants";
 
 export const E2E_DATABASE_URL = process.env.E2E_DATABASE_URL;
 export const hasDatabase = Boolean(E2E_DATABASE_URL);
@@ -67,10 +69,10 @@ function passwordHash(key: AccountKey): Promise<string> {
   return hashed;
 }
 
-/** Fresh state: the four sample accounts, no sessions, no recorded failures. */
+/** Fresh state: the four sample accounts, no sessions, no access codes, no recorded failures. */
 export async function resetDatabase(): Promise<void> {
   const db = sql();
-  await db`TRUNCATE accounts, auth_attempts RESTART IDENTITY CASCADE`;
+  await db`TRUNCATE accounts, access_codes, auth_attempts RESTART IDENTITY CASCADE`;
   for (const key of Object.keys(ACCOUNTS) as AccountKey[]) {
     const account = ACCOUNTS[key];
     const status = key === "locked" ? "locked" : "active";
@@ -93,6 +95,143 @@ function usernameAttemptKey(username: string): string {
 /** Inserts failed logins for a username, as if they happened `minutesAgo` minutes ago. */
 export async function insertUsernameFailures(key: AccountKey, count: number, minutesAgo: number) {
   const attemptKey = usernameAttemptKey(ACCOUNTS[key].username);
+  for (let i = 0; i < count; i++) {
+    await sql()`
+      INSERT INTO auth_attempts (key, created_at)
+      VALUES (${attemptKey}, now() - make_interval(mins => ${minutesAgo}))
+    `;
+  }
+}
+
+// --- Access codes (change add-account-activation) ---------------------------------------
+
+/** Same alphabet, normalization and HMAC as src/server/auth/crypto.ts. */
+const ACCESS_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+const ACCESS_CODE_TTL_HOURS = 72;
+
+export function normalizeCode(input: string): string {
+  return input.toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+export function formatCode(code: string): string {
+  return `${code.slice(0, 4)}-${code.slice(4)}`;
+}
+
+function hashCode(code: string): string {
+  return createHmac("sha256", E2E_ACCESS_CODE_PEPPER).update(normalizeCode(code)).digest("hex");
+}
+
+function randomCode(): string {
+  let code = "";
+  for (let i = 0; i < 8; i++) code += ACCESS_CODE_ALPHABET[randomInt(ACCESS_CODE_ALPHABET.length)];
+  return code;
+}
+
+export type InsertedAccessCode = { id: string; code: string; formatted: string };
+
+/**
+ * Inserts an access code directly (bypassing the admin UI) and returns the raw code.
+ * `createdMinutesAgo` past 72 hours gives an expired code.
+ */
+export async function insertAccessCode(
+  options: {
+    recipient?: string;
+    type?: "activation" | "password_reset";
+    createdMinutesAgo?: number;
+    usedBy?: AccountKey;
+    revoked?: boolean;
+  } = {},
+): Promise<InsertedAccessCode> {
+  const {
+    recipient = "BS. Trần Thị B",
+    type = "activation",
+    createdMinutesAgo = 0,
+    usedBy,
+    revoked = false,
+  } = options;
+  const code = randomCode();
+  const db = sql();
+  const accountKey = usedBy ?? (type === "password_reset" ? "lan" : undefined);
+  const [account] = accountKey
+    ? await db<
+        { id: string }[]
+      >`SELECT id FROM accounts WHERE username = ${ACCOUNTS[accountKey].username}`
+    : [];
+
+  const [row] = await db<{ id: string }[]>`
+    INSERT INTO access_codes (type, code_hash, recipient_name, account_id, expires_at, used_at, revoked_at, created_at)
+    VALUES (
+      ${type}, ${hashCode(code)}, ${recipient}, ${account?.id ?? null},
+      now() - make_interval(mins => ${createdMinutesAgo}) + make_interval(hours => ${ACCESS_CODE_TTL_HOURS}),
+      ${usedBy ? db`now()` : null},
+      ${revoked ? db`now()` : null},
+      now() - make_interval(mins => ${createdMinutesAgo})
+    )
+    RETURNING id
+  `;
+  if (!row) throw new Error("insertAccessCode: no row returned");
+  return { id: row.id, code, formatted: formatCode(code) };
+}
+
+/** Revokes a code as the admin would (used to simulate a revoke while a doctor fills the form). */
+export async function revokeAccessCodeInDb(id: string): Promise<void> {
+  await sql()`UPDATE access_codes SET revoked_at = now() WHERE id = ${id}`;
+}
+
+/** Marks a code as used by a sample account, as an activation in another browser would. */
+export async function markAccessCodeUsed(id: string, by: AccountKey): Promise<void> {
+  await sql()`
+    UPDATE access_codes
+    SET used_at = now(),
+        account_id = (SELECT id FROM accounts WHERE username = ${ACCOUNTS[by].username})
+    WHERE id = ${id}
+  `;
+}
+
+export type AccessCodeDbRow = Record<string, unknown> & {
+  id: string;
+  used_at: Date | null;
+  revoked_at: Date | null;
+  account_id: string | null;
+};
+
+export async function listAccessCodeRows(): Promise<AccessCodeDbRow[]> {
+  return sql()<AccessCodeDbRow[]>`SELECT * FROM access_codes ORDER BY created_at DESC`;
+}
+
+export async function countAccessCodes(): Promise<number> {
+  const [row] = await sql()<{ count: number }[]>`SELECT count(*)::int AS count FROM access_codes`;
+  return row?.count ?? 0;
+}
+
+export type AccountDbRow = {
+  id: string;
+  role: string;
+  status: string;
+  display_name: string;
+  terms_accepted_at: Date | null;
+};
+
+export async function findAccountByUsername(username: string): Promise<AccountDbRow | undefined> {
+  const [row] = await sql()<AccountDbRow[]>`
+    SELECT id, role, status, display_name, terms_accepted_at FROM accounts WHERE username = ${username}
+  `;
+  return row;
+}
+
+export async function countAccounts(): Promise<number> {
+  const [row] = await sql()<{ count: number }[]>`SELECT count(*)::int AS count FROM accounts`;
+  return row?.count ?? 0;
+}
+
+/** Same key format as `codeAttemptKey` in src/modules/auth/server/rate-limit.ts. */
+function codeAttemptKey(ip: string): string {
+  return `code:ip:${createHash("sha256").update(ip).digest("hex")}`;
+}
+
+/** Inserts failed code entries from the E2E client IP, as if they happened `minutesAgo` ago. */
+export async function insertCodeFailures(count: number, minutesAgo: number): Promise<void> {
+  const attemptKey = codeAttemptKey(E2E_CLIENT_IP);
   for (let i = 0; i < count; i++) {
     await sql()`
       INSERT INTO auth_attempts (key, created_at)

@@ -1,15 +1,24 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
-import { FeaturePlaceholder } from "@/components/common/feature-placeholder";
-import { PageHeader } from "@/components/layout/page-header";
+import { routes } from "@/config/routes";
+import { ActivationForm } from "@/modules/auth/components/activation-form";
 
 export const metadata: Metadata = { title: "Kích hoạt tài khoản" };
 
 export default function ActivatePage() {
   return (
     <>
-      <PageHeader title="Kích hoạt tài khoản" description="Nhập mã do quản trị viên cung cấp." />
-      <FeaturePlaceholder module="auth" />
+      <ActivationForm />
+      <p className="text-sm text-muted-foreground">
+        Đã có tài khoản?{" "}
+        <Link
+          href={routes.auth.login}
+          className="inline-flex min-h-11 items-center font-semibold text-primary underline underline-offset-3 hover:decoration-2"
+        >
+          Đăng nhập
+        </Link>
+      </p>
     </>
   );
 }

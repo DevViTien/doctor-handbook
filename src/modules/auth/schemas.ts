@@ -1,6 +1,13 @@
 import { z } from "zod";
 
-import { LOGIN_MESSAGES } from "./constants";
+import { passwordSchema, usernameSchema } from "@/lib/validation";
+
+import {
+  ACCESS_CODE_INPUT_MAX_LENGTH,
+  ACTIVATION_MESSAGES,
+  DISPLAY_NAME_MAX_LENGTH,
+  LOGIN_MESSAGES,
+} from "./constants";
 
 /**
  * Login form input, shared by the form and the action.
@@ -26,3 +33,37 @@ export const loginSchema = z.object({
 });
 
 export type LoginInput = z.output<typeof loginSchema>;
+
+/**
+ * An activation code as typed. The server normalizes case, dashes and spaces before hashing,
+ * and any malformed value of normal length is simply an unusable code (counted for rate
+ * limiting). An over-long value is refused here with the same message without being counted:
+ * it is never compared with a real code, so it reveals nothing.
+ */
+const accessCodeInput = z
+  .string(ACTIVATION_MESSAGES.codeRequired)
+  .trim()
+  .min(1, ACTIVATION_MESSAGES.codeRequired)
+  .max(ACCESS_CODE_INPUT_MAX_LENGTH, ACTIVATION_MESSAGES.invalidCode);
+
+/** Step 1 of activation: check the code. */
+export const activationCodeSchema = z.object({ code: accessCodeInput });
+
+/** Step 2 of activation: create the account (the code travels in a hidden field). */
+export const activateAccountSchema = z.object({
+  code: accessCodeInput,
+  displayName: z
+    .string(ACTIVATION_MESSAGES.displayNameRequired)
+    .trim()
+    .min(1, ACTIVATION_MESSAGES.displayNameRequired)
+    .max(DISPLAY_NAME_MAX_LENGTH, ACTIVATION_MESSAGES.displayNameTooLong),
+  username: usernameSchema,
+  password: passwordSchema,
+  /** A checked checkbox posts "on"; an unchecked one posts nothing. */
+  acceptTerms: z.preprocess(
+    (value) => value === "on" || value === true,
+    z.literal(true, { error: ACTIVATION_MESSAGES.termsRequired }),
+  ),
+});
+
+export type ActivateAccountInput = z.output<typeof activateAccountSchema>;

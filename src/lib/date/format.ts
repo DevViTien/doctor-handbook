@@ -34,9 +34,16 @@ export function formatDate(value: DateInput): string {
   return dateFormatter.format(toDate(value));
 }
 
-/** "18/11/2026, 09:05" (separator depends on the ICU data of the runtime). */
+/**
+ * "18/11/2026 09:05": date first, 24-hour clock. Assembled from parts because the order and
+ * separator of the `vi-VN` locale differ between ICU versions (Node may give "09:05 18/11/2026"),
+ * and server and browser must render the same text.
+ */
 export function formatDateTime(value: DateInput): string {
-  return dateTimeFormatter.format(toDate(value));
+  const parts = Object.fromEntries(
+    dateTimeFormatter.formatToParts(toDate(value)).map((part) => [part.type, part.value]),
+  );
+  return `${parts.day}/${parts.month}/${parts.year} ${parts.hour}:${parts.minute}`;
 }
 
 /** "3 ngày trước" */

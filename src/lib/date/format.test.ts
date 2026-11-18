@@ -11,8 +11,7 @@ describe("formatDate", () => {
 
 describe("formatDateTime", () => {
   it("uses a 24-hour clock in Vietnam time", () => {
-    const formatted = formatDateTime("2026-11-17T18:30:00Z");
-    expect(formatted).toContain("18/11/2026");
-    expect(formatted).toContain("01:30");
+    expect(formatDateTime("2026-11-17T18:30:00Z")).toBe("18/11/2026 01:30");
+    expect(formatDateTime("2026-11-18T07:05:00Z")).toBe("18/11/2026 14:05");
   });
 });

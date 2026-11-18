@@ -49,6 +49,8 @@ pnpm dev                          # http://localhost:3000
 - `vercel-build` (`scripts/vercel-build.mjs`) builds first, then runs migrations **only for
   production** deployments. Migrate the development database used by Preview manually:
   `pnpm db:migrate` with the dev credentials in `.env.local`.
+- `ACCESS_CODE_PEPPER` keys the HMAC of activation codes. Changing it invalidates every code
+  still outstanding (they live 72 hours at most): only rotate it if you suspect it leaked.
 - `CRON_SECRET` protects `/api/cron/daily-maintenance` (daily: keeps the free Supabase project
   awake and prunes rate-limit rows).
 

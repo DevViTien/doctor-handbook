@@ -1,17 +1,18 @@
 "use client";
 
-import { CircleAlertIcon, ClockIcon, EyeIcon, EyeOffIcon, LockIcon } from "lucide-react";
 import { useActionState, useEffect, useRef, useState } from "react";
 
+import { FormAlert } from "@/components/common/form-alert";
+import {
+  FORM_INPUT_CLASS,
+  FORM_LABEL_CLASS,
+  PasswordInput,
+} from "@/components/common/password-input";
 import { Spinner } from "@/components/common/spinner";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import type { ActionError } from "@/lib/errors";
-import { cn } from "@/lib/utils";
 import { loginFormAction } from "@/modules/auth/server/actions";
-
-const INPUT_CLASS = "h-12 bg-card px-3.5 text-base md:text-base dark:bg-card";
 
 /**
  * Login form (spec account-session, mockup of change add-account-login).
@@ -27,7 +28,6 @@ const INPUT_CLASS = "h-12 bg-card px-3.5 text-base md:text-base dark:bg-card";
 export function LoginForm({ next }: { next?: string | undefined }) {
   const [state, formAction, isPending] = useActionState(loginFormAction, null);
   const [submittedUsername, setSubmittedUsername] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
 
   const error = state && !state.ok ? state.error : null;
   const fieldErrors = error?.code === "VALIDATION_FAILED" ? error.fieldErrors : undefined;
@@ -64,7 +64,7 @@ export function LoginForm({ next }: { next?: string | undefined }) {
       {next ? <input type="hidden" name="next" value={next} /> : null}
 
       <Field data-invalid={usernameError ? true : undefined}>
-        <FieldLabel htmlFor="username" className="text-[0.95rem] font-semibold">
+        <FieldLabel htmlFor="username" className={FORM_LABEL_CLASS}>
           Tên đăng nhập
         </FieldLabel>
         <Input
@@ -82,41 +82,24 @@ export function LoginForm({ next }: { next?: string | undefined }) {
           autoFocus
           aria-invalid={usernameError ? true : undefined}
           aria-describedby={usernameError ? "username-error" : undefined}
-          className={INPUT_CLASS}
+          className={FORM_INPUT_CLASS}
         />
         {usernameError ? <FieldError id="username-error">{usernameError}</FieldError> : null}
       </Field>
 
       <Field data-invalid={passwordError ? true : undefined}>
-        <FieldLabel htmlFor="password" className="text-[0.95rem] font-semibold">
+        <FieldLabel htmlFor="password" className={FORM_LABEL_CLASS}>
           Mật khẩu
         </FieldLabel>
-        <div className="relative">
-          <Input
-            ref={passwordRef}
-            id="password"
-            name="password"
-            type={showPassword ? "text" : "password"}
-            autoComplete="current-password"
-            enterKeyHint="go"
-            aria-invalid={passwordError ? true : undefined}
-            aria-describedby={passwordError ? "password-error" : undefined}
-            className={cn(INPUT_CLASS, "pr-13")}
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword((shown) => !shown)}
-            aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-            aria-pressed={showPassword}
-            className="absolute top-0.5 right-0.5 grid size-11 place-items-center rounded-lg text-muted-foreground hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-          >
-            {showPassword ? (
-              <EyeOffIcon className="size-5" aria-hidden />
-            ) : (
-              <EyeIcon className="size-5" aria-hidden />
-            )}
-          </button>
-        </div>
+        <PasswordInput
+          ref={passwordRef}
+          id="password"
+          name="password"
+          autoComplete="current-password"
+          enterKeyHint="go"
+          aria-invalid={passwordError ? true : undefined}
+          aria-describedby={passwordError ? "password-error" : undefined}
+        />
         {passwordError ? <FieldError id="password-error">{passwordError}</FieldError> : null}
       </Field>
 
@@ -131,24 +114,5 @@ export function LoginForm({ next }: { next?: string | undefined }) {
         )}
       </Button>
     </form>
-  );
-}
-
-/** Form-level error: red for wrong credentials / locked account, amber for rate limiting. */
-function FormAlert({ error }: { error: ActionError }) {
-  const isRateLimited = error.code === "RATE_LIMITED";
-  const Icon = isRateLimited ? ClockIcon : error.code === "FORBIDDEN" ? LockIcon : CircleAlertIcon;
-
-  return (
-    <div
-      role="alert"
-      className={cn(
-        "flex items-start gap-2.5 rounded-lg px-3.5 py-3 text-[0.95rem] font-medium",
-        isRateLimited ? "bg-warning-bg text-warning" : "bg-destructive/10 text-destructive",
-      )}
-    >
-      <Icon className="mt-0.5 size-5 shrink-0" aria-hidden />
-      <span>{error.message}</span>
-    </div>
   );
 }
