@@ -5,6 +5,12 @@ export const ADMIN_MESSAGES = {
   revokeConflict: "Mã này đã được dùng, đã hết hạn hoặc đã bị huỷ.",
 } as const;
 
+/** Account management messages (spec account-management). */
+export const ACCOUNT_MESSAGES = {
+  /** Also the answer for the admin account: never reveal which ids belong to an admin. */
+  notFound: "Không tìm thấy tài khoản.",
+} as const;
+
 export const RECIPIENT_NAME_MAX_LENGTH = 80;
 
 /** The list shows the newest codes only; a small group never comes close (design §5). */

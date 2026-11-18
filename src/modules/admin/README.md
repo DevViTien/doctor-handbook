@@ -1,7 +1,7 @@
 # Module: admin
 
 Account administration for the single admin (the project owner). Behaviour is specified in
-`openspec/specs/access-codes/spec.md`.
+`openspec/specs/access-codes/spec.md` and `openspec/specs/account-management/spec.md`.
 
 ## Implemented
 
@@ -11,7 +11,9 @@ Account administration for the single admin (the project owner). Behaviour is sp
 | Copy the message to send | `IssuedCodeCard` in the same component: code + `/activate` link + expiry, built in the browser     |
 | List codes by status     | `components/access-code-list.tsx` ← `server/queries.ts` `listAccessCodes`; `access-code-status.ts` |
 | Revoke an unused code    | `components/revoke-access-code-button.tsx` (`ConfirmDialog`) → `revokeAccessCodeAction`            |
-| Validation and messages  | `schemas.ts`, `constants.ts` (`ADMIN_MESSAGES`)                                                    |
+| Validation and messages  | `schemas.ts`, `constants.ts` (`ADMIN_MESSAGES`, `ACCOUNT_MESSAGES`)                                |
+| List doctor accounts     | `components/account-list.tsx` ← `server/queries.ts` `listDoctorAccounts`                           |
+| Lock / unlock an account | `components/account-status-button.tsx` → `lockAccountAction`, `unlockAccountAction`                |
 
 Security properties to preserve:
 
@@ -21,12 +23,14 @@ Security properties to preserve:
 - Revoking is one conditional `UPDATE` (still unused, unrevoked, unexpired): a code used a moment
   earlier is never marked revoked; the action answers `CONFLICT` instead.
 - Status priority: revoked → used → expired → active (`getAccessCodeStatus`).
+- Lock and unlock both go through `setDoctorAccountStatus`: one transaction that only touches
+  `role = 'doctor'` rows and always deletes every session of the account. Lock ends all devices
+  at once (S8); unlock never revives a session ended by a lock. The admin account answers
+  `NOT_FOUND`, like an unknown id.
 
 ## Still to build (separate OpenSpec changes)
 
 - Password-reset codes for an existing account (the list and status helper already take a type).
-- List doctor accounts: name, username, created at, last login, last backup, patient count.
-- Lock / unlock an account — locking ends every session immediately (S8).
 - Delete an account and all its data, confirmed by typing the username (D21).
 
 ## Hard rule (idea.md N6)

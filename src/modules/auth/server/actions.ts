@@ -5,7 +5,9 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { routes } from "@/config/routes";
+import { AppError } from "@/lib/errors";
 import { getSafeRedirectPath } from "@/lib/url";
+import { LOGIN_MESSAGES } from "@/modules/auth/constants";
 import { activateAccountSchema, activationCodeSchema, loginSchema } from "@/modules/auth/schemas";
 import { activateAccount, checkActivationCode } from "@/modules/auth/server/activation";
 import { authenticate } from "@/modules/auth/server/login";
@@ -35,10 +37,12 @@ export const loginFormAction = createFormAction(
     // row would otherwise be orphaned forever, since sessions never expire.
     if (previous) await invalidateSession(previous.sessionId);
 
-    const { token } = await createSession(account.id, {
+    const session = await createSession(account.id, {
       userAgent: requestHeaders.get("user-agent"),
     });
-    await setSessionCookie(token);
+    // Locked between the password check and here (an admin lock racing this login).
+    if (!session) throw new AppError("FORBIDDEN", LOGIN_MESSAGES.accountLocked);
+    await setSessionCookie(session.token);
 
     redirect(getSafeRedirectPath(input.next) ?? getHomeRouteForRole(account.role));
   },

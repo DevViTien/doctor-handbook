@@ -1,8 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ADMIN_MESSAGES } from "@/modules/admin/constants";
-import { createAccessCodeFormAction, revokeAccessCodeAction } from "@/modules/admin/server/actions";
-import { insertAccessCode, revokeAccessCode } from "@/modules/admin/server/mutations";
+import { ACCOUNT_MESSAGES, ADMIN_MESSAGES } from "@/modules/admin/constants";
+import {
+  createAccessCodeFormAction,
+  lockAccountAction,
+  revokeAccessCodeAction,
+  unlockAccountAction,
+} from "@/modules/admin/server/actions";
+import {
+  insertAccessCode,
+  revokeAccessCode,
+  setDoctorAccountStatus,
+} from "@/modules/admin/server/mutations";
 import { ACCESS_CODE_ALPHABET, ACCESS_CODE_TTL_MS } from "@/server/auth/constants";
 import { getSessionToken } from "@/server/auth/cookies";
 import { hashAccessCode } from "@/server/auth/crypto";
@@ -14,6 +23,7 @@ vi.mock("@/server/auth/session", () => ({ validateSessionToken: vi.fn() }));
 vi.mock("@/modules/admin/server/mutations", () => ({
   insertAccessCode: vi.fn(),
   revokeAccessCode: vi.fn(),
+  setDoctorAccountStatus: vi.fn(),
 }));
 vi.mock("@/config/env", () => ({
   getServerEnv: () => ({ ACCESS_CODE_PEPPER: "unit-test-pepper-0123456789abcdef0123" }),
@@ -163,5 +173,57 @@ describe("revokeAccessCodeAction", () => {
 
     expect(result).toMatchObject({ ok: false, error: { code: "FORBIDDEN" } });
     expect(revokeAccessCode).not.toHaveBeenCalled();
+  });
+});
+
+const ACCOUNT_ID = "6f1d2c3b-4a59-4e7f-8a1b-2c3d4e5f6a7b";
+
+describe("lockAccountAction / unlockAccountAction", () => {
+  beforeEach(() => {
+    signedInAs(admin);
+    vi.mocked(setDoctorAccountStatus).mockResolvedValue(true);
+  });
+
+  it("Khoá tài khoản đang dùng: locks the doctor account", async () => {
+    await expect(lockAccountAction({ id: ACCOUNT_ID })).resolves.toEqual({
+      ok: true,
+      data: { id: ACCOUNT_ID, status: "locked" },
+    });
+    expect(setDoctorAccountStatus).toHaveBeenCalledWith(ACCOUNT_ID, "locked");
+  });
+
+  it("Mở khoá rồi đăng nhập lại: unlocks the doctor account", async () => {
+    await expect(unlockAccountAction({ id: ACCOUNT_ID })).resolves.toEqual({
+      ok: true,
+      data: { id: ACCOUNT_ID, status: "active" },
+    });
+    expect(setDoctorAccountStatus).toHaveBeenCalledWith(ACCOUNT_ID, "active");
+  });
+
+  it("Khoá tài khoản Admin: no doctor account with that id is NOT_FOUND", async () => {
+    vi.mocked(setDoctorAccountStatus).mockResolvedValue(false);
+
+    await expect(lockAccountAction({ id: ACCOUNT_ID })).resolves.toEqual({
+      ok: false,
+      error: { code: "NOT_FOUND", message: ACCOUNT_MESSAGES.notFound },
+    });
+  });
+
+  it("Bác sĩ gửi yêu cầu khoá tài khoản khác: FORBIDDEN, nothing changed", async () => {
+    signedInAs(doctor);
+
+    const result = await lockAccountAction({ id: ACCOUNT_ID });
+
+    expect(result).toMatchObject({ ok: false, error: { code: "FORBIDDEN" } });
+    expect(setDoctorAccountStatus).not.toHaveBeenCalled();
+  });
+
+  it("Chưa đăng nhập gửi yêu cầu mở khoá: UNAUTHENTICATED, nothing changed", async () => {
+    signedInAs(null);
+
+    const result = await unlockAccountAction({ id: ACCOUNT_ID });
+
+    expect(result).toMatchObject({ ok: false, error: { code: "UNAUTHENTICATED" } });
+    expect(setDoctorAccountStatus).not.toHaveBeenCalled();
   });
 });

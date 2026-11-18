@@ -3,10 +3,19 @@
 import { revalidatePath } from "next/cache";
 
 import { routes } from "@/config/routes";
+import type { AccountStatus } from "@/lib/enums";
 import { AppError } from "@/lib/errors";
-import { ADMIN_MESSAGES } from "@/modules/admin/constants";
-import { createAccessCodeSchema, revokeAccessCodeSchema } from "@/modules/admin/schemas";
-import { insertAccessCode, revokeAccessCode } from "@/modules/admin/server/mutations";
+import { ACCOUNT_MESSAGES, ADMIN_MESSAGES } from "@/modules/admin/constants";
+import {
+  accountIdSchema,
+  createAccessCodeSchema,
+  revokeAccessCodeSchema,
+} from "@/modules/admin/schemas";
+import {
+  insertAccessCode,
+  revokeAccessCode,
+  setDoctorAccountStatus,
+} from "@/modules/admin/server/mutations";
 import { createAction, createFormAction } from "@/server/actions/create-action";
 import { ACCESS_CODE_TTL_MS } from "@/server/auth/constants";
 import { formatAccessCode, generateAccessCode, hashAccessCode } from "@/server/auth/crypto";
@@ -72,4 +81,29 @@ export const revokeAccessCodeAction = createAction(
     revalidatePath(routes.admin.accessCodes);
     return { id: input.id };
   },
+);
+
+export type AccountStatusChange = { id: string; status: AccountStatus };
+
+async function changeAccountStatus(
+  id: string,
+  status: AccountStatus,
+): Promise<AccountStatusChange> {
+  if (!(await setDoctorAccountStatus(id, status))) {
+    throw new AppError("NOT_FOUND", ACCOUNT_MESSAGES.notFound);
+  }
+  revalidatePath(routes.admin.accounts);
+  return { id, status };
+}
+
+/** Locks a doctor account and ends all its sessions at once (spec "Khoá tài khoản"). */
+export const lockAccountAction = createAction(
+  { name: "admin.lockAccount", schema: accountIdSchema, access: "admin" },
+  async (input) => changeAccountStatus(input.id, "locked"),
+);
+
+/** Unlocks a doctor account; sessions ended by the lock stay ended (spec "Mở khoá tài khoản"). */
+export const unlockAccountAction = createAction(
+  { name: "admin.unlockAccount", schema: accountIdSchema, access: "admin" },
+  async (input) => changeAccountStatus(input.id, "active"),
 );

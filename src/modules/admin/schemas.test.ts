@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { ADMIN_MESSAGES } from "@/modules/admin/constants";
-import { createAccessCodeSchema, revokeAccessCodeSchema } from "@/modules/admin/schemas";
+import {
+  accountIdSchema,
+  createAccessCodeSchema,
+  revokeAccessCodeSchema,
+} from "@/modules/admin/schemas";
 
 describe("createAccessCodeSchema", () => {
   it("trims the recipient name", () => {
@@ -33,5 +37,15 @@ describe("revokeAccessCodeSchema", () => {
     expect(
       revokeAccessCodeSchema.safeParse({ id: "0b9f4f0e-4a43-4c9e-9a51-3d3a8a9a6f10" }).success,
     ).toBe(true);
+  });
+});
+
+describe("accountIdSchema", () => {
+  it("only accepts a UUID", () => {
+    expect(accountIdSchema.safeParse({ id: "bs.lan" }).success).toBe(false);
+    expect(accountIdSchema.safeParse({}).success).toBe(false);
+    expect(accountIdSchema.safeParse({ id: "0b9f4f0e-4a43-4c9e-9a51-3d3a8a9a6f10" }).success).toBe(
+      true,
+    );
   });
 });

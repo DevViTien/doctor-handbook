@@ -76,8 +76,9 @@ export async function activateAccountWithCode(
       }
 
       await tx.update(accessCodes).set({ accountId }).where(eq(accessCodes.id, code.id));
-      const { token } = await createSession(accountId, { userAgent: input.userAgent }, tx);
-      return { status: "created", accountId, sessionToken: token };
+      const session = await createSession(accountId, { userAgent: input.userAgent }, tx);
+      if (!session) throw new Error("new account has no session (not active?)");
+      return { status: "created", accountId, sessionToken: session.token };
     });
   } catch (error) {
     if (error instanceof UsernameTakenError) return { status: "username-taken" };

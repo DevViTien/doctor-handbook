@@ -13,5 +13,9 @@ export const createAccessCodeSchema = z.object({
 
 export const revokeAccessCodeSchema = z.object({ id: z.uuid() });
 
+/** Lock / unlock: the account to act on. */
+export const accountIdSchema = z.object({ id: z.uuid() });
+
 export type CreateAccessCodeInput = z.input<typeof createAccessCodeSchema>;
 export type RevokeAccessCodeInput = z.input<typeof revokeAccessCodeSchema>;
+export type AccountIdInput = z.input<typeof accountIdSchema>;

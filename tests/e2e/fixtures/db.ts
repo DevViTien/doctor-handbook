@@ -103,6 +103,52 @@ export async function insertUsernameFailures(key: AccountKey, count: number, min
   }
 }
 
+// --- Accounts (change add-account-management) -----------------------------------------
+
+/**
+ * Inserts an extra doctor account (password "Extra-Pass-123"). `lastLoginAt: null` gives a
+ * doctor who never signed in; by default the last login is one hour ago.
+ */
+export async function insertDoctor(options: {
+  username: string;
+  displayName: string;
+  lastLoginAt?: null;
+}): Promise<string> {
+  const db = sql();
+  const passwordHash = await hash("Extra-Pass-123");
+  const [row] = await db<{ id: string }[]>`
+    INSERT INTO accounts (role, username, display_name, password_hash, status, last_login_at)
+    VALUES (
+      'doctor', ${options.username}, ${options.displayName}, ${passwordHash}, 'active',
+      ${options.lastLoginAt === null ? null : db`now() - interval '1 hour'`}
+    )
+    RETURNING id
+  `;
+  if (!row) throw new Error("insertDoctor: no row returned");
+  return row.id;
+}
+
+/** Removes every doctor account (the admin stays), for the empty-list scenario. */
+export async function deleteDoctorAccounts(): Promise<void> {
+  await sql()`DELETE FROM accounts WHERE role = 'doctor'`;
+}
+
+export async function countSessions(key: AccountKey): Promise<number> {
+  const [row] = await sql()<{ count: number }[]>`
+    SELECT count(*)::int AS count FROM sessions s
+    JOIN accounts a ON a.id = s.account_id
+    WHERE a.username = ${ACCOUNTS[key].username}
+  `;
+  return row?.count ?? 0;
+}
+
+export async function accountStatus(key: AccountKey): Promise<string | undefined> {
+  const [row] = await sql()<{ status: string }[]>`
+    SELECT status FROM accounts WHERE username = ${ACCOUNTS[key].username}
+  `;
+  return row?.status;
+}
+
 // --- Access codes (change add-account-activation) ---------------------------------------
 
 /** Same alphabet, normalization and HMAC as src/server/auth/crypto.ts. */
