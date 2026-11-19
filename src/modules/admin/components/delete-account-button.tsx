@@ -6,16 +6,13 @@ import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { FORM_INPUT_CLASS, FORM_LABEL_CLASS } from "@/components/common/password-input";
+import { ROW_ACTION_BUTTON_CLASS, useConfirmedRowAction } from "@/components/common/row-action";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { formatDate } from "@/lib/date/format";
 import { cn } from "@/lib/utils";
 import { usernameMatches } from "@/modules/admin/account-deletion";
-import {
-  ROW_ACTION_BUTTON_CLASS,
-  useConfirmedRowAction,
-} from "@/modules/admin/components/row-action";
 import { ACCOUNT_LIST_TITLE_ID, ACCOUNT_MESSAGES } from "@/modules/admin/constants";
 import { deleteAccountAction } from "@/modules/admin/server/actions";
 

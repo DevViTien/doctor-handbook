@@ -1,11 +1,8 @@
 "use client";
 
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
+import { ROW_ACTION_BUTTON_CLASS, useConfirmedRowAction } from "@/components/common/row-action";
 import { Button } from "@/components/ui/button";
-import {
-  ROW_ACTION_BUTTON_CLASS,
-  useConfirmedRowAction,
-} from "@/modules/admin/components/row-action";
 import { revokeAccessCodeAction } from "@/modules/admin/server/actions";
 
 type RevokeAccessCodeButtonProps = { id: string; recipientName: string };

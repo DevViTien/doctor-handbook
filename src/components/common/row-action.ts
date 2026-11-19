@@ -11,7 +11,8 @@ export const ROW_ACTION_BUTTON_CLASS =
   "h-11 shrink-0 border-input bg-card px-3.5 text-[0.9rem] font-semibold dark:bg-card";
 
 /**
- * State of a row action that asks first (`ConfirmDialog`): revoke a code, lock an account.
+ * State of a row action that asks first (`ConfirmDialog`): revoke a code, lock an account,
+ * delete a feedback.
  * A refusal stays in the dialog until the admin closes it; then the page is refreshed so the
  * row shows its real state (the server does not revalidate on a refusal: the row, and the
  * dialog with it, would vanish before the error is read).

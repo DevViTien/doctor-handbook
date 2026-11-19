@@ -10,6 +10,7 @@ Each folder is one business capability. Routes in `src/app` stay thin and compos
 | [search](search/README.md)     | Accent-insensitive instant search, fuzzy search, voice search               | D11, §10.2                   |
 | [todos](todos/README.md)       | Simple to-do list with optional due date                                    | D5, D15, §10.3               |
 | [backup](backup/README.md)     | Export to a single file, import (replace all), backup reminder              | D8, D18, D20, §10.5          |
+| [feedback](feedback/README.md) | In-app feedback from doctors, read / mark seen / delete by the admin        | §11, §15, N6                 |
 
 ## Standard layout of a module
 

@@ -5,14 +5,11 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
+import { ROW_ACTION_BUTTON_CLASS, useConfirmedRowAction } from "@/components/common/row-action";
 import { Spinner } from "@/components/common/spinner";
 import { Button } from "@/components/ui/button";
 import type { AccountStatus } from "@/lib/enums";
 import type { ActionError } from "@/lib/errors";
-import {
-  ROW_ACTION_BUTTON_CLASS,
-  useConfirmedRowAction,
-} from "@/modules/admin/components/row-action";
 import { lockAccountAction, unlockAccountAction } from "@/modules/admin/server/actions";
 
 type AccountStatusButtonProps = { id: string; displayName: string; status: AccountStatus };

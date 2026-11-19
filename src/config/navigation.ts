@@ -2,6 +2,7 @@ import {
   KeyRoundIcon,
   ListTodoIcon,
   type LucideIcon,
+  MessageSquareTextIcon,
   SettingsIcon,
   UserCogIcon,
   UsersIcon,
@@ -26,4 +27,5 @@ export const doctorNavItems: readonly NavItem[] = [
 export const adminNavItems: readonly NavItem[] = [
   { href: routes.admin.accessCodes, label: "Mã truy cập", icon: KeyRoundIcon },
   { href: routes.admin.accounts, label: "Tài khoản", icon: UserCogIcon },
+  { href: routes.admin.feedback, label: "Góp ý", icon: MessageSquareTextIcon },
 ];

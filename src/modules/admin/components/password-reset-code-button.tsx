@@ -4,6 +4,7 @@ import { CircleAlertIcon, KeyRoundIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import { ROW_ACTION_BUTTON_CLASS } from "@/components/common/row-action";
 import { Spinner } from "@/components/common/spinner";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +16,6 @@ import {
 } from "@/components/ui/dialog";
 import type { ActionError } from "@/lib/errors";
 import { IssuedCodeDetails } from "@/modules/admin/components/issued-code-card";
-import { ROW_ACTION_BUTTON_CLASS } from "@/modules/admin/components/row-action";
 import {
   createPasswordResetCodeAction,
   type IssuedAccessCode,

@@ -14,9 +14,11 @@ import {
   insertNote,
   insertPatient,
   listAccountNotes,
+  listFeedbackRows,
   listPatientRows,
   listPatientSnapshot,
   resetDatabase,
+  seedFeedback,
   setAvatarPath,
   SKIP_WITHOUT_DATABASE,
   trashPatient,
@@ -167,6 +169,8 @@ test.describe("data-import", () => {
   test.describe("Xác nhận và tự sao lưu trước khi thay", () => {
     test("Thay thế dữ liệu đang có", async ({ page }) => {
       await insertPatient("lan", { fullName: "Trần Thị Bình" });
+      // Feedback is a message to the admin, not notebook data: an import never touches it.
+      await seedFeedback("lan", "Góp ý trước khi nhập");
       await loginAs(page, "lan", "/settings/backup");
       await choose(page, backupZip({ patients: [AN] }));
       await importButton(page).click();
@@ -177,7 +181,9 @@ test.describe("data-import", () => {
       await dialog(page).getByRole("button", { name: "Thay thế dữ liệu" }).click();
       const preImport = await pending;
       expect(preImport.suggestedFilename()).toMatch(/_truoc-khi-nhap\.zip$/);
-      expect((await readDownloadedBackup(preImport)).dataText).toContain("Trần Thị Bình");
+      const preImportData = (await readDownloadedBackup(preImport)).dataText;
+      expect(preImportData).toContain("Trần Thị Bình");
+      expect(preImportData).not.toContain("Góp ý trước khi nhập");
 
       await expect(page.getByRole("status").filter({ hasText: "Đã nhập" })).toContainText(
         "Đã nhập 1 bệnh nhân, 1 ghi chú, 0 việc.",
@@ -186,6 +192,9 @@ test.describe("data-import", () => {
       await page.goto("/patients");
       await expect(page.getByText("Nguyễn Văn An")).toBeVisible();
       await expect(page.getByText("Trần Thị Bình")).toHaveCount(0);
+      expect((await listFeedbackRows()).map((row) => row.content)).toEqual([
+        "Góp ý trước khi nhập",
+      ]);
     });
 
     test("Trang cũ không được thay dữ liệu mới mà không hỏi", async ({ page }) => {

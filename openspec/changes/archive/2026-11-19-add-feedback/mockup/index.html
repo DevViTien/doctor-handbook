@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Local mockup for review: open this file directly in a browser. Never upload it to an external service. -->
+<title>Mockup góp ý</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
+<style>
+/* Review sheet over device frames rendering the approved app tokens (palette A "Mực bút bi").
+   Feedback is a quiet tool: one card with a big text box for the doctor, a plain inbox for the
+   admin. The one thing that stands out is the "Mới" label and its 3 px primary edge. */
+:root {
+  --font: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --sheet-bg: #EEF1F6; --sheet-fg: #111827; --sheet-muted: #525C70; --sheet-line: #CDD4E0;
+  --sheet-control: #FFFFFF; --sheet-selected: #111827; --sheet-selected-fg: #FFFFFF;
+  --a-bg: #F6F7FA; --a-card: #FFFFFF; --a-fg: #111827; --a-muted: #525C70; --a-subtle: #EDF0F5;
+  --a-border: #DCE1EA; --a-input: #7D879A; --a-primary: #1E40AF; --a-primary-fg: #FFFFFF; --a-ring: #1E40AF;
+  --a-danger: #B42318; --a-danger-bg: #FBE9E7; --a-warning: #8A4B00; --a-warning-bg: #FFF4E0;
+  --a-overlay: rgb(17 24 39 / 0.5); --a-toast: #FFFFFF; --a-toast-fg: #111827;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --sheet-bg: #090D15; --sheet-fg: #E9EDF5; --sheet-muted: #9BA5B8; --sheet-line: #283244;
+    --sheet-control: #151C2A; --sheet-selected: #E9EDF5; --sheet-selected-fg: #0D121C;
+    --a-bg: #0D121C; --a-card: #151C2A; --a-fg: #E9EDF5; --a-muted: #9BA5B8; --a-subtle: #1C2536;
+    --a-border: #283244; --a-input: #68748B; --a-primary: #8EA8FF; --a-primary-fg: #0D121C; --a-ring: #8EA8FF;
+    --a-danger: #FF8A80; --a-danger-bg: #3A1614; --a-warning: #FFC56B; --a-warning-bg: #33240A;
+    --a-overlay: rgb(0 0 0 / 0.6); --a-toast: #151C2A; --a-toast-fg: #E9EDF5;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --sheet-bg: #090D15; --sheet-fg: #E9EDF5; --sheet-muted: #9BA5B8; --sheet-line: #283244;
+  --sheet-control: #151C2A; --sheet-selected: #E9EDF5; --sheet-selected-fg: #0D121C;
+  --a-bg: #0D121C; --a-card: #151C2A; --a-fg: #E9EDF5; --a-muted: #9BA5B8; --a-subtle: #1C2536;
+  --a-border: #283244; --a-input: #68748B; --a-primary: #8EA8FF; --a-primary-fg: #0D121C; --a-ring: #8EA8FF;
+  --a-danger: #FF8A80; --a-danger-bg: #3A1614; --a-warning: #FFC56B; --a-warning-bg: #33240A;
+  --a-overlay: rgb(0 0 0 / 0.6); --a-toast: #151C2A; --a-toast-fg: #E9EDF5;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; background: var(--sheet-bg); color: var(--sheet-fg); font: 15px/1.55 var(--font);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+code { font-size: 0.9em; }
+.sheet { max-width: 1300px; margin: 0 auto; padding-block: 28px 56px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+.sheet > * { min-width: 0; }
+.sheet h1 { margin: 0; font-size: 1.6rem; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+.lede { margin: 6px 0 0; color: var(--sheet-muted); max-width: 76ch; }
+.controls { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-end; }
+.control { display: grid; gap: 6px; min-width: 0; }
+.control-label { font-size: 0.82rem; font-weight: 600; color: var(--sheet-muted); }
+.seg { display: flex; flex-wrap: wrap; border: 1px solid var(--sheet-line); border-radius: 10px; overflow: hidden; background: var(--sheet-control); }
+.seg button { font: inherit; font-size: 0.86rem; border: 0; background: transparent; color: var(--sheet-fg); padding: 7px 11px; cursor: pointer; border-right: 1px solid var(--sheet-line); }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--sheet-selected); color: var(--sheet-selected-fg); font-weight: 600; }
+.seg button:focus-visible { outline: 3px solid var(--a-ring); outline-offset: 2px; }
+
+.gallery { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+.screen { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; min-width: 0; flex: 0 1 390px; }
+.screen h2 { margin: 0; font-size: 1rem; font-weight: 600; }
+.notes { margin: 0; padding-left: 18px; color: var(--sheet-muted); font-size: 0.86rem; max-width: 390px; }
+.notes li + li { margin-top: 2px; }
+.frame { width: 390px; max-width: 100%; height: 820px; overflow: hidden; position: relative; border: 1px solid var(--sheet-line); border-radius: 28px; background: var(--a-bg); }
+body[data-viewport="desktop"] .gallery { flex-direction: column; }
+body[data-viewport="desktop"] .screen { width: 100%; flex: none; }
+body[data-viewport="desktop"] .frame { width: 100%; height: 760px; border-radius: 14px; }
+body[data-viewport="desktop"] .notes { max-width: 76ch; }
+
+/* ---------- App ---------- */
+.app { height: 100%; display: flex; flex-direction: column; background: var(--a-bg); color: var(--a-fg); font-family: var(--font); font-size: 16px; line-height: 1.5; position: relative; }
+.a-status-bar { height: 44px; flex: none; }
+body[data-viewport="desktop"] .a-status-bar { display: none; }
+.a-icon { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.a-icon.sm { width: 16px; height: 16px; }
+.app :is(button, a, textarea, h2[tabindex]):focus-visible { outline: 3px solid var(--a-ring); outline-offset: 2px; }
+.a-main { flex: 1; overflow: auto; }
+.mark-new { outline: 2px dashed var(--a-primary); outline-offset: 3px; border-radius: 6px; }
+body[data-annotate="off"] .mark-new { outline: none; }
+
+/* Doctor shell */
+.d-main { max-width: 672px; margin: 0 auto; width: 100%; padding: 0 16px 96px; }
+.d-bar { display: flex; align-items: center; gap: 4px; padding: 6px 0; }
+.d-back { margin-left: -8px; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; min-width: 44px; padding: 0 8px; border-radius: 8px; color: var(--a-fg); font-weight: 600; font-size: 0.95rem; text-decoration: none; }
+.d-title { margin: 4px 0 4px; font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em; }
+.d-lede { margin: 0 0 14px; color: var(--a-muted); font-size: 0.92rem; }
+.d-page-title { padding: 16px 0; margin: 0; font-size: 1.25rem; font-weight: 600; }
+.d-nav { position: absolute; left: 0; right: 0; bottom: 0; background: var(--a-card); border-top: 1px solid var(--a-border); padding-bottom: 20px; }
+body[data-viewport="desktop"] .d-nav { padding-bottom: 0; }
+.d-nav ul { list-style: none; margin: 0 auto; padding: 0; display: flex; max-width: 672px; }
+.d-nav li { flex: 1; }
+.d-nav a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 56px; font-size: 0.75rem; font-weight: 500; color: var(--a-muted); text-decoration: none; }
+.d-nav a[aria-current="page"] { color: var(--a-primary); }
+
+.d-card { background: var(--a-card); border: 1px solid var(--a-border); border-radius: 16px; padding: 16px; display: grid; gap: 14px; }
+.d-section-title { margin: 0; font-size: 0.95rem; font-weight: 600; color: var(--a-muted); }
+.d-row { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 12px 8px 16px; margin-top: 16px; background: var(--a-card); border: 1px solid var(--a-border); border-radius: 16px; color: var(--a-fg); text-decoration: none; }
+.d-row .grow { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.d-row .t { font-weight: 600; }
+.d-row .s { font-size: 0.875rem; color: var(--a-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.d-row .end { font-size: 0.875rem; color: var(--a-muted); }
+.d-row .a-icon.muted { color: var(--a-muted); }
+.d-avatar { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: var(--a-subtle); font-weight: 700; color: var(--a-primary); flex: none; }
+
+/* Feedback form */
+.f-field { display: grid; gap: 6px; }
+.f-label { font-size: 0.95rem; font-weight: 600; }
+.f-privacy { display: flex; gap: 8px; align-items: flex-start; margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--a-subtle); color: var(--a-fg); font-size: 0.9rem; }
+.f-privacy .a-icon { color: var(--a-primary); margin-top: 1px; }
+.f-textarea { width: 100%; min-height: 168px; resize: vertical; padding: 12px 14px; font: inherit; font-size: 16px; line-height: 1.5; color: var(--a-fg); background: var(--a-card); border: 1px solid var(--a-input); border-radius: 10px; }
+.f-textarea[aria-invalid="true"] { border-color: var(--a-danger); border-width: 2px; padding: 11px 13px; }
+.f-textarea:disabled { opacity: 0.7; }
+.f-foot { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; font-size: 0.875rem; }
+.f-error { color: var(--a-danger); font-weight: 500; display: flex; gap: 6px; align-items: center; }
+.f-count { color: var(--a-muted); margin-left: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.f-count.over { color: var(--a-danger); font-weight: 600; }
+.f-alert { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 10px; font-size: 0.95rem; font-weight: 500; }
+.f-alert .a-icon { margin-top: 2px; }
+.f-alert[data-tone="danger"] { background: var(--a-danger-bg); color: var(--a-danger); }
+.f-alert[data-tone="warning"] { background: var(--a-warning-bg); color: var(--a-warning); }
+.f-done { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 10px; background: var(--a-subtle); font-size: 0.95rem; font-weight: 600; }
+.f-done .a-icon { color: var(--a-primary); margin-top: 2px; }
+
+.a-btn {
+  height: 48px; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 16px;
+  font: inherit; font-weight: 600; border-radius: 10px; border: 1px solid transparent; cursor: pointer;
+  background: var(--a-primary); color: var(--a-primary-fg); white-space: nowrap;
+}
+.a-btn[data-variant="outline"] { background: var(--a-card); color: var(--a-fg); border-color: var(--a-input); }
+.a-btn[data-variant="ghost"] { background: transparent; color: var(--a-fg); width: auto; height: 40px; padding: 0 10px; font-size: 0.9rem; }
+.a-btn[data-variant="danger"] { background: var(--a-danger); color: var(--a-card); }
+.a-btn[data-busy="true"] { cursor: progress; opacity: 0.85; }
+.a-btn.row { height: 44px; font-size: 0.9rem; padding: 0 14px; width: auto; }
+.a-btn.row.danger-text { color: var(--a-danger); }
+.a-spin { animation: a-spin 0.8s linear infinite; }
+@keyframes a-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .a-spin { animation: none; } }
+
+/* Admin shell */
+.a-admin-head { flex: none; background: var(--a-card); border-bottom: 1px solid var(--a-border); }
+.a-admin-bar { max-width: 896px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px 6px 16px; }
+.a-admin-title { display: flex; align-items: center; gap: 8px; min-width: 0; font-weight: 700; }
+.a-pill { font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--a-subtle); color: var(--a-muted); flex: none; }
+.a-tabs { max-width: 896px; margin: 0 auto; display: flex; gap: 2px; padding: 0 6px; }
+.a-tab { display: flex; align-items: center; gap: 7px; min-height: 44px; padding: 0 9px; font-size: 0.875rem; font-weight: 500; color: var(--a-muted); border-bottom: 2px solid transparent; text-decoration: none; white-space: nowrap; }
+.a-tab[aria-current="page"] { color: var(--a-fg); border-color: var(--a-primary); }
+.a-admin-main { max-width: 896px; margin: 0 auto; width: 100%; padding: 0 16px 32px; }
+.a-page-header { padding: 16px 0; }
+.a-page-header h1 { margin: 0; font-size: 1.25rem; font-weight: 700; }
+.a-page-header p { margin: 4px 0 0; color: var(--a-muted); font-size: 0.875rem; }
+.a-list-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.a-list-head h2 { margin: 0; font-size: 1.05rem; font-weight: 700; }
+.a-list-head span { color: var(--a-muted); font-size: 0.875rem; }
+.a-list-head b { color: var(--a-fg); }
+
+.fb-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.fb { position: relative; background: var(--a-card); border: 1px solid var(--a-border); border-radius: 14px; padding: 14px 14px 12px 16px; display: grid; gap: 8px; min-width: 0; overflow: hidden; }
+.fb[data-new="true"]::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--a-primary); }
+.fb-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.fb-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.fb-name.gone { color: var(--a-muted); font-style: italic; font-weight: 500; }
+.fb-badge { flex: none; font-size: 0.75rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: var(--a-primary); color: var(--a-primary-fg); }
+.fb-meta { margin: -4px 0 0; color: var(--a-muted); font-size: 0.8rem; display: flex; flex-wrap: wrap; gap: 0 6px; }
+.fb-meta .u { color: var(--a-fg); font-weight: 600; }
+.fb-content { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55; }
+.fb-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.fb-actions .a-btn { flex: 1 1 0; }
+body[data-viewport="desktop"] .fb-actions .a-btn { flex: none; }
+
+.a-empty { display: grid; justify-items: center; gap: 10px; text-align: center; padding: 40px 24px; background: var(--a-card); border: 1px solid var(--a-border); border-radius: 14px; }
+.a-empty-icon { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: var(--a-subtle); color: var(--a-muted); }
+.a-empty p { margin: 0; }
+.a-empty .t { font-weight: 600; }
+.a-empty .d { color: var(--a-muted); font-size: 0.9rem; max-width: 34ch; }
+
+.sk { background: var(--a-subtle); border-radius: 14px; height: 132px; }
+.sk + .sk { margin-top: 10px; }
+.sk-line { background: var(--a-subtle); border-radius: 6px; height: 14px; width: 40%; margin-bottom: 12px; }
+@media (prefers-reduced-motion: no-preference) { .sk, .sk-line { animation: pulse 1.6s ease-in-out infinite; } }
+@keyframes pulse { 50% { opacity: 0.55; } }
+
+/* Dialog */
+.a-overlay { position: absolute; inset: 0; background: var(--a-overlay); display: grid; place-items: center; padding: 20px; z-index: 10; overflow: auto; }
+.a-dialog { width: 100%; max-width: 448px; background: var(--a-card); color: var(--a-fg); border-radius: 16px; padding: 20px; display: grid; gap: 16px; font-family: var(--font); }
+.a-dialog h2 { margin: 0; font-size: 1.125rem; font-weight: 700; }
+.a-dialog .desc { margin: -8px 0 0; color: var(--a-muted); font-size: 0.95rem; }
+.a-quote { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--a-subtle); font-size: 0.92rem; white-space: pre-wrap; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.a-dialog-actions { display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
+body[data-viewport="desktop"] .a-dialog-actions { display: flex; justify-content: flex-end; }
+body[data-viewport="desktop"] .a-dialog-actions .a-btn { width: auto; min-width: 7rem; }
+
+/* Toast (sonner, top centre like the rest of the app) */
+.a-toast { position: absolute; left: 16px; right: 16px; top: 56px; margin: 0 auto; max-width: 356px; display: flex; gap: 10px; align-items: center; padding: 14px 16px; border-radius: 12px; background: var(--a-toast); color: var(--a-toast-fg); border: 1px solid var(--a-border); font-size: 0.95rem; font-weight: 500; box-shadow: 0 6px 24px rgb(0 0 0 / 0.14); z-index: 20; }
+body[data-viewport="desktop"] .a-toast { top: 16px; }
+</style>
+</head>
+<body data-annotate="on">
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-wifi-off" viewBox="0 0 24 24"><path d="M12 20h.01"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/><path d="M2 8.82a15 15 0 0 1 4.17-2.65"/><path d="M10.66 5c4.01-.36 8.14.9 11.34 3.76"/><path d="M16.85 11.25a10 10 0 0 1 2.22 1.68"/><path d="M5 12.86a10 10 0 0 1 5.17-2.69"/><path d="m2 2 20 20"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M12 8v4"/><path d="M12 16h.01"/></symbol>
+  <symbol id="i-loader" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5"/></symbol>
+  <symbol id="i-user-cog" viewBox="0 0 24 24"><circle cx="10" cy="7" r="4"/><path d="M10.3 15H7a4 4 0 0 0-4 4v2"/><circle cx="18" cy="18" r="3"/><path d="m21.7 19.4-.9-.3"/><path d="m15.2 16.9-.9-.3"/><path d="m16.6 21.7.3-.9"/><path d="m19.1 15.2.3-.9"/></symbol>
+  <symbol id="i-msg" viewBox="0 0 24 24"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/><path d="M7 11h10"/><path d="M7 15h6"/><path d="M7 7h8"/></symbol>
+  <symbol id="i-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></symbol>
+  <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-archive" viewBox="0 0 24 24"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><rect x="3" y="5" width="6" height="6" rx="1"/><path d="m3 17 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
+</svg>
+
+<main class="sheet">
+  <header>
+    <h1>Góp ý trong app</h1>
+    <p class="lede">Mockup cho change <code>add-feedback</code>. Bảng màu A "Mực bút bi" đã chốt, không thêm màu. Phần mới được viền nét đứt xanh (tắt được ở "Đánh dấu phần mới"). Chọn trạng thái cho trang bác sĩ và trang Admin, sáng/tối, điện thoại (390 px) hay máy tính. Tên, nội dung và giờ là ví dụ.</p>
+  </header>
+
+  <div class="controls" role="group" aria-label="Tuỳ chọn xem mockup">
+    <div class="control">
+      <span class="control-label" id="lbl-doc">Trang bác sĩ</span>
+      <div class="seg" data-control="doc" aria-labelledby="lbl-doc">
+        <button type="button" data-value="empty" aria-pressed="true">Ô trống</button>
+        <button type="button" data-value="typing" aria-pressed="false">Đang gõ</button>
+        <button type="button" data-value="sending" aria-pressed="false">Đang gửi</button>
+        <button type="button" data-value="sent" aria-pressed="false">Đã gửi</button>
+        <button type="button" data-value="err-empty" aria-pressed="false">Lỗi: trống</button>
+        <button type="button" data-value="err-long" aria-pressed="false">Lỗi: quá dài</button>
+        <button type="button" data-value="err-limit" aria-pressed="false">Giới hạn 24 giờ</button>
+        <button type="button" data-value="err-offline" aria-pressed="false">Mất mạng</button>
+      </div>
+    </div>
+    <div class="control">
+      <span class="control-label" id="lbl-adm">Trang Admin</span>
+      <div class="seg" data-control="adm" aria-labelledby="lbl-adm">
+        <button type="button" data-value="list" aria-pressed="true">Có góp ý</button>
+        <button type="button" data-value="seen" aria-pressed="false">Sau "Đã xem"</button>
+        <button type="button" data-value="dialog" aria-pressed="false">Hộp thoại xoá</button>
+        <button type="button" data-value="deleting" aria-pressed="false">Đang xoá</button>
+        <button type="button" data-value="err-gone" aria-pressed="false">Lỗi: không còn</button>
+        <button type="button" data-value="deleted" aria-pressed="false">Sau khi xoá</button>
+        <button type="button" data-value="empty" aria-pressed="false">Rỗng</button>
+        <button type="button" data-value="loading" aria-pressed="false">Đang tải</button>
+      </div>
+    </div>
+    <div class="control">
+      <span class="control-label" id="lbl-theme">Chế độ</span>
+      <div class="seg" data-control="theme" aria-labelledby="lbl-theme">
+        <button type="button" data-value="system" aria-pressed="true">Theo máy</button>
+        <button type="button" data-value="light" aria-pressed="false">Sáng</button>
+        <button type="button" data-value="dark" aria-pressed="false">Tối</button>
+      </div>
+    </div>
+    <div class="control">
+      <span class="control-label" id="lbl-viewport">Khung</span>
+      <div class="seg" data-control="viewport" aria-labelledby="lbl-viewport">
+        <button type="button" data-value="phone" aria-pressed="true">Điện thoại</button>
+        <button type="button" data-value="desktop" aria-pressed="false">Máy tính</button>
+      </div>
+    </div>
+    <div class="control">
+      <span class="control-label" id="lbl-annotate">Đánh dấu phần mới</span>
+      <div class="seg" data-control="annotate" aria-labelledby="lbl-annotate">
+        <button type="button" data-value="on" aria-pressed="true">Bật</button>
+        <button type="button" data-value="off" aria-pressed="false">Tắt</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="gallery">
+    <!-- 1. Settings -->
+    <section class="screen" aria-labelledby="s1">
+      <h2 id="s1">1. Cài đặt (/settings)</h2>
+      <div class="frame">
+        <div class="app">
+          <div class="a-status-bar"></div>
+          <div class="a-main">
+            <div class="d-main">
+              <h1 class="d-page-title">Cài đặt</h1>
+              <div class="d-card">
+                <h2 class="d-section-title">Tài khoản</h2>
+                <div style="display:flex;gap:12px;align-items:center;min-width:0">
+                  <div class="d-avatar">NL</div>
+                  <div style="min-width:0"><div style="font-weight:600">Nguyễn Thị Lan</div><div style="font-size:.875rem;color:var(--a-muted)">Tên đăng nhập: bs.lan</div></div>
+                </div>
+                <button class="a-btn" data-variant="outline" type="button"><svg class="a-icon" aria-hidden="true"><use href="#i-logout"/></svg>Đăng xuất</button>
+              </div>
+              <div class="d-card" style="margin-top:16px"><div style="font-weight:600">Đổi mật khẩu</div><div style="font-size:.875rem;color:var(--a-muted)">(không đổi, thu gọn trong mockup)</div></div>
+              <a class="d-row" href="#s1"><svg class="a-icon muted" aria-hidden="true"><use href="#i-archive"/></svg><span class="grow"><span class="t">Sao lưu và nhập dữ liệu</span><span class="s">Lần sao lưu gần nhất: 3 ngày trước</span></span><svg class="a-icon muted" aria-hidden="true"><use href="#i-chevron"/></svg></a>
+              <a class="d-row" href="#s1"><svg class="a-icon muted" aria-hidden="true"><use href="#i-trash"/></svg><span class="grow"><span class="t">Thùng rác</span></span><span class="end">Trống</span><svg class="a-icon muted" aria-hidden="true"><use href="#i-chevron"/></svg></a>
+              <a class="d-row mark-new" href="#s2"><svg class="a-icon muted" aria-hidden="true"><use href="#i-msg"/></svg><span class="grow"><span class="t">Góp ý</span><span class="s">Báo lỗi, gợi ý thêm tính năng</span></span><svg class="a-icon muted" aria-hidden="true"><use href="#i-chevron"/></svg></a>
+            </div>
+          </div>
+          <nav class="d-nav" aria-label="Điều hướng chính"><ul>
+            <li><a href="#s1"><svg class="a-icon" aria-hidden="true"><use href="#i-users"/></svg>Bệnh nhân</a></li>
+            <li><a href="#s1"><svg class="a-icon" aria-hidden="true"><use href="#i-list"/></svg>Việc cần làm</a></li>
+            <li><a href="#s1" aria-current="page"><svg class="a-icon" aria-hidden="true"><use href="#i-settings"/></svg>Cài đặt</a></li>
+          </ul></nav>
+        </div>
+      </div>
+      <ul class="notes">
+        <li>Dòng mới "Góp ý" đặt cuối, sau "Thùng rác", cùng kiểu với các dòng có sẵn.</li>
+      </ul>
+    </section>
+
+    <!-- 2. Doctor feedback page -->
+    <section class="screen" aria-labelledby="s2">
+      <h2 id="s2">2. Góp ý của bác sĩ (/settings/feedback)</h2>
+      <div class="frame">
+        <div class="app">
+          <div class="a-status-bar"></div>
+          <div class="a-main">
+            <div class="d-main">
+              <div class="d-bar"><a class="d-back" href="#s1"><svg class="a-icon" aria-hidden="true"><use href="#i-arrow-left"/></svg>Cài đặt</a></div>
+              <h1 class="d-title">Góp ý</h1>
+              <p class="d-lede">Gặp lỗi, thấy khó dùng, hay muốn app có thêm gì? Viết vài dòng, Admin sẽ đọc.</p>
+              <form class="d-card mark-new" onsubmit="return false" novalidate>
+                <div class="f-done" id="f-done" role="status" hidden><svg class="a-icon" aria-hidden="true"><use href="#i-circle-check"/></svg><span>Đã gửi góp ý. Cảm ơn bác sĩ!</span></div>
+                <div class="f-alert" id="f-alert" role="alert" hidden><svg class="a-icon" aria-hidden="true"><use id="f-alert-icon" href="#i-alert"/></svg><span id="f-alert-text"></span></div>
+                <div class="f-field">
+                  <label class="f-label" for="f-content">Nội dung góp ý</label>
+                  <p class="f-privacy" id="f-privacy"><svg class="a-icon sm" aria-hidden="true"><use href="#i-shield"/></svg><span>Đừng ghi tên hay thông tin bệnh nhân. Admin đọc được nội dung này.</span></p>
+                  <textarea class="f-textarea" id="f-content" name="content" rows="6" aria-describedby="f-privacy f-count" placeholder="Ví dụ: Tìm bằng giọng nói hay nhận sai tên có dấu."></textarea>
+                  <div class="f-foot">
+                    <span class="f-error" id="f-error" hidden><svg class="a-icon sm" aria-hidden="true"><use href="#i-alert"/></svg><span id="f-error-text"></span></span>
+                    <span class="f-count" id="f-count">0/2.000</span>
+                  </div>
+                </div>
+                <button class="a-btn" id="f-submit" type="submit">Gửi góp ý</button>
+              </form>
+            </div>
+          </div>
+          <nav class="d-nav" aria-label="Điều hướng chính"><ul>
+            <li><a href="#s2"><svg class="a-icon" aria-hidden="true"><use href="#i-users"/></svg>Bệnh nhân</a></li>
+            <li><a href="#s2"><svg class="a-icon" aria-hidden="true"><use href="#i-list"/></svg>Việc cần làm</a></li>
+            <li><a href="#s2" aria-current="page"><svg class="a-icon" aria-hidden="true"><use href="#i-settings"/></svg>Cài đặt</a></li>
+          </ul></nav>
+        </div>
+      </div>
+      <ul class="notes">
+        <li>Một ô chữ duy nhất, không chọn loại góp ý: gõ là gửi được (N2). Loại máy, giờ gửi và bản app tự kèm theo, bác sĩ không phải nhập.</li>
+        <li>Lời nhắc riêng tư nằm ngay trên ô, trình đọc màn hình đọc kèm khi vào ô.</li>
+        <li>Bộ đếm luôn hiện; quá 2.000 ký tự thì đỏ và báo "quá N ký tự", không cắt ngầm chữ dán vào.</li>
+        <li>Gửi xong: ô trống, báo "Đã gửi" ngay trong thẻ (không toast). Lỗi bất kỳ: chữ vẫn còn trong ô.</li>
+        <li>Giới hạn 24 giờ dùng khung vàng + đồng hồ (chờ, không phải lỗi), giống đăng nhập sai nhiều lần.</li>
+      </ul>
+    </section>
+
+    <!-- 3. Admin feedback page -->
+    <section class="screen" aria-labelledby="s3">
+      <h2 id="s3">3. Góp ý của Admin (/admin/feedback)</h2>
+      <div class="frame">
+        <div class="app">
+          <div class="a-status-bar"></div>
+          <header class="a-admin-head">
+            <div class="a-admin-bar">
+              <div class="a-admin-title"><span>Doctor Handbook</span><span class="a-pill">Quản trị</span></div>
+              <button class="a-btn" data-variant="ghost" type="button"><svg class="a-icon" aria-hidden="true"><use href="#i-logout"/></svg>Đăng xuất</button>
+            </div>
+            <nav class="a-tabs" aria-label="Điều hướng quản trị">
+              <a class="a-tab" href="#s3"><svg class="a-icon sm" aria-hidden="true"><use href="#i-key"/></svg>Mã truy cập</a>
+              <a class="a-tab" href="#s3"><svg class="a-icon sm" aria-hidden="true"><use href="#i-user-cog"/></svg>Tài khoản</a>
+              <a class="a-tab mark-new" href="#s3" aria-current="page"><svg class="a-icon sm" aria-hidden="true"><use href="#i-msg"/></svg>Góp ý</a>
+            </nav>
+          </header>
+          <div class="a-main">
+            <div class="a-admin-main">
+              <div class="a-page-header">
+                <h1>Góp ý</h1>
+                <p>Góp ý bác sĩ gửi từ app. Nếu góp ý lỡ chứa thông tin bệnh nhân, đọc xong hãy xoá.</p>
+              </div>
+
+              <div id="adm-loading" hidden>
+                <div class="sk-line"></div>
+                <div class="sk"></div><div class="sk"></div><div class="sk"></div>
+              </div>
+
+              <div id="adm-list">
+                <div class="a-list-head"><h2 tabindex="-1">Hộp thư</h2><span id="adm-count"><b>2 mới</b> · 4 góp ý</span></div>
+                <ul class="fb-list">
+                  <li class="fb" data-new="true" id="fb-1">
+                    <div class="fb-head"><span class="fb-name">Trần Văn Minh</span><span class="fb-badge">Mới</span></div>
+                    <p class="fb-meta"><span class="u" translate="no">bs.minh</span><span>· 19/11/2026 14:32</span><span>· iPhone · Safari</span></p>
+                    <p class="fb-content">Nút lưu ghi chú hơi khó bấm khi đang cầm máy một tay.
+Có thể cho nút to hơn hoặc đưa xuống dưới không?
+Cảm ơn.</p>
+                    <div class="fb-actions">
+                      <button class="a-btn row" data-variant="outline" type="button" id="fb-1-seen"><svg class="a-icon sm" aria-hidden="true"><use href="#i-check"/></svg>Đã xem</button>
+                      <button class="a-btn row danger-text" data-variant="outline" type="button"><svg class="a-icon sm" aria-hidden="true"><use href="#i-trash"/></svg>Xoá</button>
+                    </div>
+                  </li>
+                  <li class="fb" data-new="true" id="fb-2">
+                    <div class="fb-head"><span class="fb-name">Nguyễn Thị Lan</span><span class="fb-badge">Mới</span></div>
+                    <p class="fb-meta"><span class="u" translate="no">bs.lan</span><span>· 19/11/2026 09:05</span><span>· Android · Chrome</span></p>
+                    <p class="fb-content">Tìm bằng giọng nói hay nhận sai tên có dấu.</p>
+                    <div class="fb-actions">
+                      <button class="a-btn row" data-variant="outline" type="button"><svg class="a-icon sm" aria-hidden="true"><use href="#i-check"/></svg>Đã xem</button>
+                      <button class="a-btn row danger-text" data-variant="outline" type="button" id="fb-2-del"><svg class="a-icon sm" aria-hidden="true"><use href="#i-trash"/></svg>Xoá</button>
+                    </div>
+                  </li>
+                  <li class="fb" data-new="false">
+                    <div class="fb-head"><span class="fb-name gone">Tài khoản đã xoá</span></div>
+                    <p class="fb-meta"><span>18/11/2026 21:47</span><span>· iPhone · Safari</span></p>
+                    <p class="fb-content">Muốn thêm nhãn để phân nhóm bệnh nhân theo khoa.</p>
+                    <div class="fb-actions">
+                      <button class="a-btn row danger-text" data-variant="outline" type="button"><svg class="a-icon sm" aria-hidden="true"><use href="#i-trash"/></svg>Xoá</button>
+                    </div>
+                  </li>
+                  <li class="fb" data-new="false">
+                    <div class="fb-head"><span class="fb-name">Võ Hoàng Khánh Nguyên Khoa Hồi sức tích cực</span></div>
+                    <p class="fb-meta"><span class="u" translate="no">bs.khanhnguyen_hstc</span><span>· 17/11/2026 07:20</span><span>· Windows · Edge</span></p>
+                    <p class="fb-content">App chạy tốt, nhắc sao lưu rất có ích.</p>
+                    <div class="fb-actions">
+                      <button class="a-btn row danger-text" data-variant="outline" type="button"><svg class="a-icon sm" aria-hidden="true"><use href="#i-trash"/></svg>Xoá</button>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="a-empty" id="adm-empty" hidden>
+                <div class="a-empty-icon"><svg class="a-icon" aria-hidden="true"><use href="#i-msg"/></svg></div>
+                <p class="t">Chưa có góp ý nào</p>
+                <p class="d">Bác sĩ gửi góp ý ở Cài đặt → Góp ý. Góp ý mới sẽ hiện ở đây.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="a-overlay" id="adm-dialog" hidden>
+            <div class="a-dialog" role="alertdialog" aria-modal="true" aria-labelledby="dd-title" aria-describedby="dd-desc">
+              <h2 id="dd-title">Xoá góp ý này?</h2>
+              <p class="desc" id="dd-desc">Góp ý của Nguyễn Thị Lan, gửi lúc 19/11/2026 09:05. Không hoàn tác được.</p>
+              <p class="a-quote">Tìm bằng giọng nói hay nhận sai tên có dấu.</p>
+              <div class="f-alert" data-tone="danger" id="dd-error" role="alert" hidden><svg class="a-icon" aria-hidden="true"><use href="#i-alert"/></svg><span>Góp ý này không còn.</span></div>
+              <div class="a-dialog-actions" id="dd-actions">
+                <button class="a-btn" id="dd-cancel" data-variant="outline" type="button">Không xoá</button>
+                <button class="a-btn" id="dd-confirm" data-variant="danger" type="button">Xoá góp ý</button>
+              </div>
+              <div id="dd-close" hidden><button class="a-btn" data-variant="outline" type="button">Đóng</button></div>
+            </div>
+          </div>
+
+          <div class="a-toast" id="adm-toast" role="status" hidden><svg class="a-icon" aria-hidden="true"><use href="#i-circle-check"/></svg>Đã xoá góp ý.</div>
+        </div>
+      </div>
+      <ul class="notes">
+        <li>Tab thứ ba "Góp ý"; ba tab vừa khung 360 px.</li>
+        <li>Mới nhất ở trên. Góp ý chưa xem có nhãn chữ "Mới" và vạch xanh bên trái; đầu danh sách đếm số mới.</li>
+        <li>Dòng phụ: tên đăng nhập · giờ gửi (giờ Việt Nam) · loại máy. Nội dung giữ xuống dòng.</li>
+        <li>"Đã xem" bấm là xong, không hỏi lại. "Xoá" hỏi lại vì không hoàn tác được; hộp thoại trích 3 dòng đầu để chắc xoá đúng cái.</li>
+        <li>Người gửi đã bị xoá tài khoản: hiện "Tài khoản đã xoá", không còn tên đăng nhập.</li>
+      </ul>
+    </section>
+  </div>
+</main>
+
+<script>
+(() => {
+  const root = document.documentElement;
+  const body = document.body;
+  const $ = (id) => document.getElementById(id);
+  const spinner = '<svg class="a-icon sm a-spin" aria-hidden="true"><use href="#i-loader"/></svg>';
+  const fmt = (n) => n.toLocaleString("vi-VN");
+  const SAMPLE = "Tìm bằng giọng nói hay nhận sai tên có dấu, ví dụ đọc \"Huỳnh\" thì ra \"Quỳnh\".\nMáy là iPhone 13, mở app từ màn hình chính.";
+  const LONG = (SAMPLE + "\n").repeat(18).slice(0, 2046);
+
+  function count() {
+    const len = $("f-content").value.trim().length;
+    const over = len - 2000;
+    $("f-count").textContent = over > 0 ? `${fmt(len)}/2.000 · quá ${fmt(over)} ký tự` : `${fmt(len)}/2.000`;
+    $("f-count").classList.toggle("over", over > 0);
+  }
+
+  function renderDoc(state) {
+    const ta = $("f-content");
+    ta.value = { empty: "", sent: "", "err-empty": "" }[state] ?? (state === "err-long" ? LONG : SAMPLE);
+    const sending = state === "sending";
+    ta.disabled = sending;
+    $("f-submit").disabled = sending;
+    $("f-submit").dataset.busy = String(sending);
+    $("f-submit").innerHTML = sending ? spinner + "Đang gửi…" : "Gửi góp ý";
+    $("f-done").hidden = state !== "sent";
+    const field = { "err-empty": "Nhập nội dung góp ý.", "err-long": "Góp ý tối đa 2.000 ký tự." }[state];
+    $("f-error").hidden = !field;
+    $("f-error-text").textContent = field || "";
+    ta.setAttribute("aria-invalid", field ? "true" : "false");
+    const alert = {
+      "err-limit": ["warning", "#i-clock", "Đã gửi 20 góp ý trong 24 giờ qua. Thử lại sau."],
+      "err-offline": ["danger", "#i-wifi-off", "Chưa gửi được vì mất mạng. Chữ đã nhập vẫn còn, bấm Gửi góp ý lại khi có mạng."],
+    }[state];
+    $("f-alert").hidden = !alert;
+    if (alert) {
+      $("f-alert").dataset.tone = alert[0];
+      $("f-alert-icon").setAttribute("href", alert[1]);
+      $("f-alert-text").textContent = alert[2];
+    }
+    count();
+  }
+
+  function renderAdm(state) {
+    const loading = state === "loading";
+    const empty = state === "empty";
+    $("adm-loading").hidden = !loading;
+    $("adm-list").hidden = loading || empty;
+    $("adm-empty").hidden = !empty;
+    const dialog = ["dialog", "deleting", "err-gone"].includes(state);
+    $("adm-dialog").hidden = !dialog;
+    const busy = state === "deleting";
+    $("dd-confirm").dataset.busy = String(busy);
+    $("dd-confirm").disabled = busy;
+    $("dd-cancel").disabled = busy;
+    $("dd-confirm").innerHTML = busy ? spinner + "Xoá góp ý" : "Xoá góp ý";
+    $("dd-error").hidden = state !== "err-gone";
+    $("dd-actions").hidden = state === "err-gone";
+    $("dd-close").hidden = state !== "err-gone";
+    const seen = state === "seen";
+    $("fb-1").dataset.new = String(!seen);
+    $("fb-1").querySelector(".fb-badge").hidden = seen;
+    $("fb-1-seen").hidden = seen;
+    $("fb-2").hidden = state === "deleted";
+    const newCount = (seen ? 1 : 2) - (state === "deleted" ? 1 : 0);
+    const total = state === "deleted" ? 3 : 4;
+    $("adm-count").innerHTML = (newCount > 0 ? `<b>${newCount} mới</b> · ` : "") + `${total} góp ý`;
+    $("adm-toast").hidden = state !== "deleted";
+  }
+
+  $("f-content").addEventListener("input", count);
+  const apply = {
+    doc: renderDoc,
+    adm: renderAdm,
+    theme: (v) => (v === "system" ? root.removeAttribute("data-theme") : root.setAttribute("data-theme", v)),
+    viewport: (v) => (body.dataset.viewport = v),
+    annotate: (v) => (body.dataset.annotate = v),
+  };
+  document.querySelectorAll(".seg").forEach((group) => {
+    group.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-value]");
+      if (!button) return;
+      group.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
+      apply[group.dataset.control](button.dataset.value);
+    });
+  });
+  document.querySelectorAll('.frame a[href^="#"]').forEach((a) => a.addEventListener("click", (e) => e.preventDefault()));
+  body.dataset.viewport = "phone";
+  renderDoc("empty");
+  renderAdm("list");
+})();
+</script>
+</body>
+</html>

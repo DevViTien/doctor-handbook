@@ -41,7 +41,8 @@ context: |
     ảnh chỉ trong bucket private qua `accountObjectPath`; mọi `?next=` qua `getSafeRedirectPath`.
   - Bác sĩ tự giữ bản sao (D8, N5): server miễn phí có thể mất dữ liệu; sao lưu ra một file và nhập
     lại (thay thế toàn bộ, D20). Định dạng file sao lưu có phiên bản và app MUST đọc được mọi phiên
-    bản cũ hơn; dữ liệu mới thêm vào schema MUST có mặt trong sao lưu/nhập.
+    bản cũ hơn; dữ liệu sổ tay của bác sĩ thêm vào schema MUST có mặt trong sao lưu/nhập (góp ý gửi
+    Admin, bảng `feedback`, không thuộc sổ tay nên không vào sao lưu: change add-feedback).
   - Database: mọi bảng khai `.enableRLS()`; migration sinh bằng `pnpm db:generate` và phải tương thích
     ngược (expand → code → contract) vì chạy khi bản cũ còn phục vụ.
   - File lớn (ảnh, file sao lưu) đi thẳng giữa trình duyệt và Storage, không qua Vercel Function.

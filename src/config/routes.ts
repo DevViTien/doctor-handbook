@@ -22,11 +22,13 @@ export const routes = {
     settings: "/settings",
     trash: "/settings/trash",
     backup: "/settings/backup",
+    feedback: "/settings/feedback",
   },
   admin: {
     root: "/admin",
     accessCodes: "/admin/access-codes",
     accounts: "/admin/accounts",
+    feedback: "/admin/feedback",
   },
   api: {
     health: "/api/health",

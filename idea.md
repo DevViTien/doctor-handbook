@@ -642,7 +642,8 @@ flowchart TD
 
 🖥️ Admin — giao diện riêng, đơn giản, dùng tốt trên cả điện thoại và máy tính
 ├── 🔑 Mã truy cập   — Tạo mã kích hoạt / đặt lại mật khẩu, danh sách mã
-└── 👤 Tài khoản     — Danh sách bác sĩ, khóa / mở khóa
+├── 👤 Tài khoản     — Danh sách bác sĩ, khóa / mở khóa
+└── 💬 Góp ý         — Góp ý bác sĩ gửi từ app: đọc, đánh dấu đã xem, xóa
 ```
 
 ---

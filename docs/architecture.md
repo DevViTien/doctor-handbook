@@ -9,7 +9,7 @@ separate backend: pages, Server Actions and Route Handlers run on Vercel and tal
 ```
 src/
 ├── app/          Routes only: layouts, pages, route handlers. Thin; composes modules.
-├── modules/      Feature modules (auth, admin, patients, search, todos, backup).
+├── modules/      Feature modules (auth, admin, patients, search, todos, backup, feedback).
 ├── components/   Shared UI: ui/ (shadcn primitives), layout/, common/, providers/.
 ├── hooks/        Shared client hooks.
 ├── lib/          Pure, client-safe utilities: errors, results, validation, text, dates, enums.
@@ -82,7 +82,7 @@ sequenceDiagram
 | API without session  | `proxy.ts` answers 401 JSON, never an HTML redirect                                                                                                          |
 | Action / route guard | `requireAccess(level)` → `AppError("UNAUTHENTICATED" \| "FORBIDDEN")`                                                                                        |
 | Data ownership       | DAL functions filter by `auth.account.id`; never trust an id from the client                                                                                 |
-| Admin isolation      | Admin code paths never query `patients`, `notes` or `todos`                                                                                                  |
+| Admin isolation      | Admin code paths never query `patients`, `notes` or `todos` (only count patients); the feedback inbox joins `accounts` for names only                        |
 | Data API             | `.enableRLS()` (no policies) on every table + privileges of `anon` / `authenticated` revoked (`drizzle/0002_*`)                                              |
 
 `getCurrentAuth()` is memoized per request with React `cache`, so a layout, a page and their
@@ -114,6 +114,9 @@ actions share a single session lookup.
   always has the same owner as its patient.
 - Migrations must be backward compatible (expand → migrate code → contract): they run while the
   previous deployment still serves traffic.
+- Backup scope: every table of the doctor's notebook (patients, notes, avatars, to-dos)
+  round-trips through backup and import. `feedback` does not: it is a message to the admin,
+  `account_id ON DELETE SET NULL`, so it outlives a deleted account (spec `feedback`).
 - Search: application-computed `search_text` (`normalizeVi`) + `pg_trgm` GIN indexes.
 - Database access is lazy (`getDb()`), so builds never need credentials.
 
@@ -173,7 +176,7 @@ E2E builds with `VERCEL_DEPLOYMENT_ID=dpl_e2e` (`tests/e2e/app-update.spec.ts`).
 ## Logging and privacy
 
 Use `logger` from `server/logger.ts` only. Never log patient data or request bodies: log ids, error
-codes and timings.
+codes and timings. Feedback text is never logged either (it may name a patient by mistake).
 
 ## Testing strategy
 

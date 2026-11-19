@@ -2,6 +2,7 @@
 export * from "./accounts";
 export * from "./auth";
 export * from "./enums";
+export * from "./feedback";
 export * from "./patients";
 export * from "./relations";
 export * from "./todos";

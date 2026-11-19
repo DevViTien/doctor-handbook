@@ -1,4 +1,4 @@
-import { ArchiveIcon, ChevronRightIcon, Trash2Icon } from "lucide-react";
+import { ArchiveIcon, ChevronRightIcon, MessageSquareTextIcon, Trash2Icon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -81,6 +81,20 @@ export default async function SettingsPage() {
         <span className="flex-1 font-semibold">Thùng rác</span>
         <span className="text-sm text-muted-foreground">
           {trashCount > 0 ? `${trashCount} bệnh nhân` : "Trống"}
+        </span>
+        <ChevronRightIcon className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+      </Link>
+
+      <Link
+        href={routes.doctor.feedback}
+        className="mt-4 flex min-h-14 items-center gap-3 rounded-2xl border bg-card py-2 pr-3 pl-4 transition-colors hover:bg-muted focus-visible:outline-3 focus-visible:outline-ring motion-reduce:transition-none"
+      >
+        <MessageSquareTextIcon className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+        <span className="grid min-w-0 flex-1 gap-px">
+          <span className="font-semibold">Góp ý</span>
+          <span className="truncate text-sm text-muted-foreground">
+            Báo lỗi, gợi ý thêm tính năng
+          </span>
         </span>
         <ChevronRightIcon className="size-5 shrink-0 text-muted-foreground" aria-hidden />
       </Link>

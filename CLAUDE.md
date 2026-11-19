@@ -120,7 +120,8 @@ Danh sách đầy đủ nằm ở **một chỗ duy nhất**: `openspec/config.y
   account id từ client. Mọi Server Action dựng bằng `createAction` (gọi bằng object) hoặc `createFormAction` (form + `useActionState`) và khai `access`.
 - Admin không đọc dữ liệu bệnh nhân. App không phải hồ sơ bệnh án.
 - Không log dữ liệu bệnh nhân (chỉ dùng `logger`); không đưa dữ liệu bệnh nhân vào URL, toast, tiêu đề.
-- Mọi bảng khai `.enableRLS()`; migration tương thích ngược; dữ liệu mới phải có trong sao lưu/nhập.
+- Mọi bảng khai `.enableRLS()`; migration tương thích ngược; dữ liệu sổ tay mới phải có trong sao lưu/nhập
+  (góp ý gửi Admin là ngoại lệ đã duyệt).
 - Không thêm dịch vụ ngoài/trả phí khi chưa có quyết định trong `idea.md` / `teckstack.md`.
 
 Change nào cần vi phạm một bất biến phải nói rõ trong proposal và lý do; nếu được chấp nhận thì sửa luôn

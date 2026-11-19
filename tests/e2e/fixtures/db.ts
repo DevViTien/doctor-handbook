@@ -567,6 +567,47 @@ export async function countOwnedRows(accountId: string) {
   return row;
 }
 
+// --- Feedback (change add-feedback) ------------------------------------------------------
+
+/** Inserts feedback sent by a sample account `minutesAgo` ago; returns its id. */
+export async function seedFeedback(
+  from: AccountKey,
+  content: string,
+  options: { minutesAgo?: number; seen?: boolean; userAgent?: string } = {},
+): Promise<string> {
+  const [row] = await sql()<{ id: string }[]>`
+    INSERT INTO feedback (account_id, content, user_agent, seen_at, created_at)
+    SELECT id, ${content}, ${options.userAgent ?? null},
+      ${options.seen ? sql()`now()` : null},
+      now() - make_interval(mins => ${options.minutesAgo ?? 5})
+    FROM accounts WHERE username = ${ACCOUNTS[from].username}
+    RETURNING id
+  `;
+  if (!row) throw new Error("seedFeedback: no row returned");
+  return row.id;
+}
+
+export type FeedbackDbRow = {
+  id: string;
+  username: string | null;
+  content: string;
+  user_agent: string | null;
+  seen_at: Date | null;
+};
+
+/** Every feedback row, newest first, with the sender's username (null once deleted). */
+export async function listFeedbackRows(): Promise<FeedbackDbRow[]> {
+  return sql()<FeedbackDbRow[]>`
+    SELECT f.id, a.username, f.content, f.user_agent, f.seen_at
+    FROM feedback f LEFT JOIN accounts a ON a.id = f.account_id
+    ORDER BY f.created_at DESC, f.id
+  `;
+}
+
+export async function deleteFeedbackRow(id: string): Promise<void> {
+  await sql()`DELETE FROM feedback WHERE id = ${id}`;
+}
+
 export async function closeDatabase(): Promise<void> {
   await client?.end();
   client = undefined;
