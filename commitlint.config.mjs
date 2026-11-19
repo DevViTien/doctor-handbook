@@ -12,6 +12,7 @@ const config = {
         "todos",
         "search",
         "backup",
+        "feedback",
         "ui",
         "db",
         "config",

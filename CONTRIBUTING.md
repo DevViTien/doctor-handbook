@@ -7,8 +7,8 @@
    apply → archive, with the `/opsx:*` commands. Bug fixes, refactors and tooling that do not
    change a requirement go straight to code. Full rules: [CLAUDE.md](CLAUDE.md).
 3. Commit with [Conventional Commits](https://www.conventionalcommits.org) — enforced by
-   commitlint. Scopes: `auth`, `admin`, `patients`, `todos`, `search`, `backup`, `ui`, `db`,
-   `config`, `deps`, `docs`, `ci`, `openspec`, `agent`.
+   commitlint. Scopes: `auth`, `admin`, `patients`, `todos`, `search`, `backup`, `feedback`,
+   `ui`, `db`, `config`, `deps`, `docs`, `ci`, `openspec`, `agent`.
    ```
    feat(patients): add timestamped notes
    fix(auth): end other sessions on password change
