@@ -129,6 +129,9 @@ keeping files off Vercel functions (≈4.5 MB body limit).
   browser is accepted only if `isAvatarPathOf(sessionAccountId, path)`.
 - Pictures are shown through `GET /api/patients/<id>/avatar`, which checks ownership and
   redirects to a signed URL; the storage path never reaches the browser.
+- Deleting a doctor account (admin, D21) removes the whole `<accountId>/` folder with
+  `removeAccountObjects` (lists that folder only, never the bucket) inside the transaction that
+  deletes the account, so a storage failure keeps the account and its rows.
 - CSP `img-src` / `connect-src` allow the origin of `SUPABASE_URL` (read at build time).
 - E2E runs a fake Storage (`tests/e2e/fake-storage.mjs`, port 54321) implementing only the
   storage-js routes the app uses, plus `/__fake/*` routes the tests use to inspect objects.

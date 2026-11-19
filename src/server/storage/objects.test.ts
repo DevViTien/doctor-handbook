@@ -1,11 +1,15 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { getStorage } from "@/server/storage/client";
 import {
   accountObjectPath,
   isAvatarPathOf,
   newAvatarObjectPath,
+  removeAccountObjects,
   storedAvatarPath,
 } from "@/server/storage/objects";
+
+vi.mock("@/server/storage/client", () => ({ getStorage: vi.fn() }));
 
 const ACCOUNT_ID = "6f1c1b0e-6c1a-4c37-9d55-1f0a8c1e2b3d";
 
@@ -58,5 +62,100 @@ describe("avatar paths", () => {
     expect(storedAvatarPath(null)).toBeNull();
     expect(storedAvatarPath(`not-a-uuid/${name}.webp`)).toBeNull();
     expect(storedAvatarPath(`${OTHER}/../x.webp`)).toBeNull();
+  });
+});
+
+describe("removeAccountObjects", () => {
+  const name = (i: number) => `${i.toString(16).padStart(32, "0")}.webp`;
+  let stored: string[];
+  const list = vi.fn();
+  const remove = vi.fn();
+
+  beforeEach(() => {
+    stored = [];
+    // Like Supabase: lists the folder's entries (at most `limit`), removes full paths.
+    list.mockImplementation(async (prefix: string, options: { limit: number }) => ({
+      data: stored
+        .filter((key) => key.startsWith(`${prefix}/`))
+        .slice(0, options.limit)
+        .map((key) => ({ name: key.slice(prefix.length + 1) })),
+      error: null,
+    }));
+    remove.mockImplementation(async (paths: string[]) => {
+      stored = stored.filter((key) => !paths.includes(key));
+      return { data: paths.map((path) => ({ name: path })), error: null };
+    });
+    vi.mocked(getStorage).mockReturnValue({
+      from: () => ({ list, remove }),
+    } as unknown as ReturnType<typeof getStorage>);
+  });
+
+  it("removes every object of the account in batches of 1000, and nothing of another", async () => {
+    const OTHER = "0a1c1b0e-6c1a-4c37-9d55-1f0a8c1e2b3d";
+    stored = [
+      ...Array.from({ length: 2345 }, (_, i) => `${ACCOUNT_ID}/${name(i)}`),
+      `${OTHER}/${name(1)}`,
+    ];
+
+    await expect(removeAccountObjects("avatars", ACCOUNT_ID)).resolves.toBe(2345);
+
+    expect(stored).toEqual([`${OTHER}/${name(1)}`]);
+    expect(remove).toHaveBeenCalledTimes(3);
+    for (const [paths] of remove.mock.calls as [string[]][]) {
+      expect(paths.length).toBeLessThanOrEqual(1000);
+    }
+    expect(list).toHaveBeenCalledWith(ACCOUNT_ID, { limit: 1000, offset: 0 });
+  });
+
+  it("leaves entries that are not plain object names alone, and stops", async () => {
+    stored = [`${ACCOUNT_ID}/${name(1)}`, `${ACCOUNT_ID}/..`, `${ACCOUNT_ID}/a b`];
+
+    await expect(removeAccountObjects("avatars", ACCOUNT_ID)).resolves.toBe(1);
+
+    expect(stored).toEqual([`${ACCOUNT_ID}/..`, `${ACCOUNT_ID}/a b`]);
+    expect(remove).toHaveBeenCalledTimes(1);
+  });
+
+  it("never removes sub-folders, and never spins on a remove that did nothing", async () => {
+    stored = [`${ACCOUNT_ID}/${name(1)}`, `${ACCOUNT_ID}/${name(2)}`];
+    list.mockImplementation(async () => ({
+      data: [
+        { name: "folder", id: null },
+        ...stored.map((key) => ({ name: key.split("/")[1], id: "x" })),
+      ],
+      error: null,
+    }));
+    // A storage that answers "ok" but keeps the objects.
+    remove.mockResolvedValue({ data: [], error: null });
+
+    await expect(removeAccountObjects("avatars", ACCOUNT_ID)).resolves.toBe(2);
+
+    expect(remove).toHaveBeenCalledTimes(1);
+    expect(remove.mock.calls[0]?.[0]).toEqual(stored);
+  });
+
+  it("returns 0 for an account without objects", async () => {
+    await expect(removeAccountObjects("avatars", ACCOUNT_ID)).resolves.toBe(0);
+    expect(remove).not.toHaveBeenCalled();
+  });
+
+  it("never lists anything for an id that is not a UUID (never the whole bucket)", async () => {
+    await expect(removeAccountObjects("avatars", "")).rejects.toMatchObject({
+      code: "VALIDATION_FAILED",
+    });
+    expect(list).not.toHaveBeenCalled();
+  });
+
+  it("Kho ảnh lỗi: throws when listing or removing fails", async () => {
+    list.mockResolvedValueOnce({ data: null, error: new Error("down") });
+    await expect(removeAccountObjects("avatars", ACCOUNT_ID)).rejects.toMatchObject({
+      code: "INTERNAL",
+    });
+
+    stored = [`${ACCOUNT_ID}/${name(1)}`];
+    remove.mockResolvedValueOnce({ data: null, error: new Error("down") });
+    await expect(removeAccountObjects("avatars", ACCOUNT_ID)).rejects.toMatchObject({
+      code: "INTERNAL",
+    });
   });
 });

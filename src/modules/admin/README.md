@@ -5,17 +5,19 @@ Account administration for the single admin (the project owner). Behaviour is sp
 
 ## Implemented
 
-| Flow                      | Where                                                                                                                |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Issue activation code     | `components/create-access-code-form.tsx` → `server/actions.ts` `createAccessCodeFormAction`                          |
-| Copy the message to send  | `IssuedCodeDetails` (`issued-code-card.tsx`): code + `/activate` or `/reset-password` link + expiry                  |
-| List codes by status      | `components/access-code-list.tsx` ← `server/queries.ts` `listAccessCodes`; `access-code-status.ts`                   |
-| Revoke an unused code     | `components/revoke-access-code-button.tsx` (`ConfirmDialog`) → `revokeAccessCodeAction`                              |
-| Validation and messages   | `schemas.ts`, `constants.ts` (`ADMIN_MESSAGES`, `ACCOUNT_MESSAGES`)                                                  |
-| List doctor accounts      | `components/account-list.tsx` ← `server/queries.ts` `listDoctorAccounts`                                             |
-| Lock / unlock an account  | `components/account-status-button.tsx` → `lockAccountAction`, `unlockAccountAction`                                  |
-| Issue password-reset code | `components/password-reset-code-button.tsx` (dialog) → `createPasswordResetCodeAction` → `issuePasswordResetCode`    |
-| Show an issued code       | `components/issued-code-card.tsx` `IssuedCodeDetails` (both kinds; the copied message never holds the code in a URL) |
+| Flow                       | Where                                                                                                                     |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Issue activation code      | `components/create-access-code-form.tsx` → `server/actions.ts` `createAccessCodeFormAction`                               |
+| Copy the message to send   | `IssuedCodeDetails` (`issued-code-card.tsx`): code + `/activate` or `/reset-password` link + expiry                       |
+| List codes by status       | `components/access-code-list.tsx` ← `server/queries.ts` `listAccessCodes`; `access-code-status.ts`                        |
+| Revoke an unused code      | `components/revoke-access-code-button.tsx` (`ConfirmDialog`) → `revokeAccessCodeAction`                                   |
+| Validation and messages    | `schemas.ts`, `constants.ts` (`ADMIN_MESSAGES`, `ACCOUNT_MESSAGES`)                                                       |
+| List doctor accounts       | `components/account-list.tsx` ← `server/queries.ts` `listDoctorAccounts`                                                  |
+| Lock / unlock an account   | `components/account-status-button.tsx` → `lockAccountAction`, `unlockAccountAction`                                       |
+| Issue password-reset code  | `components/password-reset-code-button.tsx` (dialog) → `createPasswordResetCodeAction` → `issuePasswordResetCode`         |
+| Delete a locked account    | `components/delete-account-button.tsx` (`ConfirmDialog` + typed username) → `deleteAccountAction` → `deleteDoctorAccount` |
+| Patient count, last backup | `listDoctorAccounts` (`patientCount` subquery, outside the trash; `lastBackupAt`)                                         |
+| Show an issued code        | `components/issued-code-card.tsx` `IssuedCodeDetails` (both kinds; the copied message never holds the code in a URL)      |
 
 Security properties to preserve:
 
@@ -33,9 +35,13 @@ Security properties to preserve:
   earlier usable reset codes in the same transaction (account row locked `FOR UPDATE`), so at
   most one reset code per account can be used.
 
-## Still to build (separate OpenSpec changes)
-
-- Delete an account and all its data, confirmed by typing the username (D21).
+- Deleting (D21) only works on a LOCKED doctor account, and only when the typed username
+  matches (`usernameMatches`, checked in the DAL, not only in the dialog). `deleteDoctorAccount`
+  runs one transaction: lock the row `FOR UPDATE` (an unlock waits), remove every object under
+  `<accountId>/` in the avatars bucket (`removeAccountObjects`), then `DELETE` the account, which
+  cascades to sessions, patients, notes, todos and the account's access codes. A storage error
+  rolls everything back: the account stays, still locked, and the admin retries. Avatars are
+  found by the account's folder, never by reading `patients.avatar_path` (N6).
 
 ## Hard rule (idea.md N6)
 

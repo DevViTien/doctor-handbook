@@ -9,9 +9,11 @@ import { ACCOUNT_MESSAGES, ADMIN_MESSAGES } from "@/modules/admin/constants";
 import {
   accountIdSchema,
   createAccessCodeSchema,
+  deleteAccountSchema,
   revokeAccessCodeSchema,
 } from "@/modules/admin/schemas";
 import {
+  deleteDoctorAccount,
   insertAccessCode,
   issuePasswordResetCode,
   revokeAccessCode,
@@ -21,6 +23,7 @@ import { createAction, createFormAction } from "@/server/actions/create-action";
 import { ACCESS_CODE_TTL_MS } from "@/server/auth/constants";
 import { formatAccessCode, generateAccessCode, hashAccessCode } from "@/server/auth/crypto";
 import { isUniqueViolation } from "@/server/db/errors";
+import { logger } from "@/server/logger";
 
 /** What the admin sees once, right after creating a code. Never stored, never logged. */
 export type IssuedAccessCode = {
@@ -153,5 +156,42 @@ export const createPasswordResetCodeAction = createAction(
       username: stored.username,
       expiresAt: expiresAt.toISOString(),
     };
+  },
+);
+
+/**
+ * Deletes a locked doctor account and all its data, once the admin typed its username (spec
+ * account-management "Xoá tài khoản đã khoá"). Refusals change nothing; on a refusal the page is
+ * NOT revalidated (the dialog would vanish before the reason is read), the client refreshes
+ * when the dialog closes. Only ids and counts are logged.
+ */
+export const deleteAccountAction = createAction(
+  { name: "admin.deleteAccount", schema: deleteAccountSchema, access: "admin" },
+  async (input): Promise<{ username: string }> => {
+    let outcome;
+    try {
+      outcome = await deleteDoctorAccount(input.id, input.username);
+    } catch (error) {
+      // Storage (or the database) failed: the transaction rolled back, the account is still
+      // there and still locked, so the admin can simply try again.
+      logger.error("Account deletion failed", { accountId: input.id, error });
+      throw new AppError("INTERNAL", ACCOUNT_MESSAGES.deleteFailed);
+    }
+
+    if (outcome.status === "not-found") throw new AppError("NOT_FOUND", ACCOUNT_MESSAGES.notFound);
+    if (outcome.status === "active") {
+      throw new AppError("CONFLICT", ACCOUNT_MESSAGES.activeNoDelete);
+    }
+    if (outcome.status === "mismatch") {
+      throw new AppError("VALIDATION_FAILED", ACCOUNT_MESSAGES.usernameMismatch);
+    }
+
+    logger.info("Doctor account deleted", {
+      accountId: input.id,
+      removedObjects: outcome.removedObjects,
+    });
+    revalidatePath(routes.admin.accounts);
+    revalidatePath(routes.admin.accessCodes);
+    return { username: outcome.username };
   },
 );

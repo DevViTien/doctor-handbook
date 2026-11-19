@@ -28,6 +28,8 @@ type ConfirmDialogProps = {
   destructive?: boolean;
   /** Shows a spinner and blocks closing while the confirmed action runs. */
   pending?: boolean;
+  /** Keeps the confirm button off until the caller's condition holds (e.g. username typed). */
+  confirmDisabled?: boolean;
   onConfirm: () => void;
   /**
    * Why the confirmed action failed. Shown inside the dialog (a toast could vanish before it
@@ -54,6 +56,7 @@ export function ConfirmDialog({
   cancelLabel = "Huỷ",
   destructive = false,
   pending = false,
+  confirmDisabled = false,
   onConfirm,
   error = null,
   closeLabel = "Đóng",
@@ -86,7 +89,7 @@ export function ConfirmDialog({
               </AlertDialogCancel>
               <AlertDialogAction
                 variant={destructive ? "destructive" : "default"}
-                disabled={pending}
+                disabled={pending || confirmDisabled}
                 className={cn(
                   FOOTER_BUTTON,
                   // Solid red (mockup), stronger than the soft "destructive" button variant.

@@ -129,6 +129,44 @@ export async function removeAvatarsQuietly(paths: ReadonlyArray<string | null>):
   }
 }
 
+/** Supabase lists and removes at most 1000 objects per call. */
+const STORAGE_BATCH = 1000;
+
+/**
+ * Deletes every object under `<accountId>/` in a bucket (an account being deleted, spec
+ * account-management "Xoá tài khoản đã khoá"). Lists the account's own folder, never the whole
+ * bucket, and removes only names that are safe path segments (no sub-folders, no `..`). Throws
+ * on any storage error, so the caller can keep the account and let the admin retry. Returns how
+ * many objects were removed.
+ */
+export async function removeAccountObjects(
+  bucket: StorageBucket,
+  accountId: string,
+): Promise<number> {
+  if (!accountIdSchema.safeParse(accountId).success) throw new AppError("VALIDATION_FAILED");
+  const storage = getStorage().from(bucket);
+  const removed = new Set<string>();
+  // Removed objects drop out of the listing, so every round lists from the start again. A name
+  // already removed that is listed again (a remove that silently did nothing) ends the loop
+  // instead of spinning on it while the caller holds a row lock.
+  for (;;) {
+    const { data, error } = await storage.list(accountId, { limit: STORAGE_BATCH, offset: 0 });
+    if (error) throw new AppError("INTERNAL", undefined, { cause: error });
+    const paths = data
+      // Sub-folders are listed with `id: null`: never created by the app, never removed here.
+      .filter((entry) => entry.id !== null && SAFE_SEGMENT.test(entry.name))
+      .map((entry) => accountObjectPath(accountId, entry.name))
+      .filter((path) => !removed.has(path));
+    // Nothing left, or only entries this function leaves alone (logged as a count only).
+    if (paths.length === 0) {
+      if (data.length > 0) logger.warn("Account objects left in place", { left: data.length });
+      return removed.size;
+    }
+    await removeObjects(bucket, paths);
+    for (const path of paths) removed.add(path);
+  }
+}
+
 export async function removeObjects(
   bucket: StorageBucket,
   paths: readonly AccountObjectPath[],

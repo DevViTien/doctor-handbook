@@ -4,11 +4,13 @@ import { ACCOUNT_MESSAGES, ADMIN_MESSAGES } from "@/modules/admin/constants";
 import {
   createAccessCodeFormAction,
   createPasswordResetCodeAction,
+  deleteAccountAction,
   lockAccountAction,
   revokeAccessCodeAction,
   unlockAccountAction,
 } from "@/modules/admin/server/actions";
 import {
+  deleteDoctorAccount,
   insertAccessCode,
   issuePasswordResetCode,
   revokeAccessCode,
@@ -18,11 +20,13 @@ import { ACCESS_CODE_ALPHABET, ACCESS_CODE_TTL_MS } from "@/server/auth/constant
 import { getSessionToken } from "@/server/auth/cookies";
 import { hashAccessCode } from "@/server/auth/crypto";
 import { type AuthContext, validateSessionToken } from "@/server/auth/session";
+import { logger } from "@/server/logger";
 
 // Real guards (requireAccess), fake session lookup: tests the access rules end to end.
 vi.mock("@/server/auth/cookies", () => ({ getSessionToken: vi.fn() }));
 vi.mock("@/server/auth/session", () => ({ validateSessionToken: vi.fn() }));
 vi.mock("@/modules/admin/server/mutations", () => ({
+  deleteDoctorAccount: vi.fn(),
   insertAccessCode: vi.fn(),
   issuePasswordResetCode: vi.fn(),
   revokeAccessCode: vi.fn(),
@@ -292,5 +296,95 @@ describe("createPasswordResetCodeAction", () => {
 
     expect(result).toMatchObject({ ok: false, error: { code: "FORBIDDEN" } });
     expect(issuePasswordResetCode).not.toHaveBeenCalled();
+  });
+});
+
+describe("deleteAccountAction", () => {
+  const request = { id: ACCOUNT_ID, username: "bs.khoa" };
+
+  beforeEach(() => {
+    signedInAs(admin);
+    vi.mocked(deleteDoctorAccount).mockResolvedValue({
+      status: "deleted",
+      username: "bs.khoa",
+      removedObjects: 2,
+    });
+  });
+
+  it("Xoá tài khoản cùng toàn bộ dữ liệu: returns the username, logs only id and count", async () => {
+    const info = vi.spyOn(logger, "info");
+
+    await expect(deleteAccountAction(request)).resolves.toEqual({
+      ok: true,
+      data: { username: "bs.khoa" },
+    });
+    expect(deleteDoctorAccount).toHaveBeenCalledWith(ACCOUNT_ID, "bs.khoa");
+    expect(info).toHaveBeenCalledWith("Doctor account deleted", {
+      accountId: ACCOUNT_ID,
+      removedObjects: 2,
+    });
+  });
+
+  it("Bác sĩ gửi yêu cầu xoá tài khoản khác: FORBIDDEN, nothing deleted", async () => {
+    signedInAs(doctor);
+
+    const result = await deleteAccountAction(request);
+
+    expect(result).toMatchObject({ ok: false, error: { code: "FORBIDDEN" } });
+    expect(deleteDoctorAccount).not.toHaveBeenCalled();
+  });
+
+  it("Chưa đăng nhập gửi yêu cầu xoá: UNAUTHENTICATED, nothing deleted", async () => {
+    signedInAs(null);
+
+    const result = await deleteAccountAction(request);
+
+    expect(result).toMatchObject({ ok: false, error: { code: "UNAUTHENTICATED" } });
+    expect(deleteDoctorAccount).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [
+      "Xoá tài khoản Admin hoặc tài khoản đã xoá",
+      "not-found",
+      "NOT_FOUND",
+      ACCOUNT_MESSAGES.notFound,
+    ],
+    [
+      "Tài khoản vừa được mở khoá ở nơi khác",
+      "active",
+      "CONFLICT",
+      ACCOUNT_MESSAGES.activeNoDelete,
+    ],
+    [
+      "Server từ chối tên đăng nhập không khớp",
+      "mismatch",
+      "VALIDATION_FAILED",
+      ACCOUNT_MESSAGES.usernameMismatch,
+    ],
+  ] as const)("%s", async (_label, status, code, message) => {
+    vi.mocked(deleteDoctorAccount).mockResolvedValue({ status });
+
+    await expect(deleteAccountAction(request)).resolves.toEqual({
+      ok: false,
+      error: { code, message },
+    });
+  });
+
+  it("Kho ảnh lỗi: INTERNAL with its own message", async () => {
+    vi.spyOn(logger, "error").mockImplementation(() => undefined);
+    vi.mocked(deleteDoctorAccount).mockRejectedValue(new Error("storage down"));
+
+    await expect(deleteAccountAction(request)).resolves.toEqual({
+      ok: false,
+      error: { code: "INTERNAL", message: ACCOUNT_MESSAGES.deleteFailed },
+    });
+  });
+
+  it("rejects an id that is not a UUID before touching anything", async () => {
+    const result = await deleteAccountAction({ id: "bs.khoa", username: "bs.khoa" });
+
+    expect(result).toMatchObject({ ok: false, error: { code: "VALIDATION_FAILED" } });
+    expect(deleteDoctorAccount).not.toHaveBeenCalled();
   });
 });

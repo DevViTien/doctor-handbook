@@ -4,6 +4,7 @@ import { ADMIN_MESSAGES } from "@/modules/admin/constants";
 import {
   accountIdSchema,
   createAccessCodeSchema,
+  deleteAccountSchema,
   revokeAccessCodeSchema,
 } from "@/modules/admin/schemas";
 
@@ -47,5 +48,21 @@ describe("accountIdSchema", () => {
     expect(accountIdSchema.safeParse({ id: "0b9f4f0e-4a43-4c9e-9a51-3d3a8a9a6f10" }).success).toBe(
       true,
     );
+  });
+});
+
+describe("deleteAccountSchema", () => {
+  const id = "0b9f4f0e-4a43-4c9e-9a51-3d3a8a9a6f10";
+
+  it("keeps an empty or wrong username for the DAL to refuse with its own message", () => {
+    expect(deleteAccountSchema.parse({ id, username: "" })).toEqual({ id, username: "" });
+    expect(deleteAccountSchema.parse({ id, username: " BS.Khoa " }).username).toBe(" BS.Khoa ");
+  });
+
+  it("rejects an id that is not a UUID and an overlong username", () => {
+    expect(deleteAccountSchema.safeParse({ id: "bs.khoa", username: "bs.khoa" }).success).toBe(
+      false,
+    );
+    expect(deleteAccountSchema.safeParse({ id, username: "a".repeat(65) }).success).toBe(false);
   });
 });

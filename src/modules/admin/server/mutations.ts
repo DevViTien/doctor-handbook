@@ -3,10 +3,12 @@ import "server-only";
 import { and, eq, sql } from "drizzle-orm";
 
 import type { AccessCodeType, AccountStatus } from "@/lib/enums";
+import { usernameMatches } from "@/modules/admin/account-deletion";
 import { accessCodeIsUsable } from "@/server/auth/access-codes";
 import { invalidateAccountSessions } from "@/server/auth/session";
 import { type DbExecutor, getDb } from "@/server/db/client";
 import { accessCodes, accounts } from "@/server/db/schema";
+import { removeAccountObjects, STORAGE_BUCKETS } from "@/server/storage/objects";
 
 export type NewAccessCode = {
   type: AccessCodeType;
@@ -118,5 +120,42 @@ export async function issuePasswordResetCode(
       expiresAt: code.expiresAt,
     });
     return { status: "issued", displayName: account.displayName, username: account.username };
+  });
+}
+
+export type DoctorAccountDeletion =
+  | { status: "deleted"; username: string; removedObjects: number }
+  | { status: "not-found" }
+  | { status: "active" }
+  | { status: "mismatch" };
+
+/**
+ * Deletes a LOCKED doctor account and everything it owns (design §2), in one transaction:
+ *
+ * 1. the account row is locked (`FOR UPDATE`), so an unlock cannot slip in while deleting;
+ * 2. it must be locked and `typedUsername` must match: otherwise nothing is touched;
+ * 3. its avatars are removed by the account's folder in Storage (no patient row is read, N6).
+ *    A storage error throws and rolls the transaction back: the account stays, still locked;
+ * 4. the row is deleted; foreign keys cascade to sessions, patients, notes, todos and the
+ *    account's access codes.
+ */
+export async function deleteDoctorAccount(
+  id: string,
+  typedUsername: string,
+  db: DbExecutor = getDb(),
+): Promise<DoctorAccountDeletion> {
+  return db.transaction(async (tx): Promise<DoctorAccountDeletion> => {
+    const [account] = await tx
+      .select({ username: accounts.username, status: accounts.status })
+      .from(accounts)
+      .where(doctorAccountById(id))
+      .for("update");
+    if (!account) return { status: "not-found" };
+    if (account.status !== "locked") return { status: "active" };
+    if (!usernameMatches(typedUsername, account.username)) return { status: "mismatch" };
+
+    const removedObjects = await removeAccountObjects(STORAGE_BUCKETS.avatars, id);
+    await tx.delete(accounts).where(doctorAccountById(id));
+    return { status: "deleted", username: account.username, removedObjects };
   });
 }

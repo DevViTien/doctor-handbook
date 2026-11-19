@@ -8,7 +8,8 @@
 //   GET    /storage/v1/object/sign/:bucket/:path?token         → the bytes
 //   DELETE /storage/v1/object/:bucket        { prefixes }      → [{ name }]
 //   POST   /storage/v1/object/list/:bucket   { prefix }        → [{ name }]
-// plus test-only routes under /__fake (list, read, write, reset) and /health.
+// plus test-only routes under /__fake (list, read, write, reset, fail) and /health.
+// POST /__fake/fail { route: "list" } makes the list route answer 500 until the next reset.
 // Never part of the app bundle.
 import { randomBytes } from "node:crypto";
 import http from "node:http";
@@ -55,6 +56,9 @@ function check(token, key, kind) {
   return Boolean(entry && entry.key === key && entry.kind === kind && entry.expiresAt > Date.now());
 }
 
+/** Routes switched to fail by POST /__fake/fail (cleared by the reset). */
+const failing = new Set();
+
 const notFound = { statusCode: "404", error: "not_found", message: "Object not found" };
 
 const server = http.createServer(async (req, res) => {
@@ -72,9 +76,15 @@ const server = http.createServer(async (req, res) => {
         .map(([key, value]) => ({ key, size: value.body.length, type: value.type }));
       return send(res, 200, list);
     }
+    if (path === "/__fake/fail" && req.method === "POST") {
+      const { route } = await json(req);
+      failing.add(String(route));
+      return send(res, 200, { ok: true });
+    }
     if (path === "/__fake/objects" && req.method === "DELETE") {
       objects.clear();
       tokens.clear();
+      failing.clear();
       return send(res, 200, { ok: true });
     }
     if (path === "/__fake/object") {
@@ -162,6 +172,9 @@ const server = http.createServer(async (req, res) => {
       );
     }
     match = api.match(/^\/object\/list\/([^/]+)$/);
+    if (match && req.method === "POST" && failing.has("list")) {
+      return send(res, 500, { statusCode: "500", error: "internal", message: "Fake failure" });
+    }
     if (match && req.method === "POST") {
       const bucket = match[1];
       const { prefix = "" } = await json(req);

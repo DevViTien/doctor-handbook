@@ -6,7 +6,9 @@ import { routes } from "@/config/routes";
 import { formatDate, formatDateTime } from "@/lib/date/format";
 import { cn } from "@/lib/utils";
 import { AccountStatusButton } from "@/modules/admin/components/account-status-button";
+import { DeleteAccountButton } from "@/modules/admin/components/delete-account-button";
 import { PasswordResetCodeButton } from "@/modules/admin/components/password-reset-code-button";
+import { ACCOUNT_LIST_TITLE_ID } from "@/modules/admin/constants";
 import type { DoctorAccountListItem } from "@/modules/admin/server/queries";
 
 /** "Bác sĩ": every doctor account with its status, never any patient data (spec account-management). */
@@ -31,9 +33,14 @@ export function AccountList({ accounts }: { accounts: DoctorAccountListItem[] })
   }
 
   return (
-    <section aria-labelledby="account-list-title" className="grid min-w-0 gap-3">
+    <section aria-labelledby={ACCOUNT_LIST_TITLE_ID} className="grid min-w-0 gap-3">
       <div className="flex items-baseline justify-between gap-2">
-        <h2 id="account-list-title" className="text-[1.05rem] font-bold">
+        {/* Focusable: takes focus when the row whose button had it is deleted. */}
+        <h2
+          id={ACCOUNT_LIST_TITLE_ID}
+          tabIndex={-1}
+          className="rounded-sm text-[1.05rem] font-bold focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+        >
           Bác sĩ
         </h2>
         <span className="text-sm text-muted-foreground">{accounts.length} tài khoản</span>
@@ -81,6 +88,11 @@ function AccountRow({ account }: { account: DoctorAccountListItem }) {
             ? `Đăng nhập ${formatDateTime(account.lastLoginAt)}`
             : "Chưa đăng nhập"}
         </span>
+        {/* Counts only (idea.md P3-3, N6): never a patient's name or details. */}
+        <span className="text-[0.8rem]">
+          {account.patientCount.toLocaleString("vi-VN")} bệnh nhân ·{" "}
+          {account.lastBackupAt ? `Sao lưu ${formatDate(account.lastBackupAt)}` : "Chưa sao lưu"}
+        </span>
       </div>
       {/* Phone: the buttons go under the details, each as wide as the row (thumb-friendly). */}
       <div className="flex w-full flex-wrap gap-2 md:w-auto [&>button]:flex-1 md:[&>button]:flex-none">
@@ -92,6 +104,15 @@ function AccountRow({ account }: { account: DoctorAccountListItem }) {
           displayName={account.displayName}
           status={account.status}
         />
+        {locked ? (
+          <DeleteAccountButton
+            id={account.id}
+            displayName={account.displayName}
+            username={account.username}
+            patientCount={account.patientCount}
+            lastBackupAt={account.lastBackupAt}
+          />
+        ) : null}
       </div>
     </li>
   );

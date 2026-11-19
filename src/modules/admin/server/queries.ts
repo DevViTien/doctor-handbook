@@ -1,11 +1,11 @@
 import "server-only";
 
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 
 import type { AccessCodeType, AccountStatus } from "@/lib/enums";
 import { ACCESS_CODE_LIST_LIMIT } from "@/modules/admin/constants";
 import { type DbExecutor, getDb } from "@/server/db/client";
-import { accessCodes, accounts } from "@/server/db/schema";
+import { accessCodes, accounts, patients } from "@/server/db/schema";
 
 /**
  * One row of the admin's code list. Never includes `code_hash`, and from `accounts` only the
@@ -42,7 +42,10 @@ export async function listAccessCodes(db: DbExecutor = getDb()): Promise<AccessC
     .limit(ACCESS_CODE_LIST_LIMIT);
 }
 
-/** One doctor account in the admin's list: no password hash, no patient data (N6). */
+/**
+ * One doctor account in the admin's list: no password hash, no patient data (N6). The patient
+ * count is a number only (idea.md P3-3), never a name or a field.
+ */
 export type DoctorAccountListItem = {
   id: string;
   displayName: string;
@@ -50,6 +53,9 @@ export type DoctorAccountListItem = {
   status: AccountStatus;
   createdAt: Date;
   lastLoginAt: Date | null;
+  /** Patients outside the trash, as the doctor sees them in their own list. */
+  patientCount: number;
+  lastBackupAt: Date | null;
 };
 
 /** Doctor accounts, newest first (spec account-management). The admin account is excluded. */
@@ -65,6 +71,14 @@ export async function listDoctorAccounts(
         status: accounts.status,
         createdAt: accounts.createdAt,
         lastLoginAt: accounts.lastLoginAt,
+        // Counting only, as the admin may (N6); uses patients_account_id_deleted_at_idx.
+        patientCount: sql<number>`(${db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(patients)
+          .where(and(eq(patients.accountId, accounts.id), isNull(patients.deletedAt)))})`.mapWith(
+          Number,
+        ),
+        lastBackupAt: accounts.lastBackupAt,
       })
       .from(accounts)
       .where(eq(accounts.role, "doctor"))

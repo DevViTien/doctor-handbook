@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Local mockup for review: open this file directly in a browser. Never upload it to an external service. -->
+<title>Mockup xoá tài khoản</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
+<style>
+/* Review sheet over device frames rendering the approved app tokens (palette A "Mực bút bi").
+   The one loud element is the delete dialog: a red "lost for good" block and a solid red button
+   that only lights up once the username is typed. The account list stays as quiet as before. */
+:root {
+  --font: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --sheet-bg: #EEF1F6; --sheet-fg: #111827; --sheet-muted: #525C70; --sheet-line: #CDD4E0;
+  --sheet-control: #FFFFFF; --sheet-selected: #111827; --sheet-selected-fg: #FFFFFF;
+  --a-bg: #F6F7FA; --a-card: #FFFFFF; --a-fg: #111827; --a-muted: #525C70; --a-subtle: #EDF0F5;
+  --a-border: #DCE1EA; --a-input: #7D879A; --a-primary: #1E40AF; --a-primary-fg: #FFFFFF; --a-ring: #1E40AF;
+  --a-danger: #B42318; --a-danger-bg: #FDECEA; --a-overlay: rgb(17 24 39 / 0.5);
+  --a-toast: #111827; --a-toast-fg: #FFFFFF;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --sheet-bg: #090D15; --sheet-fg: #E9EDF5; --sheet-muted: #9BA5B8; --sheet-line: #283244;
+    --sheet-control: #151C2A; --sheet-selected: #E9EDF5; --sheet-selected-fg: #0D121C;
+    --a-bg: #0D121C; --a-card: #151C2A; --a-fg: #E9EDF5; --a-muted: #9BA5B8; --a-subtle: #1C2536;
+    --a-border: #283244; --a-input: #68748B; --a-primary: #8EA8FF; --a-primary-fg: #0D121C; --a-ring: #8EA8FF;
+    --a-danger: #FF8A80; --a-danger-bg: #3A1614; --a-overlay: rgb(0 0 0 / 0.6);
+    --a-toast: #E9EDF5; --a-toast-fg: #0D121C;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --sheet-bg: #090D15; --sheet-fg: #E9EDF5; --sheet-muted: #9BA5B8; --sheet-line: #283244;
+  --sheet-control: #151C2A; --sheet-selected: #E9EDF5; --sheet-selected-fg: #0D121C;
+  --a-bg: #0D121C; --a-card: #151C2A; --a-fg: #E9EDF5; --a-muted: #9BA5B8; --a-subtle: #1C2536;
+  --a-border: #283244; --a-input: #68748B; --a-primary: #8EA8FF; --a-primary-fg: #0D121C; --a-ring: #8EA8FF;
+  --a-danger: #FF8A80; --a-danger-bg: #3A1614; --a-overlay: rgb(0 0 0 / 0.6);
+  --a-toast: #E9EDF5; --a-toast-fg: #0D121C;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; background: var(--sheet-bg); color: var(--sheet-fg); font: 15px/1.55 var(--font);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.sheet { max-width: 1240px; margin: 0 auto; padding-block: 28px 56px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+.sheet > * { min-width: 0; }
+.sheet h1 { margin: 0; font-size: 1.6rem; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+.lede { margin: 6px 0 0; color: var(--sheet-muted); max-width: 72ch; }
+.controls { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-end; }
+.control { display: grid; gap: 6px; min-width: 0; }
+.control-label { font-size: 0.82rem; font-weight: 600; color: var(--sheet-muted); }
+.seg { display: flex; flex-wrap: wrap; border: 1px solid var(--sheet-line); border-radius: 10px; overflow: hidden; background: var(--sheet-control); }
+.seg button { font: inherit; font-size: 0.86rem; border: 0; background: transparent; color: var(--sheet-fg); padding: 7px 11px; cursor: pointer; border-right: 1px solid var(--sheet-line); }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--sheet-selected); color: var(--sheet-selected-fg); font-weight: 600; }
+.seg button:focus-visible { outline: 3px solid var(--a-ring); outline-offset: 2px; }
+
+.gallery { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+.screen { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; min-width: 0; flex: 0 1 390px; }
+.screen h2 { margin: 0; font-size: 1rem; font-weight: 600; }
+.notes { margin: 0; padding-left: 18px; color: var(--sheet-muted); font-size: 0.86rem; max-width: 390px; }
+.notes li + li { margin-top: 2px; }
+.frame { width: 390px; max-width: 100%; height: 820px; overflow: hidden; position: relative; border: 1px solid var(--sheet-line); border-radius: 28px; background: var(--a-bg); }
+body[data-viewport="desktop"] .gallery { flex-direction: column; }
+body[data-viewport="desktop"] .screen { width: 100%; flex: none; }
+body[data-viewport="desktop"] .frame { width: 100%; height: 820px; border-radius: 14px; }
+body[data-viewport="desktop"] .notes { max-width: 72ch; }
+
+/* ---------- App ---------- */
+.app { height: 100%; display: flex; flex-direction: column; background: var(--a-bg); color: var(--a-fg); font-family: var(--font); font-size: 16px; line-height: 1.5; position: relative; }
+.a-status-bar { height: 44px; flex: none; }
+body[data-viewport="desktop"] .a-status-bar { display: none; }
+.a-icon { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.a-icon.sm { width: 16px; height: 16px; }
+.app :is(button, a, input, h2[tabindex]):focus-visible { outline: 3px solid var(--a-ring); outline-offset: 2px; }
+
+.a-admin-head { flex: none; background: var(--a-card); border-bottom: 1px solid var(--a-border); }
+.a-admin-bar { max-width: 896px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px 6px 16px; }
+.a-admin-title { display: flex; align-items: center; gap: 8px; min-width: 0; font-weight: 700; }
+.a-pill { font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--a-subtle); color: var(--a-muted); flex: none; }
+.a-tabs { max-width: 896px; margin: 0 auto; display: flex; gap: 4px; padding: 0 8px; }
+.a-tab { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px; font-size: 0.875rem; font-weight: 500; color: var(--a-muted); border-bottom: 2px solid transparent; text-decoration: none; }
+.a-tab[aria-current="page"] { color: var(--a-fg); border-color: var(--a-primary); }
+.a-main { flex: 1; overflow: auto; }
+.a-admin-main { max-width: 896px; margin: 0 auto; width: 100%; padding: 0 16px 32px; }
+.a-page-header { padding: 16px 0; }
+.a-page-header h1 { margin: 0; font-size: 1.25rem; font-weight: 700; }
+.a-page-header p { margin: 4px 0 0; color: var(--a-muted); font-size: 0.875rem; }
+
+.a-btn {
+  height: 48px; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 16px;
+  font: inherit; font-weight: 600; border-radius: 10px; border: 1px solid transparent; cursor: pointer;
+  background: var(--a-primary); color: var(--a-primary-fg); white-space: nowrap;
+}
+.a-btn[data-variant="outline"] { background: var(--a-card); color: var(--a-fg); border-color: var(--a-input); }
+.a-btn[data-variant="ghost"] { background: transparent; color: var(--a-fg); width: auto; height: 40px; padding: 0 10px; font-size: 0.9rem; }
+.a-btn[data-variant="danger"] { background: var(--a-danger); color: var(--a-card); }
+.a-btn[data-variant="danger"]:disabled { opacity: 0.45; cursor: not-allowed; }
+.a-btn[data-busy="true"] { cursor: progress; opacity: 0.85; }
+.a-btn.row { height: 44px; font-size: 0.9rem; padding: 0 14px; }
+.a-btn.row.danger-text { color: var(--a-danger); }
+.a-spin { animation: a-spin 0.8s linear infinite; }
+@keyframes a-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .a-spin { animation: none; } }
+
+.a-list-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.a-list-head h2 { margin: 0; font-size: 1.05rem; font-weight: 700; }
+.a-list-head span { color: var(--a-muted); font-size: 0.875rem; }
+.a-col { display: grid; gap: 12px; min-width: 0; }
+.a-list { list-style: none; margin: 0; padding: 0; background: var(--a-card); border: 1px solid var(--a-border); border-radius: 14px; overflow: hidden; }
+/* Same row as the shipped AccountList: details, then the buttons (full width on phones). */
+.a-acc { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; padding: 12px 12px 12px 16px; min-width: 0; }
+.a-acc + .a-acc { border-top: 1px solid var(--a-border); }
+.a-acc-body { flex: 1 1 14rem; min-width: 0; display: grid; gap: 2px; }
+.a-acc-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a-acc[data-status="locked"] .a-acc-name { color: var(--a-muted); }
+.a-acc-line { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; font-size: 0.875rem; min-width: 0; }
+.a-acc-user { font-weight: 600; overflow-wrap: anywhere; }
+.a-status { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; }
+.a-status[data-tone="locked"] { color: var(--a-danger); }
+.a-acc-meta { color: var(--a-muted); font-size: 0.8rem; }
+.a-acc-meta.new { color: var(--a-fg); }
+.a-acc-meta.new .muted { color: var(--a-muted); }
+.a-acc-actions { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+.a-acc-actions .a-btn { flex: 1 1 0; width: auto; }
+body[data-viewport="desktop"] .a-acc-actions { width: auto; }
+body[data-viewport="desktop"] .a-acc-actions .a-btn { flex: none; }
+.mark-new { outline: 2px dashed var(--a-primary); outline-offset: 2px; border-radius: 4px; }
+body[data-annotate="off"] .mark-new { outline: none; }
+
+.a-empty { display: grid; justify-items: center; gap: 10px; text-align: center; padding: 40px 24px; background: var(--a-card); border: 1px solid var(--a-border); border-radius: 14px; }
+.a-empty-icon { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: var(--a-subtle); color: var(--a-muted); }
+.a-empty p { margin: 0; }
+.a-empty .t { font-weight: 600; }
+.a-empty .d { color: var(--a-muted); font-size: 0.9rem; max-width: 32ch; }
+.a-link-btn { display: inline-flex; align-items: center; min-height: 44px; color: var(--a-primary); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Dialog */
+.a-overlay { position: absolute; inset: 0; background: var(--a-overlay); display: grid; place-items: center; padding: 20px; z-index: 10; overflow: auto; overflow-x: hidden; }
+.a-dialog { width: 100%; max-width: 448px; background: var(--a-card); color: var(--a-fg); border-radius: 16px; padding: 20px; display: grid; gap: 16px; font-family: var(--font); }
+.a-dialog h2 { margin: 0; font-size: 1.125rem; font-weight: 700; text-wrap: balance; overflow-wrap: anywhere; }
+.a-dialog .desc { margin: -8px 0 0; color: var(--a-muted); font-size: 0.95rem; }
+.a-loss { border-radius: 12px; background: var(--a-danger-bg); color: var(--a-fg); padding: 12px 14px; display: grid; gap: 8px; }
+.a-loss-title { margin: 0; display: flex; gap: 8px; align-items: center; color: var(--a-danger); font-weight: 700; font-size: 0.95rem; }
+.a-loss ul { margin: 0; padding-left: 26px; display: grid; gap: 2px; font-size: 0.95rem; }
+.a-loss .backup { margin: 0; padding-top: 8px; border-top: 1px solid color-mix(in srgb, var(--a-danger) 25%, transparent); font-size: 0.9rem; color: var(--a-fg); }
+.a-field { display: grid; gap: 6px; }
+.a-label { font-size: 0.95rem; font-weight: 600; }
+.a-hint { margin: 0; color: var(--a-muted); font-size: 0.875rem; }
+.a-hint b { color: var(--a-fg); }
+.a-input { width: 100%; height: 48px; padding: 0 14px; font: inherit; font-size: 16px; color: var(--a-fg); background: var(--a-card); border: 1px solid var(--a-input); border-radius: 10px; }
+.a-input:disabled { opacity: 0.6; }
+.a-alert { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 10px; background: var(--a-danger-bg); color: var(--a-danger); font-size: 0.95rem; font-weight: 500; }
+.a-alert .a-icon { margin-top: 2px; }
+.a-dialog-actions { display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
+body[data-viewport="desktop"] .a-dialog-actions { display: flex; justify-content: flex-end; }
+body[data-viewport="desktop"] .a-dialog-actions .a-btn { width: auto; min-width: 7rem; }
+
+/* Toast (sonner, bottom centre) */
+.a-toast { position: absolute; left: 16px; right: 16px; bottom: 24px; margin: 0 auto; max-width: 356px; display: flex; gap: 10px; align-items: center; padding: 14px 16px; border-radius: 12px; background: var(--a-toast); color: var(--a-toast-fg); font-size: 0.95rem; font-weight: 500; box-shadow: 0 6px 24px rgb(0 0 0 / 0.18); z-index: 20; }
+body[data-viewport="desktop"] .a-toast { left: auto; right: 24px; margin: 0; }
+</style>
+</head>
+<body data-annotate="on">
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></symbol>
+  <symbol id="i-triangle" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-loader" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5"/></symbol>
+  <symbol id="i-user-cog" viewBox="0 0 24 24"><circle cx="10" cy="7" r="4"/><path d="M10.3 15H7a4 4 0 0 0-4 4v2"/><circle cx="18" cy="18" r="3"/><path d="m21.7 19.4-.9-.3"/><path d="m15.2 16.9-.9-.3"/><path d="m16.6 21.7.3-.9"/><path d="m19.1 15.2.3-.9"/></symbol>
+  <symbol id="i-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-lock-open" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+</svg>
+
+<main class="sheet">
+  <header>
+    <h1>Xoá tài khoản bác sĩ</h1>
+    <p class="lede">Mockup cho change <code>add-account-deletion</code>. Bảng màu A "Mực bút bi" đã chốt, không thêm màu. Phần mới được viền nét đứt xanh (tắt được ở "Đánh dấu phần mới"). Chọn trạng thái, sáng/tối, điện thoại (390 px) hay máy tính. Tên người, số liệu và ngày là ví dụ.</p>
+  </header>
+
+  <div class="controls" role="group" aria-label="Tuỳ chọn xem mockup">
+    <div class="control">
+      <span class="control-label" id="lbl-state">Trạng thái</span>
+      <div class="seg" data-control="state" aria-labelledby="lbl-state">
+        <button type="button" data-value="list" aria-pressed="true">Danh sách</button>
+        <button type="button" data-value="dialog" aria-pressed="false">Hộp thoại (ô trống)</button>
+        <button type="button" data-value="typing" aria-pressed="false">Gõ chưa khớp</button>
+        <button type="button" data-value="match" aria-pressed="false">Gõ khớp</button>
+        <button type="button" data-value="deleting" aria-pressed="false">Đang xoá</button>
+        <button type="button" data-value="err-mismatch" aria-pressed="false">Lỗi: không khớp</button>
+        <button type="button" data-value="err-active" aria-pressed="false">Lỗi: đang hoạt động</button>
+        <button type="button" data-value="err-notfound" aria-pressed="false">Lỗi: không tìm thấy</button>
+        <button type="button" data-value="err-storage" aria-pressed="false">Lỗi: kho ảnh</button>
+        <button type="button" data-value="deleted" aria-pressed="false">Sau khi xoá</button>
+        <button type="button" data-value="empty" aria-pressed="false">Xoá tài khoản cuối</button>
+      </div>
+    </div>
+    <div class="control">
+      <span class="control-label" id="lbl-theme">Chế độ</span>
+      <div class="seg" data-control="theme" aria-labelledby="lbl-theme">
+        <button type="button" data-value="system" aria-pressed="true">Theo máy</button>
+        <button type="button" data-value="light" aria-pressed="false">Sáng</button>
+        <button type="button" data-value="dark" aria-pressed="false">Tối</button>
+      </div>
+    </div>
+    <div class="control">
+      <span class="control-label" id="lbl-viewport">Khung</span>
+      <div class="seg" data-control="viewport" aria-labelledby="lbl-viewport">
+        <button type="button" data-value="phone" aria-pressed="true">Điện thoại</button>
+        <button type="button" data-value="desktop" aria-pressed="false">Máy tính</button>
+      </div>
+    </div>
+    <div class="control">
+      <span class="control-label" id="lbl-annotate">Đánh dấu phần mới</span>
+      <div class="seg" data-control="annotate" aria-labelledby="lbl-annotate">
+        <button type="button" data-value="on" aria-pressed="true">Bật</button>
+        <button type="button" data-value="off" aria-pressed="false">Tắt</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="gallery">
+    <section class="screen" aria-labelledby="s1">
+      <h2 id="s1">Tài khoản (/admin/accounts)</h2>
+      <div class="frame">
+        <div class="app">
+          <div class="a-status-bar"></div>
+          <header class="a-admin-head">
+            <div class="a-admin-bar">
+              <div class="a-admin-title"><span>Doctor Handbook</span><span class="a-pill">Quản trị</span></div>
+              <button class="a-btn" data-variant="ghost" type="button"><svg class="a-icon" aria-hidden="true"><use href="#i-logout"/></svg>Đăng xuất</button>
+            </div>
+            <nav class="a-tabs" aria-label="Điều hướng quản trị">
+              <a class="a-tab" href="#s1"><svg class="a-icon sm" aria-hidden="true"><use href="#i-key"/></svg>Mã truy cập</a>
+              <a class="a-tab" href="#s1" aria-current="page"><svg class="a-icon sm" aria-hidden="true"><use href="#i-user-cog"/></svg>Tài khoản</a>
+            </nav>
+          </header>
+          <div class="a-main">
+            <div class="a-admin-main">
+              <div class="a-page-header">
+                <h1>Tài khoản</h1>
+                <p>Tài khoản bác sĩ. Khoá khi bác sĩ mất máy hoặc ngừng dùng app.</p>
+              </div>
+
+              <div id="list-wrap" class="a-col">
+                <div class="a-list-head"><h2 tabindex="-1">Bác sĩ</h2><span id="count">4 tài khoản</span></div>
+                <ul class="a-list">
+                  <li class="a-acc" data-status="active" data-row="multi">
+                    <div class="a-acc-body">
+                      <span class="a-acc-name">Nguyễn Thị Lan</span>
+                      <span class="a-acc-line"><span class="a-acc-user" translate="no">bs.lan</span><span class="a-status"><svg class="a-icon sm" aria-hidden="true"><use href="#i-circle-check"/></svg>Đang hoạt động</span></span>
+                      <span class="a-acc-meta">Tạo 15/11/2026 · Đăng nhập 18/11/2026 09:45</span>
+                      <span class="a-acc-meta new"><span class="mark-new">132 bệnh nhân <span class="muted">·</span> Sao lưu 15/11/2026</span></span>
+                    </div>
+                    <div class="a-acc-actions">
+                      <button class="a-btn row" data-variant="outline" type="button"><svg class="a-icon sm" aria-hidden="true"><use href="#i-key"/></svg>Cấp mã đặt lại mật khẩu</button>
+                      <button class="a-btn row" data-variant="outline" type="button"><svg class="a-icon sm" aria-hidden="true"><use href="#i-lock"/></svg>Khoá</button>
+                    </div>
+                  </li>
+                  <li class="a-acc" data-status="locked" id="row-khoa">
+                    <div class="a-acc-body">
+                      <span class="a-acc-name">Lê Văn Khoa</span>
+                      <span class="a-acc-line"><span class="a-acc-user" translate="no">bs.khoa</span><span class="a-status" data-tone="locked"><svg class="a-icon sm" aria-hidden="true"><use href="#i-lock"/></svg>Đã khoá</span></span>
+                      <span class="a-acc-meta">Tạo 10/11/2026 · Đăng nhập 12/11/2026 16:20</span>
+                      <span class="a-acc-meta new"><span class="mark-new">12 bệnh nhân <span class="muted">·</span> Chưa sao lưu</span></span>
+                    </div>
+                    <div class="a-acc-actions">
+                      <button class="a-btn row" data-variant="outline" type="button"><svg class="a-icon sm" aria-hidden="true"><use href="#i-lock-open"/></svg>Mở khoá</button>
+                      <button class="a-btn row danger-text mark-new" data-variant="outline" type="button"><svg class="a-icon sm" aria-hidden="true"><use href="#i-trash"/></svg>Xoá</button>
+                    </div>
+                  </li>
+                  <li class="a-acc" data-status="active" data-row="multi">
+                    <div class="a-acc-body">
+                      <span class="a-acc-name">Trần Văn Minh</span>
+                      <span class="a-acc-line"><span class="a-acc-user" translate="no">bs.minh</span><span class="a-status"><svg class="a-icon sm" aria-hidden="true"><use href="#i-circle-check"/></svg>Đang hoạt động</span></span>
+                      <span class="a-acc-meta">Tạo 14/11/2026 · Chưa đăng nhập</span>
+                      <span class="a-acc-meta new"><span class="mark-new">0 bệnh nhân <span class="muted">·</span> Chưa sao lưu</span></span>
+                    </div>
+                    <div class="a-acc-actions">
+                      <button class="a-btn row" data-variant="outline" type="button"><svg class="a-icon sm" aria-hidden="true"><use href="#i-key"/></svg>Cấp mã đặt lại mật khẩu</button>
+                      <button class="a-btn row" data-variant="outline" type="button"><svg class="a-icon sm" aria-hidden="true"><use href="#i-lock"/></svg>Khoá</button>
+                    </div>
+                  </li>
+                  <li class="a-acc" data-status="active" data-row="multi">
+                    <div class="a-acc-body">
+                      <span class="a-acc-name">Võ Hoàng Khánh Nguyên Khoa Hồi sức tích cực</span>
+                      <span class="a-acc-line"><span class="a-acc-user" translate="no">bs.khanhnguyen_hstc</span><span class="a-status"><svg class="a-icon sm" aria-hidden="true"><use href="#i-circle-check"/></svg>Đang hoạt động</span></span>
+                      <span class="a-acc-meta">Tạo 02/11/2026 · Đăng nhập 17/11/2026 07:12</span>
+                      <span class="a-acc-meta new"><span class="mark-new">1.204 bệnh nhân <span class="muted">·</span> Sao lưu 03/11/2026</span></span>
+                    </div>
+                    <div class="a-acc-actions">
+                      <button class="a-btn row" data-variant="outline" type="button"><svg class="a-icon sm" aria-hidden="true"><use href="#i-key"/></svg>Cấp mã đặt lại mật khẩu</button>
+                      <button class="a-btn row" data-variant="outline" type="button"><svg class="a-icon sm" aria-hidden="true"><use href="#i-lock"/></svg>Khoá</button>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="a-empty" id="empty" hidden>
+                <div class="a-empty-icon"><svg class="a-icon" aria-hidden="true"><use href="#i-users"/></svg></div>
+                <p class="t">Chưa có tài khoản bác sĩ nào</p>
+                <p class="d">Tạo mã kích hoạt rồi gửi cho bác sĩ để họ tự tạo tài khoản.</p>
+                <a class="a-link-btn" href="#s1">Tạo mã kích hoạt</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="a-overlay" id="dialog" hidden>
+            <div class="a-dialog" role="alertdialog" aria-modal="true" aria-labelledby="dd-title" aria-describedby="dd-desc">
+              <h2 id="dd-title">Xoá tài khoản của Lê Văn Khoa?</h2>
+              <p class="desc" id="dd-desc">Không hoàn tác được. Nếu bác sĩ còn cần dữ liệu, mở khoá để bác sĩ tự sao lưu trước.</p>
+              <div class="a-loss">
+                <p class="a-loss-title"><svg class="a-icon" aria-hidden="true"><use href="#i-triangle"/></svg>Sẽ mất vĩnh viễn</p>
+                <ul>
+                  <li>12 bệnh nhân, cả thùng rác</li>
+                  <li>Mọi ghi chú và ảnh đại diện</li>
+                  <li>Việc cần làm</li>
+                </ul>
+                <p class="backup">Chưa sao lưu lần nào.</p>
+              </div>
+              <div class="a-field">
+                <label class="a-label" for="dd-input">Gõ tên đăng nhập để xác nhận</label>
+                <p class="a-hint" id="dd-hint">Gõ <b translate="no">bs.khoa</b></p>
+                <input class="a-input" id="dd-input" aria-describedby="dd-hint" autocomplete="off" autocapitalize="none" spellcheck="false" translate="no">
+              </div>
+              <div class="a-alert" id="dd-error" role="alert" hidden><svg class="a-icon" aria-hidden="true"><use href="#i-alert"/></svg><span id="dd-error-text"></span></div>
+              <div class="a-dialog-actions" id="dd-actions">
+                <button class="a-btn" id="dd-cancel" data-variant="outline" type="button">Không xoá</button>
+                <button class="a-btn" id="dd-confirm" data-variant="danger" type="button">Xoá vĩnh viễn</button>
+              </div>
+              <div id="dd-close" hidden><button class="a-btn" data-variant="outline" type="button">Đóng</button></div>
+            </div>
+          </div>
+
+          <div class="a-toast" id="toast" role="status" hidden><svg class="a-icon" aria-hidden="true"><use href="#i-circle-check"/></svg>Đã xoá tài khoản bs.khoa.</div>
+        </div>
+      </div>
+      <ul class="notes">
+        <li>Mỗi dòng thêm "N bệnh nhân · Sao lưu ngày" (không tính thùng rác), chỉ là con số, không có tên bệnh nhân.</li>
+        <li>Nút "Xoá" chỉ có ở dòng <b>đã khoá</b>: dòng đang hoạt động giữ nguyên hai nút cũ. Muốn xoá thì khoá trước.</li>
+        <li>"Xoá vĩnh viễn" chỉ bấm được khi gõ đúng tên đăng nhập (không phân biệt hoa thường). Gõ chưa khớp thì không báo lỗi đỏ; server vẫn kiểm lại.</li>
+        <li>Khi có lỗi, hộp thoại chỉ còn nút "Đóng"; đóng xong trang làm mới để dòng hiện đúng trạng thái.</li>
+        <li>Xoá xong: dòng biến mất, toast "Đã xoá tài khoản bs.khoa.", focus về tiêu đề "Bác sĩ".</li>
+      </ul>
+    </section>
+  </div>
+</main>
+
+<script>
+(() => {
+  const root = document.documentElement;
+  const body = document.body;
+  const $ = (id) => document.getElementById(id);
+  const spinner = '<svg class="a-icon sm a-spin" aria-hidden="true"><use href="#i-loader"/></svg>';
+  const ERRORS = {
+    "err-mismatch": "Tên đăng nhập không khớp.",
+    "err-active": "Tài khoản đang hoạt động. Khoá trước khi xoá.",
+    "err-notfound": "Không tìm thấy tài khoản.",
+    "err-storage": "Chưa xoá được tài khoản. Tài khoản vẫn bị khoá, hãy thử lại sau.",
+  };
+  const matches = (v) => v.trim().toLowerCase() === "bs.khoa";
+  let state = "list";
+
+  function sync() {
+    const input = $("dd-input");
+    const busy = state === "deleting";
+    const error = ERRORS[state];
+    $("dd-confirm").disabled = busy || !matches(input.value);
+    $("dd-confirm").dataset.busy = String(busy);
+    $("dd-confirm").innerHTML = busy ? spinner + "Xoá vĩnh viễn" : "Xoá vĩnh viễn";
+    $("dd-cancel").disabled = busy;
+    input.disabled = busy || Boolean(error);
+    $("dd-error").hidden = !error;
+    $("dd-error-text").textContent = error || "";
+    $("dd-actions").hidden = Boolean(error);
+    $("dd-close").hidden = !error;
+  }
+
+  function render(next) {
+    state = next;
+    const dialogOpen = ["dialog", "typing", "match", "deleting"].includes(state) || state in ERRORS;
+    $("dialog").hidden = !dialogOpen;
+    const typed = { dialog: "", typing: "bs.kho", match: "BS.Khoa", deleting: "BS.Khoa", "err-mismatch": "bs.khoa", "err-active": "bs.khoa", "err-notfound": "bs.khoa", "err-storage": "bs.khoa" };
+    if (dialogOpen) $("dd-input").value = typed[state] ?? "";
+    const gone = state === "deleted";
+    $("row-khoa").hidden = gone;
+    $("count").textContent = gone ? "3 tài khoản" : "4 tài khoản";
+    $("toast").hidden = !(gone || state === "empty");
+    $("list-wrap").hidden = state === "empty";
+    $("empty").hidden = state !== "empty";
+    sync();
+  }
+
+  $("dd-input").addEventListener("input", sync);
+  const apply = {
+    state: render,
+    theme: (v) => (v === "system" ? root.removeAttribute("data-theme") : root.setAttribute("data-theme", v)),
+    viewport: (v) => (body.dataset.viewport = v),
+    annotate: (v) => (body.dataset.annotate = v),
+  };
+  document.querySelectorAll(".seg").forEach((group) => {
+    group.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-value]");
+      if (!button) return;
+      group.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
+      apply[group.dataset.control](button.dataset.value);
+    });
+  });
+  document.querySelectorAll('.frame a[href^="#"]').forEach((a) => a.addEventListener("click", (e) => e.preventDefault()));
+  body.dataset.viewport = "phone";
+  render("list");
+})();
+</script>
+</body>
+</html>

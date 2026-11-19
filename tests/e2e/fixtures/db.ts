@@ -549,6 +549,24 @@ export async function accountIdOf(key: AccountKey): Promise<string> {
   return row.id;
 }
 
+// --- Account deletion (change add-account-deletion) ---------------------------------------
+
+/** Everything an account owns, by id (the username is gone once the account is deleted). */
+export async function countOwnedRows(accountId: string) {
+  const [row] = await sql()<
+    { accounts: number; patients: number; notes: number; todos: number; codes: number }[]
+  >`
+    SELECT
+      (SELECT count(*)::int FROM accounts WHERE id = ${accountId}) AS accounts,
+      (SELECT count(*)::int FROM patients WHERE account_id = ${accountId}) AS patients,
+      (SELECT count(*)::int FROM notes WHERE account_id = ${accountId}) AS notes,
+      (SELECT count(*)::int FROM todos WHERE account_id = ${accountId}) AS todos,
+      (SELECT count(*)::int FROM access_codes WHERE account_id = ${accountId}) AS codes
+  `;
+  if (!row) throw new Error("countOwnedRows: no row returned");
+  return row;
+}
+
 export async function closeDatabase(): Promise<void> {
   await client?.end();
   client = undefined;

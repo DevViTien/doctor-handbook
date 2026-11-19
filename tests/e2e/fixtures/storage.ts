@@ -30,6 +30,15 @@ export async function putStoredObject(key: string, bytes: Buffer, type = "image/
   });
 }
 
+/** Makes the Storage list route fail until the next reset ("Kho ảnh lỗi"). */
+export async function failStorageList(): Promise<void> {
+  await fetch(`${FAKE_STORAGE_URL}/__fake/fail`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ route: "list" }),
+  });
+}
+
 export async function resetStorage(): Promise<void> {
   await fetch(`${FAKE_STORAGE_URL}/__fake/objects`, { method: "DELETE" }).catch(() => undefined);
 }

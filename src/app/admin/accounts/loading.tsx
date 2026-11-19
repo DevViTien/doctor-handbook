@@ -7,7 +7,7 @@ export default function AccountsLoading() {
       <Skeleton className="h-4 w-72 max-w-full" />
       <div className="space-y-2 pt-2">
         {Array.from({ length: 4 }, (_, index) => (
-          <Skeleton key={index} className="h-20 w-full rounded-xl" />
+          <Skeleton key={index} className="h-24 w-full rounded-xl" />
         ))}
       </div>
     </div>
